@@ -2,7 +2,7 @@ name: Server CI
 
 on:
   push:
-    branches: [main]
+    branches: [develop, main]
   pull_request:
   workflow_dispatch:
 
@@ -22,27 +22,27 @@ jobs:
           sdk: '3.13.4'
       - name: Resolve locked dependencies
         run: |
-          (cd balmatchum/balmatchum_server && dart pub get --enforce-lockfile)
-          (cd balmatchum/balmatchum_client && dart pub get --enforce-lockfile)
+          (cd server && dart pub get --enforce-lockfile)
+          (cd client && dart pub get --enforce-lockfile)
       - name: Install pinned generator
         run: dart pub global activate serverpod_cli 4.0.3
       - name: Generate and reject drift
-        working-directory: balmatchum/balmatchum_server
+        working-directory: server
         run: |
           dart pub global run serverpod_cli:serverpod_cli --no-interactive --no-analytics generate
-          git diff --exit-code -- lib/src/generated test/integration/test_tools ../balmatchum_client/lib
-          test -z "$(git ls-files --others --exclude-standard -- lib/src/generated test/integration/test_tools ../balmatchum_client/lib)"
+          git diff --exit-code -- lib/src/generated test/integration/test_tools ../client/lib
+          test -z "$(git ls-files --others --exclude-standard -- lib/src/generated test/integration/test_tools ../client/lib)"
       - name: Check format
         run: |
-          dart format --output=none --set-exit-if-changed balmatchum/balmatchum_server
-          dart format --output=none --set-exit-if-changed balmatchum/balmatchum_client
+          dart format --output=none --set-exit-if-changed server
+          dart format --output=none --set-exit-if-changed client
       - name: Analyze both packages
         run: |
-          (cd balmatchum/balmatchum_server && dart analyze --fatal-infos)
-          (cd balmatchum/balmatchum_client && dart analyze --fatal-infos)
+          (cd server && dart analyze --fatal-infos)
+          (cd client && dart analyze --fatal-infos)
       - name: Test with isolated embedded PostgreSQL
-        working-directory: balmatchum/balmatchum_server
+        working-directory: server
         run: dart test
       - name: Compile server entry point
-        working-directory: balmatchum/balmatchum_server
+        working-directory: server
         run: dart build cli --target bin/main.dart --output build
