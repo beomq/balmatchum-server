@@ -1,0 +1,19 @@
+apiServer:
+  port: 0
+  publicHost: localhost
+  publicPort: 0
+  publicScheme: http
+insightsServer:
+  port: 0
+  publicHost: localhost
+  publicPort: 0
+  publicScheme: http
+database:
+  host: localhost
+  port: 9090
+  name: balmatchum_test
+  user: postgres
+  dataPath: .serverpod/test/pgdata
+sessionLogs:
+  persistentEnabled: true
+  consoleEnabled: true

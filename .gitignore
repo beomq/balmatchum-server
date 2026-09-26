@@ -1,0 +1,7 @@
+.DS_Store
+**/.dart_tool/
+**/build/
+**/config/passwords.yaml
+**/.env
+**/.env.*
+**/data/
