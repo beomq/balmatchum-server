@@ -6,8 +6,8 @@ Work only inside this repository. Do not edit the app, design repository, or sha
 
 - Serverpod and CLI are pinned to 4.0.3.
 - Dart 3.13.4 is the validation SDK (Flutter 3.47.5 contains it).
-- Server: `balmatchum/balmatchum_server`.
-- Standalone generated client: `balmatchum/balmatchum_client`. Keep this path stable for Git dependencies pinned by the app owner.
+- Server: `server`.
+- Standalone generated client: `client`. Keep this path stable for Git dependencies pinned by the app owner.
 - No Redis, authentication features, website, Flutter companion, or cloud storage integrations are configured.
 - Development uses external PostgreSQL 16 via Compose. Tests use isolated embedded PostgreSQL through `config/test.yaml`, not the development database.
 
@@ -20,6 +20,8 @@ Never hand-edit `lib/src/generated/`, client `lib/src/`, or `test/integration/te
 Check both packages with `dart format --output=none --set-exit-if-changed .` and `dart analyze --fatal-infos`; run `SERVERPOD_PASSWORD_database=local-disposable-test-only dart test` in the server. Build with `dart build cli --target bin/main.dart --output build`: `dart compile exe` cannot run the native dependency build hooks. Check regeneration for drift with `git diff --exit-code` and untracked-file detection on the generated directories. The root CI runs these checks. Servers/tests may be started for authorized local verification; clean up only processes you started.
 
 ## Secrets and release control
+
+Develop on feature branches and open pull requests targeting `develop`. Reserve `main` for releases; do not use it for feature integration. Preserve the existing initial commit on `main`. The lead coordinates branch creation, commits, pushes, and pull requests; do not perform these Git actions without explicit assignment. CI runs on pushes to `develop` and `main`, and on pull requests.
 
 Supply `SERVERPOD_PASSWORD_database` through the environment. Never commit real passwords, `.env` files, `config/passwords.yaml`, PostgreSQL data, or credentials. The CI password is a public disposable test-only value for its private ephemeral database.
 

@@ -6,13 +6,17 @@ Serverpod 자체 전이 의존성으로 lockfile에 `redis`가 있고 기본 시
 
 ## 고정 패키지 경로
 
-- 서버: `balmatchum/balmatchum_server`
-- 독립 생성 클라이언트: **`balmatchum/balmatchum_client`**
+로컬 저장소 루트는 `balmatchum/server/`이며 앱·디자인 저장소와 분리됩니다. Dart 패키지 이름은 `balmatchum_server`, `balmatchum_client`를 유지합니다.
+
+- 서버: `server`
+- 독립 생성 클라이언트: **`client`**
 - CI: `.github/workflows/ci.yml`
 
 클라이언트는 Pub workspace에 묶여 있지 않아 별도 Dart/Flutter 프로젝트의 Git dependency로 사용할 수 있습니다. 원격은 `https://github.com/beomq/balmatchum-server.git`이며 앱 담당자가 검증된 커밋 SHA와 위 클라이언트 경로를 지정합니다. 초기 설정 단계에서는 커밋·푸시하지 않습니다.
 
 ## 로컬 준비
+
+브랜치 흐름은 **feature 브랜치 → PR → `develop`**입니다. `main`은 릴리스 전용이며 기존 초기 커밋을 유지합니다. 브랜치 생성·커밋·푸시·PR은 리드가 조정하고 명시적 지시 후 수행합니다. CI는 `develop`·`main` push와 PR에서 실행합니다.
 
 저장소 루트에서 실행합니다. 현재 Mac에 설치된 전용 SDK/cache 설정입니다.
 
@@ -21,8 +25,8 @@ export PATH="/Users/beomseok/fvm/versions/3.47.5/bin/cache/dart-sdk/bin:$PATH"
 export PUB_CACHE="/Users/beomseok/fvm/versions/3.47.5/.balmatchum-pub-cache"
 dart --version
 dart pub global activate serverpod_cli 4.0.3
-(cd balmatchum/balmatchum_server && dart pub get --enforce-lockfile)
-(cd balmatchum/balmatchum_client && dart pub get --enforce-lockfile)
+(cd server && dart pub get --enforce-lockfile)
+(cd client && dart pub get --enforce-lockfile)
 ```
 
 ## PostgreSQL과 실행
@@ -30,7 +34,7 @@ dart pub global activate serverpod_cli 4.0.3
 개발 DB는 Docker Compose의 PostgreSQL 16이며 로컬 `127.0.0.1:8090`에만 노출합니다. 비밀번호는 저장소에 넣지 않고 같은 셸의 환경변수로 전달합니다.
 
 ```sh
-cd balmatchum/balmatchum_server
+cd server
 export SERVERPOD_PASSWORD_database="$(openssl rand -hex 24)"
 docker compose up -d --wait
 dart run bin/main.dart --apply-migrations
@@ -41,7 +45,7 @@ DB 볼륨을 재사용할 때는 처음 설정한 비밀번호를 안전한 로�
 다른 터미널에서 같은 SDK 설정 후 실제 생성 클라이언트 연결을 검증합니다.
 
 ```sh
-cd balmatchum/balmatchum_client
+cd client
 dart run example/smoke.dart http://localhost:8080/
 ```
 
@@ -60,11 +64,11 @@ dart pub global run serverpod_cli:serverpod_cli --no-interactive --no-analytics 
 저장소 루트의 기본 검증 명령입니다.
 
 ```sh
-dart format --output=none --set-exit-if-changed balmatchum/balmatchum_server balmatchum/balmatchum_client
-(cd balmatchum/balmatchum_server && dart analyze --fatal-infos)
-(cd balmatchum/balmatchum_client && dart analyze --fatal-infos)
-(cd balmatchum/balmatchum_server && SERVERPOD_PASSWORD_database=local-disposable-test-only dart test)
-(cd balmatchum/balmatchum_server && dart build cli --target bin/main.dart --output build)
+dart format --output=none --set-exit-if-changed server client
+(cd server && dart analyze --fatal-infos)
+(cd client && dart analyze --fatal-infos)
+(cd server && SERVERPOD_PASSWORD_database=local-disposable-test-only dart test)
+(cd server && dart build cli --target bin/main.dart --output build)
 ```
 
 테스트는 `config/test.yaml`의 `database.dataPath`를 이용하는 **내장 PostgreSQL**입니다. 테스트 그룹마다 임시 DB를 생성하고 정리하므로 개발 DB 및 Docker와 분리됩니다. 최초 실행에는 PostgreSQL 바이너리 다운로드가 필요합니다. `SELECT 1` 연결 검증과 기본 endpoint 테스트를 실행합니다. 생성 헬퍼의 기본 테스트 제한시간은 120초입니다.

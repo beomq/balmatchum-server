@@ -1,11 +1,22 @@
 # 서버 초기화 검증 기록
 
+이 문서의 초기화 실행 결과는 최초 설정 당시의 기록입니다. 이후 리드가 `c923309b196d6f2d1ed2530a86d9052e574ab7e0`을 커밋·푸시했고 CI가 통과했다고 전달했습니다. 현재 로컬 배치는 `balmatchum/server/` 아래 `server/`, `client/`이며, 아래 경로 표기는 새 배치에 맞춰 갱신했습니다. 배치 변경 자체는 아직 커밋·푸시하지 않았습니다.
+
+## 로컬 배치 변경 검증
+
+- 이동 전 작업 트리는 깨끗했고 HEAD는 위 커밋과 일치했습니다.
+- 저장소 전체와 패키지를 디렉터리 rename으로 이동했습니다. 검증 명령 실행 전 1,731개 항목의 inode와 파일 크기를 비교해 손실 없이 보존한 것을 확인했습니다. 무시된 `.dart_tool`, `build`, PostgreSQL 데이터도 함께 이동했습니다.
+- 추적 파일 41개를 새 패키지 경로로 이동했습니다. 중간 `.gitignore` 규칙은 루트로 병합했습니다. CI, generator, 문서의 경로만 변경했고 Dart 패키지 이름과 원격은 유지했습니다.
+- 양쪽 `dart pub get --enforce-lockfile`, CLI `generate`, 14개 Dart 파일 format 검사, 양쪽 `dart analyze --fatal-infos`, PostgreSQL 통합 테스트 2개, `dart build cli --target bin/main.dart --output build`가 모두 종료 코드 0으로 통과했습니다.
+- 재생성된 파일 10개는 기존 HEAD의 대응 파일과 Git blob 해시가 같습니다. 마이그레이션과 lockfile도 변경하지 않았습니다.
+- `docker compose config --quiet`, `git diff --check`는 종료 코드 0입니다. 새 경로 CI 자체는 아직 커밋·푸시하지 않아 원격 실행 전입니다.
+
 ## 결과
 
 - Serverpod/CLI 4.0.3, Dart 3.13.4.
-- 서버: `balmatchum/balmatchum_server`.
-- 독립 클라이언트: `balmatchum/balmatchum_client`.
-- 최초 마이그레이션: `balmatchum/balmatchum_server/migrations/20260926020708431`.
+- 서버: `server`.
+- 독립 클라이언트: `client`.
+- 최초 마이그레이션: `server/migrations/20260926020708431`.
 - 루트 CI: `.github/workflows/ci.yml`; 루트 `README.md`, 영문 `AGENTS.md`.
 - Git main 초기화, origin `https://github.com/beomq/balmatchum-server.git` 설정. 스테이징/커밋/푸시/배포 없음.
 
