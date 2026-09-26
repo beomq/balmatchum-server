@@ -13,6 +13,8 @@ Work only inside this repository. Do not edit the app, design repository, or sha
 
 ## Commands and generated code
 
+Read `docs/onboarding.md`, `docs/configuration-secrets.md`, and `docs/sources-and-verification.md` before changing setup or configuration. These are the Korean team guides; keep commands portable and verify version-specific claims against Serverpod 4.0.3 source. Never assume `.env` is automatically loaded. Preserve `SETUP_REPORT.md` as historical evidence. Feature flags, forced-update policy, Sentry, and Fastlane remain discussion candidates, not authorized work.
+
 Run `dart pub get --enforce-lockfile` in both packages. From the server package use `dart pub global run serverpod_cli:serverpod_cli --no-interactive --no-analytics generate`.
 
 Never hand-edit `lib/src/generated/`, client `lib/src/`, or `test/integration/test_tools/`. Edit endpoint/model source, then regenerate with CLI 4.0.3. Create migrations with the CLI when stored models change. Commit generated code and lockfiles with the source change after explicit commit approval.
