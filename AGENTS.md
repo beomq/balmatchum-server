@@ -21,7 +21,7 @@ Check both packages with `dart format --output=none --set-exit-if-changed .` and
 
 ## Secrets and release control
 
-Develop on feature branches and open pull requests targeting `develop`. Reserve `main` for releases; do not use it for feature integration. Preserve the existing initial commit on `main`. The lead coordinates branch creation, commits, pushes, and pull requests; do not perform these Git actions without explicit assignment. CI runs on pushes to `develop` and `main`, and on pull requests.
+Create short-lived task branches from `develop`, then use pull requests and passing CI to integrate into `develop`. Never merge broken or unverified features into `develop`. Reserve `main` for release pull requests and version tags only; preserve its existing initial commit. Use `release/*` only when release stabilization overlaps subsequent work. The lead coordinates branch creation, commits, pushes, pull requests, merges, releases, remote protection changes, and deployment; do not perform these actions without explicit assignment. CI runs on pushes to `develop` and `main`, and on pull requests.
 
 Supply `SERVERPOD_PASSWORD_database` through the environment. Never commit real passwords, `.env` files, `config/passwords.yaml`, PostgreSQL data, or credentials. The CI password is a public disposable test-only value for its private ephemeral database.
 
