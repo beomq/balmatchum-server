@@ -1,0 +1,4 @@
+class: GpsRecord
+fields:
+  receipt: RecordReceipt
+  payload: GpsRecordInput

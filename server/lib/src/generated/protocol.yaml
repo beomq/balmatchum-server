@@ -1,2 +1,5 @@
 greeting:
   - hello:
+records:
+  - saveConfirmed:
+  - getMine:

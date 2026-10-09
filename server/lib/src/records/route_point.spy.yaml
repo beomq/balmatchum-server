@@ -1,0 +1,6 @@
+class: RoutePoint
+fields:
+  recordedAt: DateTime
+  latitude: double
+  longitude: double
+  horizontalAccuracyMeters: double?

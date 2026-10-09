@@ -10,8 +10,11 @@
 // ignore_for_file: invalid_use_of_internal_member
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:balmatchum_server/src/generated/records/gps_record_input.dart'
+    as _iax46414;
 import 'package:serverpod/serverpod.dart' as _is;
 import '../greetings/greeting_endpoint.dart' as _il624ik7;
+import '../records/records_endpoint.dart' as _imwf5oma;
 
 class Endpoints extends _is.EndpointDispatch {
   @override
@@ -21,6 +24,12 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'greeting',
+          null,
+        ),
+      'records': _imwf5oma.RecordsEndpoint()
+        ..initialize(
+          server,
+          'records',
           null,
         ),
     };
@@ -45,6 +54,50 @@ class Endpoints extends _is.EndpointDispatch {
                   (endpoints['greeting'] as _il624ik7.GreetingEndpoint).hello(
                     session,
                     params['name'],
+                  ),
+        ),
+      },
+    );
+    connectors['records'] = _is.EndpointConnector(
+      name: 'records',
+      endpoint: endpoints['records']!,
+      methodConnectors: {
+        'saveConfirmed': _is.MethodConnector(
+          name: 'saveConfirmed',
+          params: {
+            'input': _is.ParameterDescription(
+              name: 'input',
+              type: _is.getType<_iax46414.GpsRecordInput>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['records'] as _imwf5oma.RecordsEndpoint)
+                  .saveConfirmed(
+                    session,
+                    params['input'],
+                  ),
+        ),
+        'getMine': _is.MethodConnector(
+          name: 'getMine',
+          params: {
+            'recordId': _is.ParameterDescription(
+              name: 'recordId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['records'] as _imwf5oma.RecordsEndpoint).getMine(
+                    session,
+                    params['recordId'],
                   ),
         ),
       },

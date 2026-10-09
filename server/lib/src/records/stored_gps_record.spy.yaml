@@ -1,0 +1,13 @@
+class: StoredGpsRecord
+serverOnly: true
+table: gps_record
+fields:
+  id: UuidValue?, defaultPersist=random_v7
+  owner: String
+  clientRecordId: UuidValue
+  persistedAt: DateTime
+  payload: GpsRecordInput
+indexes:
+  gps_record_owner_client_unique:
+    fields: owner, clientRecordId
+    unique: true
