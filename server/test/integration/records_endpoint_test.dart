@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:balmatchum_server/src/generated/protocol.dart';
 import 'package:balmatchum_server/src/records/records_endpoint.dart';
 import 'package:serverpod/serverpod.dart';
@@ -69,6 +72,44 @@ void main() {
       expect(first.persistedAt.isUtc, isTrue);
       expect(await StoredGpsRecord.db.count(owner.build()), 1);
     });
+
+    test(
+      'Watch fixture maps to persistence and original acknowledgement key',
+      () async {
+        final fixture =
+            jsonDecode(
+                  File(
+                    'test/integration/fixtures/watch_v1.json',
+                  ).readAsStringSync(),
+                )
+                as Map<String, dynamic>;
+        final wire = fixture['record'] as Map<String, dynamic>;
+        final input = GpsRecordInput(
+          schemaVersion: wire['schemaVersion'] as int,
+          clientRecordId: UuidValue.fromString(wire['recordId'] as String),
+          startedAt: DateTime.parse(wire['startedAt'] as String),
+          endedAt: DateTime.parse(wire['endedAt'] as String),
+          source: 'watch',
+          routePoints: (wire['payload']['points'] as List)
+              .map(
+                (point) => RoutePoint(
+                  recordedAt: DateTime.parse(point['recordedAt'] as String),
+                  latitude: (point['latitude'] as num).toDouble(),
+                  longitude: (point['longitude'] as num).toDouble(),
+                  horizontalAccuracyMeters:
+                      (point['horizontalAccuracyMeters'] as num).toDouble(),
+                ),
+              )
+              .toList(),
+        );
+        final receipt = await endpoints.records.saveConfirmed(owner, input);
+        final saved = await endpoints.records.getMine(owner, receipt.recordId);
+        expect(saved.payload.toJson(), input.toJson());
+        expect(receipt.clientRecordId.toString(), wire['recordId']);
+        expect(fixture['ack']['recordId'], receipt.clientRecordId.toString());
+        expect(fixture['ack']['contextId'], wire['contextId']);
+      },
+    );
 
     test('different payload conflicts without replacing original', () async {
       final input = record();
