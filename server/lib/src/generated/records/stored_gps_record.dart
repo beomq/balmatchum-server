@@ -1,0 +1,658 @@
+/* AUTOMATICALLY GENERATED CODE DO NOT MODIFY */
+/*   To generate run: "serverpod generate"    */
+
+// ignore_for_file: implementation_imports
+// ignore_for_file: library_private_types_in_public_api
+// ignore_for_file: non_constant_identifier_names
+// ignore_for_file: public_member_api_docs
+// ignore_for_file: type_literal_in_constant_pattern
+// ignore_for_file: use_super_parameters
+// ignore_for_file: invalid_use_of_internal_member
+
+// ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:balmatchum_server/src/generated/protocol.dart' as _iu3f2ih9;
+import 'package:serverpod/serverpod.dart' as _is;
+import '../records/gps_record_input.dart' as _i7qho75c;
+
+abstract class StoredGpsRecord
+    implements _is.TableRow<_is.UuidValue?>, _is.ProtocolSerialization {
+  StoredGpsRecord._({
+    this.id,
+    required this.owner,
+    required this.clientRecordId,
+    required this.persistedAt,
+    required this.payload,
+  });
+
+  factory StoredGpsRecord({
+    _is.UuidValue? id,
+    required String owner,
+    required _is.UuidValue clientRecordId,
+    required DateTime persistedAt,
+    required _i7qho75c.GpsRecordInput payload,
+  }) = _StoredGpsRecordImpl;
+
+  factory StoredGpsRecord.fromJson(Map<String, dynamic> jsonSerialization) {
+    return StoredGpsRecord(
+      id: jsonSerialization['id'] == null
+          ? null
+          : _is.UuidValueJsonExtension.fromJson(jsonSerialization['id']),
+      owner: jsonSerialization['owner'] as String,
+      clientRecordId: _is.UuidValueJsonExtension.fromJson(
+        jsonSerialization['clientRecordId'],
+      ),
+      persistedAt: _is.DateTimeJsonExtension.fromJson(
+        jsonSerialization['persistedAt'],
+      ),
+      payload: _iu3f2ih9.Protocol().deserialize<_i7qho75c.GpsRecordInput>(
+        jsonSerialization['payload'],
+      ),
+    );
+  }
+
+  static final t = StoredGpsRecordTable();
+
+  static const db = StoredGpsRecordRepository._();
+
+  @override
+  _is.UuidValue? id;
+
+  String owner;
+
+  _is.UuidValue clientRecordId;
+
+  DateTime persistedAt;
+
+  _i7qho75c.GpsRecordInput payload;
+
+  @override
+  _is.Table<_is.UuidValue?> get table => t;
+
+  /// Returns a shallow copy of this [StoredGpsRecord]
+  /// with some or all fields replaced by the given arguments.
+  @_is.useResult
+  StoredGpsRecord copyWith({
+    _is.UuidValue? id,
+    String? owner,
+    _is.UuidValue? clientRecordId,
+    DateTime? persistedAt,
+    _i7qho75c.GpsRecordInput? payload,
+  });
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      '__className__': 'StoredGpsRecord',
+      if (id != null) 'id': id?.toJson(),
+      'owner': owner,
+      'clientRecordId': clientRecordId.toJson(),
+      'persistedAt': persistedAt.toJson(),
+      'payload': payload.toJson(),
+    };
+  }
+
+  @override
+  Map<String, dynamic> toJsonForProtocol() {
+    return {};
+  }
+
+  static StoredGpsRecordInclude include() {
+    return StoredGpsRecordInclude._();
+  }
+
+  static StoredGpsRecordIncludeList includeList({
+    _is.WhereExpressionBuilder<StoredGpsRecordTable>? where,
+    int? limit,
+    int? offset,
+    _is.OrderByBuilder<StoredGpsRecordTable>? orderBy,
+    _is.OrderByListBuilder<StoredGpsRecordTable>? orderByList,
+    StoredGpsRecordInclude? include,
+  }) {
+    return StoredGpsRecordIncludeList._(
+      where: where,
+      limit: limit,
+      offset: offset,
+      orderBy: orderBy?.call(StoredGpsRecord.t),
+      orderByList: orderByList?.call(StoredGpsRecord.t),
+      include: include,
+    );
+  }
+
+  @override
+  String toString() {
+    return _is.SerializationManager.encode(this);
+  }
+}
+
+class _Undefined {}
+
+class _StoredGpsRecordImpl extends StoredGpsRecord {
+  _StoredGpsRecordImpl({
+    _is.UuidValue? id,
+    required String owner,
+    required _is.UuidValue clientRecordId,
+    required DateTime persistedAt,
+    required _i7qho75c.GpsRecordInput payload,
+  }) : super._(
+         id: id,
+         owner: owner,
+         clientRecordId: clientRecordId,
+         persistedAt: persistedAt,
+         payload: payload,
+       );
+
+  /// Returns a shallow copy of this [StoredGpsRecord]
+  /// with some or all fields replaced by the given arguments.
+  @_is.useResult
+  @override
+  StoredGpsRecord copyWith({
+    Object? id = _Undefined,
+    String? owner,
+    _is.UuidValue? clientRecordId,
+    DateTime? persistedAt,
+    _i7qho75c.GpsRecordInput? payload,
+  }) {
+    return StoredGpsRecord(
+      id: id is _is.UuidValue? ? id : this.id,
+      owner: owner ?? this.owner,
+      clientRecordId: clientRecordId ?? this.clientRecordId,
+      persistedAt: persistedAt ?? this.persistedAt,
+      payload: payload ?? this.payload.copyWith(),
+    );
+  }
+}
+
+class StoredGpsRecordUpdateTable extends _is.UpdateTable<StoredGpsRecordTable> {
+  StoredGpsRecordUpdateTable(super.table);
+
+  _is.ColumnValue<String, String> owner(String value) => _is.ColumnValue(
+    table.owner,
+    value,
+  );
+
+  _is.ColumnValue<_is.UuidValue, _is.UuidValue> clientRecordId(
+    _is.UuidValue value,
+  ) => _is.ColumnValue(
+    table.clientRecordId,
+    value,
+  );
+
+  _is.ColumnValue<DateTime, DateTime> persistedAt(DateTime value) =>
+      _is.ColumnValue(
+        table.persistedAt,
+        value,
+      );
+
+  _is.ColumnValue<_i7qho75c.GpsRecordInput, _i7qho75c.GpsRecordInput> payload(
+    _i7qho75c.GpsRecordInput value,
+  ) => _is.ColumnValue(
+    table.payload,
+    value,
+  );
+}
+
+class StoredGpsRecordTable extends _is.Table<_is.UuidValue?> {
+  StoredGpsRecordTable({super.tableRelation}) : super(tableName: 'gps_record') {
+    updateTable = StoredGpsRecordUpdateTable(this);
+    owner = _is.ColumnString(
+      'owner',
+      this,
+    );
+    clientRecordId = _is.ColumnUuid(
+      'clientRecordId',
+      this,
+    );
+    persistedAt = _is.ColumnDateTime(
+      'persistedAt',
+      this,
+    );
+    payload = _is.ColumnSerializable<_i7qho75c.GpsRecordInput>(
+      'payload',
+      this,
+    );
+  }
+
+  late final StoredGpsRecordUpdateTable updateTable;
+
+  late final _is.ColumnString owner;
+
+  late final _is.ColumnUuid clientRecordId;
+
+  late final _is.ColumnDateTime persistedAt;
+
+  late final _is.ColumnSerializable<_i7qho75c.GpsRecordInput> payload;
+
+  @override
+  List<_is.Column> get columns => [
+    id,
+    owner,
+    clientRecordId,
+    persistedAt,
+    payload,
+  ];
+}
+
+class StoredGpsRecordInclude extends _is.IncludeObject {
+  StoredGpsRecordInclude._();
+
+  @override
+  Map<String, _is.Include?> get includes => {};
+
+  @override
+  _is.Table<_is.UuidValue?> get table => StoredGpsRecord.t;
+}
+
+class StoredGpsRecordIncludeList extends _is.IncludeList {
+  StoredGpsRecordIncludeList._({
+    _is.WhereExpressionBuilder<StoredGpsRecordTable>? where,
+    super.limit,
+    super.offset,
+    super.orderBy,
+    super.orderByList,
+    super.include,
+  }) {
+    super.where = where?.call(StoredGpsRecord.t);
+  }
+
+  @override
+  Map<String, _is.Include?> get includes => include?.includes ?? {};
+
+  @override
+  _is.Table<_is.UuidValue?> get table => StoredGpsRecord.t;
+}
+
+class StoredGpsRecordRepository {
+  const StoredGpsRecordRepository._();
+
+  /// Returns a list of [StoredGpsRecord]s matching the given query parameters.
+  ///
+  /// Use [where] to specify which items to include in the return value.
+  /// If none is specified, all items will be returned.
+  ///
+  /// To specify the order of the items use [orderBy] or [orderByList]
+  /// when sorting by multiple columns.
+  ///
+  /// The maximum number of items can be set by [limit]. If no limit is set,
+  /// all items matching the query will be returned.
+  ///
+  /// [offset] defines how many items to skip, after which [limit] (or all)
+  /// items are read from the database.
+  ///
+  /// ```dart
+  /// var persons = await Persons.db.find(
+  ///   session,
+  ///   where: (t) => t.lastName.equals('Jones'),
+  ///   orderBy: (t) => t.firstName,
+  ///   limit: 100,
+  /// );
+  /// ```
+  Future<List<StoredGpsRecord>> find(
+    _is.DatabaseSession session, {
+    _is.WhereExpressionBuilder<StoredGpsRecordTable>? where,
+    int? limit,
+    int? offset,
+    _is.OrderByBuilder<StoredGpsRecordTable>? orderBy,
+    _is.OrderByListBuilder<StoredGpsRecordTable>? orderByList,
+    _is.Transaction? transaction,
+    _is.LockMode? lockMode,
+    _is.LockBehavior? lockBehavior,
+  }) async {
+    return session.db.find<StoredGpsRecord>(
+      where: where?.call(StoredGpsRecord.t),
+      orderBy: orderBy?.call(StoredGpsRecord.t),
+      orderByList: orderByList?.call(StoredGpsRecord.t),
+      limit: limit,
+      offset: offset,
+      transaction: transaction,
+      lockMode: lockMode,
+      lockBehavior: lockBehavior,
+    );
+  }
+
+  /// Returns the first matching [StoredGpsRecord] matching the given query parameters.
+  ///
+  /// Use [where] to specify which items to include in the return value.
+  /// If none is specified, all items will be returned.
+  ///
+  /// To specify the order use [orderBy] or [orderByList]
+  /// when sorting by multiple columns.
+  ///
+  /// [offset] defines how many items to skip, after which the next one will be picked.
+  ///
+  /// ```dart
+  /// var youngestPerson = await Persons.db.findFirstRow(
+  ///   session,
+  ///   where: (t) => t.lastName.equals('Jones'),
+  ///   orderBy: (t) => t.age,
+  /// );
+  /// ```
+  Future<StoredGpsRecord?> findFirstRow(
+    _is.DatabaseSession session, {
+    _is.WhereExpressionBuilder<StoredGpsRecordTable>? where,
+    int? offset,
+    _is.OrderByBuilder<StoredGpsRecordTable>? orderBy,
+    _is.OrderByListBuilder<StoredGpsRecordTable>? orderByList,
+    _is.Transaction? transaction,
+    _is.LockMode? lockMode,
+    _is.LockBehavior? lockBehavior,
+  }) async {
+    return session.db.findFirstRow<StoredGpsRecord>(
+      where: where?.call(StoredGpsRecord.t),
+      orderBy: orderBy?.call(StoredGpsRecord.t),
+      orderByList: orderByList?.call(StoredGpsRecord.t),
+      offset: offset,
+      transaction: transaction,
+      lockMode: lockMode,
+      lockBehavior: lockBehavior,
+    );
+  }
+
+  /// Finds a single [StoredGpsRecord] by its [id] or null if no such row exists.
+  Future<StoredGpsRecord?> findById(
+    _is.DatabaseSession session,
+    _is.UuidValue id, {
+    _is.Transaction? transaction,
+    _is.LockMode? lockMode,
+    _is.LockBehavior? lockBehavior,
+  }) async {
+    return session.db.findById<StoredGpsRecord>(
+      id,
+      transaction: transaction,
+      lockMode: lockMode,
+      lockBehavior: lockBehavior,
+    );
+  }
+
+  /// Inserts all [StoredGpsRecord]s in the list and returns the inserted rows.
+  ///
+  /// The returned [StoredGpsRecord]s will have their `id` fields set.
+  ///
+  /// This is an atomic operation, meaning that if one of the rows fails to
+  /// insert, none of the rows will be inserted.
+  ///
+  /// If [ignoreConflicts] is set to `true`, rows that conflict with existing
+  /// rows are silently skipped, and only the successfully inserted rows are
+  /// returned.
+  ///
+  /// If [noReturn] is set to `true`, the inserted rows are not read back from
+  /// the database and an empty list is returned. This avoids the overhead of
+  /// transferring and deserializing the rows when the result is not needed.
+  Future<List<StoredGpsRecord>> insert(
+    _is.DatabaseSession session,
+    List<StoredGpsRecord> rows, {
+    _is.Transaction? transaction,
+    bool ignoreConflicts = false,
+    bool noReturn = false,
+  }) async {
+    return session.db.insert<StoredGpsRecord>(
+      rows,
+      transaction: transaction,
+      ignoreConflicts: ignoreConflicts,
+      noReturn: noReturn,
+    );
+  }
+
+  /// Inserts a single [StoredGpsRecord] and returns the inserted row.
+  ///
+  /// The returned [StoredGpsRecord] will have its `id` field set.
+  Future<StoredGpsRecord> insertRow(
+    _is.DatabaseSession session,
+    StoredGpsRecord row, {
+    _is.Transaction? transaction,
+  }) async {
+    return session.db.insertRow<StoredGpsRecord>(
+      row,
+      transaction: transaction,
+    );
+  }
+
+  /// Upserts all [StoredGpsRecord]s in the list and returns the resulting rows.
+  ///
+  /// If a row conflicts on the given [conflictColumns], the existing row is
+  /// updated with the new values. Otherwise, a new row is inserted.
+  ///
+  /// If [updateColumns] is provided, only those columns will be updated on
+  /// conflict. If null, all non-conflict, non-id columns are updated.
+  ///
+  /// If [updateWhere] is provided, the update only applies to rows matching the
+  /// given expression. Conflicting rows that don't match are skipped and not
+  /// returned, so the resulting list may be shorter than [rows].
+  ///
+  /// The returned [StoredGpsRecord]s will have their `id` fields set.
+  ///
+  /// This is an atomic operation, meaning that if one of the rows fails,
+  /// none of the rows will be affected.
+  ///
+  /// If [noReturn] is set to `true`, the resulting rows are not read back from
+  /// the database and an empty list is returned. This avoids the overhead of
+  /// transferring and deserializing the rows when the result is not needed.
+  Future<List<StoredGpsRecord>> upsert(
+    _is.DatabaseSession session,
+    List<StoredGpsRecord> rows, {
+    required _is.ColumnSelections<StoredGpsRecordTable> conflictColumns,
+    _is.ColumnSelections<StoredGpsRecordTable>? updateColumns,
+    _is.WhereExpressionBuilder<StoredGpsRecordTable>? updateWhere,
+    _is.Transaction? transaction,
+    bool noReturn = false,
+  }) async {
+    return session.db.upsert<StoredGpsRecord>(
+      rows,
+      conflictColumns: conflictColumns(StoredGpsRecord.t),
+      updateColumns: updateColumns?.call(StoredGpsRecord.t),
+      updateWhere: updateWhere?.call(StoredGpsRecord.t),
+      transaction: transaction,
+      noReturn: noReturn,
+    );
+  }
+
+  /// Upserts a single [StoredGpsRecord] and returns the resulting row.
+  ///
+  /// If the row conflicts on the given [conflictColumns], the existing row is
+  /// updated. Otherwise, a new row is inserted.
+  ///
+  /// If [updateColumns] is provided, only those columns will be updated on
+  /// conflict. If null, all non-conflict, non-id columns are updated.
+  ///
+  /// If [updateWhere] is provided, the update only applies when the existing
+  /// row matches the expression. Returns `null` if no row was affected — for
+  /// example when [updateWhere] does not match the conflicting row.
+  ///
+  /// The returned [StoredGpsRecord] will have its `id` field set.
+  Future<StoredGpsRecord?> upsertRow(
+    _is.DatabaseSession session,
+    StoredGpsRecord row, {
+    required _is.ColumnSelections<StoredGpsRecordTable> conflictColumns,
+    _is.ColumnSelections<StoredGpsRecordTable>? updateColumns,
+    _is.WhereExpressionBuilder<StoredGpsRecordTable>? updateWhere,
+    _is.Transaction? transaction,
+  }) async {
+    return session.db.upsertRow<StoredGpsRecord>(
+      row,
+      conflictColumns: conflictColumns(StoredGpsRecord.t),
+      updateColumns: updateColumns?.call(StoredGpsRecord.t),
+      updateWhere: updateWhere?.call(StoredGpsRecord.t),
+      transaction: transaction,
+    );
+  }
+
+  /// Updates all [StoredGpsRecord]s in the list and returns the updated rows. If
+  /// [columns] is provided, only those columns will be updated. Defaults to
+  /// all columns.
+  /// This is an atomic operation, meaning that if one of the rows fails to
+  /// update, none of the rows will be updated.
+  ///
+  /// If [noReturn] is set to `true`, the updated rows are not read back from
+  /// the database and an empty list is returned. This avoids the overhead of
+  /// transferring and deserializing the rows when the result is not needed.
+  Future<List<StoredGpsRecord>> update(
+    _is.DatabaseSession session,
+    List<StoredGpsRecord> rows, {
+    _is.ColumnSelections<StoredGpsRecordTable>? columns,
+    _is.Transaction? transaction,
+    bool noReturn = false,
+  }) async {
+    return session.db.update<StoredGpsRecord>(
+      rows,
+      columns: columns?.call(StoredGpsRecord.t),
+      transaction: transaction,
+      noReturn: noReturn,
+    );
+  }
+
+  /// Updates a single [StoredGpsRecord]. The row needs to have its id set.
+  /// Optionally, a list of [columns] can be provided to only update those
+  /// columns. Defaults to all columns.
+  Future<StoredGpsRecord> updateRow(
+    _is.DatabaseSession session,
+    StoredGpsRecord row, {
+    _is.ColumnSelections<StoredGpsRecordTable>? columns,
+    _is.Transaction? transaction,
+  }) async {
+    return session.db.updateRow<StoredGpsRecord>(
+      row,
+      columns: columns?.call(StoredGpsRecord.t),
+      transaction: transaction,
+    );
+  }
+
+  /// Updates a single [StoredGpsRecord] by its [id] with the specified [columnValues].
+  /// Returns the updated row or null if no row with the given id exists.
+  Future<StoredGpsRecord?> updateById(
+    _is.DatabaseSession session,
+    _is.UuidValue id, {
+    required _is.ColumnValueListBuilder<StoredGpsRecordUpdateTable>
+    columnValues,
+    _is.Transaction? transaction,
+  }) async {
+    return session.db.updateById<StoredGpsRecord>(
+      id,
+      columnValues: columnValues(StoredGpsRecord.t.updateTable),
+      transaction: transaction,
+    );
+  }
+
+  /// Updates all [StoredGpsRecord]s matching the [where] expression with the specified [columnValues].
+  /// Returns the list of updated rows.
+  ///
+  /// If [noReturn] is set to `true`, the updated rows are not read back from
+  /// the database and an empty list is returned. This avoids the overhead of
+  /// transferring and deserializing the rows when the result is not needed.
+  Future<List<StoredGpsRecord>> updateWhere(
+    _is.DatabaseSession session, {
+    required _is.ColumnValueListBuilder<StoredGpsRecordUpdateTable>
+    columnValues,
+    required _is.WhereExpressionBuilder<StoredGpsRecordTable> where,
+    int? limit,
+    int? offset,
+    _is.OrderByBuilder<StoredGpsRecordTable>? orderBy,
+    _is.OrderByListBuilder<StoredGpsRecordTable>? orderByList,
+    _is.Transaction? transaction,
+    bool noReturn = false,
+  }) async {
+    return session.db.updateWhere<StoredGpsRecord>(
+      columnValues: columnValues(StoredGpsRecord.t.updateTable),
+      where: where(StoredGpsRecord.t),
+      limit: limit,
+      offset: offset,
+      orderBy: orderBy?.call(StoredGpsRecord.t),
+      orderByList: orderByList?.call(StoredGpsRecord.t),
+      transaction: transaction,
+      noReturn: noReturn,
+    );
+  }
+
+  /// Deletes all [StoredGpsRecord]s in the list and returns the deleted rows.
+  ///
+  /// To specify the order of the returned rows use [orderBy] or [orderByList]
+  /// when sorting by multiple columns.
+  ///
+  /// This is an atomic operation, meaning that if one of the rows fail to
+  /// be deleted, none of the rows will be deleted.
+  ///
+  /// If [noReturn] is set to `true`, the deleted rows are not read back from
+  /// the database and an empty list is returned. This avoids the overhead of
+  /// transferring and deserializing the rows when the result is not needed.
+  Future<List<StoredGpsRecord>> delete(
+    _is.DatabaseSession session,
+    List<StoredGpsRecord> rows, {
+    _is.OrderByBuilder<StoredGpsRecordTable>? orderBy,
+    _is.OrderByListBuilder<StoredGpsRecordTable>? orderByList,
+    _is.Transaction? transaction,
+    bool noReturn = false,
+  }) async {
+    return session.db.delete<StoredGpsRecord>(
+      rows,
+      orderBy: orderBy?.call(StoredGpsRecord.t),
+      orderByList: orderByList?.call(StoredGpsRecord.t),
+      transaction: transaction,
+      noReturn: noReturn,
+    );
+  }
+
+  /// Deletes a single [StoredGpsRecord].
+  Future<StoredGpsRecord> deleteRow(
+    _is.DatabaseSession session,
+    StoredGpsRecord row, {
+    _is.Transaction? transaction,
+  }) async {
+    return session.db.deleteRow<StoredGpsRecord>(
+      row,
+      transaction: transaction,
+    );
+  }
+
+  /// Deletes all rows matching the [where] expression.
+  ///
+  /// To specify the order of the returned rows use [orderBy] or [orderByList]
+  /// when sorting by multiple columns.
+  ///
+  /// If [noReturn] is set to `true`, the deleted rows are not read back from
+  /// the database and an empty list is returned. This avoids the overhead of
+  /// transferring and deserializing the rows when the result is not needed.
+  Future<List<StoredGpsRecord>> deleteWhere(
+    _is.DatabaseSession session, {
+    required _is.WhereExpressionBuilder<StoredGpsRecordTable> where,
+    _is.OrderByBuilder<StoredGpsRecordTable>? orderBy,
+    _is.OrderByListBuilder<StoredGpsRecordTable>? orderByList,
+    _is.Transaction? transaction,
+    bool noReturn = false,
+  }) async {
+    return session.db.deleteWhere<StoredGpsRecord>(
+      where: where(StoredGpsRecord.t),
+      orderBy: orderBy?.call(StoredGpsRecord.t),
+      orderByList: orderByList?.call(StoredGpsRecord.t),
+      transaction: transaction,
+      noReturn: noReturn,
+    );
+  }
+
+  /// Counts the number of rows matching the [where] expression. If omitted,
+  /// will return the count of all rows in the table.
+  Future<int> count(
+    _is.DatabaseSession session, {
+    _is.WhereExpressionBuilder<StoredGpsRecordTable>? where,
+    int? limit,
+    _is.Transaction? transaction,
+  }) async {
+    return session.db.count<StoredGpsRecord>(
+      where: where?.call(StoredGpsRecord.t),
+      limit: limit,
+      transaction: transaction,
+    );
+  }
+
+  /// Acquires row-level locks on [StoredGpsRecord] rows matching the [where] expression.
+  Future<void> lockRows(
+    _is.DatabaseSession session, {
+    required _is.WhereExpressionBuilder<StoredGpsRecordTable> where,
+    required _is.LockMode lockMode,
+    required _is.Transaction transaction,
+    _is.LockBehavior lockBehavior = _is.LockBehavior.wait,
+  }) async {
+    return session.db.lockRows<StoredGpsRecord>(
+      where: where(StoredGpsRecord.t),
+      lockMode: lockMode,
+      lockBehavior: lockBehavior,
+      transaction: transaction,
+    );
+  }
+}

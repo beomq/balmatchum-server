@@ -13,7 +13,17 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'greetings/greeting.dart' as _izw8z7ou;
+import 'records/gps_record.dart' as _ixays1el;
+import 'records/gps_record_input.dart' as _ijl0tr6b;
+import 'records/record_exception.dart' as _ihyrwhon;
+import 'records/record_receipt.dart' as _ipyparvp;
+import 'records/route_point.dart' as _ir7rvxr1;
 export 'greetings/greeting.dart';
+export 'records/gps_record.dart';
+export 'records/gps_record_input.dart';
+export 'records/record_exception.dart';
+export 'records/record_receipt.dart';
+export 'records/route_point.dart';
 export 'client.dart';
 
 class Protocol extends _isc.SerializationManager {
@@ -53,8 +63,47 @@ class Protocol extends _isc.SerializationManager {
     if (t == _izw8z7ou.Greeting) {
       return _izw8z7ou.Greeting.fromJson(data) as T;
     }
+    if (t == _ixays1el.GpsRecord) {
+      return _ixays1el.GpsRecord.fromJson(data) as T;
+    }
+    if (t == _ijl0tr6b.GpsRecordInput) {
+      return _ijl0tr6b.GpsRecordInput.fromJson(data) as T;
+    }
+    if (t == _ihyrwhon.RecordException) {
+      return _ihyrwhon.RecordException.fromJson(data) as T;
+    }
+    if (t == _ipyparvp.RecordReceipt) {
+      return _ipyparvp.RecordReceipt.fromJson(data) as T;
+    }
+    if (t == _ir7rvxr1.RoutePoint) {
+      return _ir7rvxr1.RoutePoint.fromJson(data) as T;
+    }
     if (t == _isc.getType<_izw8z7ou.Greeting?>()) {
       return (data != null ? _izw8z7ou.Greeting.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_ixays1el.GpsRecord?>()) {
+      return (data != null ? _ixays1el.GpsRecord.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_ijl0tr6b.GpsRecordInput?>()) {
+      return (data != null ? _ijl0tr6b.GpsRecordInput.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_ihyrwhon.RecordException?>()) {
+      return (data != null ? _ihyrwhon.RecordException.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_ipyparvp.RecordReceipt?>()) {
+      return (data != null ? _ipyparvp.RecordReceipt.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_ir7rvxr1.RoutePoint?>()) {
+      return (data != null ? _ir7rvxr1.RoutePoint.fromJson(data) : null) as T;
+    }
+    if (t == List<_ir7rvxr1.RoutePoint>) {
+      return (data as List)
+              .map((e) => deserialize<_ir7rvxr1.RoutePoint>(e))
+              .toList()
+          as T;
     }
     return super.deserialize<T>(data, t);
   }
@@ -62,6 +111,11 @@ class Protocol extends _isc.SerializationManager {
   static String? getClassNameForType(Type type) {
     return switch (type) {
       _izw8z7ou.Greeting => 'Greeting',
+      _ixays1el.GpsRecord => 'GpsRecord',
+      _ijl0tr6b.GpsRecordInput => 'GpsRecordInput',
+      _ihyrwhon.RecordException => 'RecordException',
+      _ipyparvp.RecordReceipt => 'RecordReceipt',
+      _ir7rvxr1.RoutePoint => 'RoutePoint',
       _ => null,
     };
   }
@@ -78,6 +132,16 @@ class Protocol extends _isc.SerializationManager {
     switch (data) {
       case _izw8z7ou.Greeting():
         return 'Greeting';
+      case _ixays1el.GpsRecord():
+        return 'GpsRecord';
+      case _ijl0tr6b.GpsRecordInput():
+        return 'GpsRecordInput';
+      case _ihyrwhon.RecordException():
+        return 'RecordException';
+      case _ipyparvp.RecordReceipt():
+        return 'RecordReceipt';
+      case _ir7rvxr1.RoutePoint():
+        return 'RoutePoint';
     }
     return null;
   }
@@ -90,6 +154,21 @@ class Protocol extends _isc.SerializationManager {
     }
     if (dataClassName == 'Greeting') {
       return deserialize<_izw8z7ou.Greeting>(data['data']);
+    }
+    if (dataClassName == 'GpsRecord') {
+      return deserialize<_ixays1el.GpsRecord>(data['data']);
+    }
+    if (dataClassName == 'GpsRecordInput') {
+      return deserialize<_ijl0tr6b.GpsRecordInput>(data['data']);
+    }
+    if (dataClassName == 'RecordException') {
+      return deserialize<_ihyrwhon.RecordException>(data['data']);
+    }
+    if (dataClassName == 'RecordReceipt') {
+      return deserialize<_ipyparvp.RecordReceipt>(data['data']);
+    }
+    if (dataClassName == 'RoutePoint') {
+      return deserialize<_ir7rvxr1.RoutePoint>(data['data']);
     }
     return super.deserializeByClassName(data);
   }

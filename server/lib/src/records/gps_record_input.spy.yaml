@@ -1,0 +1,8 @@
+class: GpsRecordInput
+fields:
+  schemaVersion: int
+  clientRecordId: UuidValue
+  startedAt: DateTime
+  endedAt: DateTime
+  source: String
+  routePoints: List<RoutePoint>

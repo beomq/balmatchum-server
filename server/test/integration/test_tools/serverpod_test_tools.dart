@@ -15,6 +15,12 @@ import 'dart:async' as _ida;
 import 'dart:io' as _idi;
 import 'package:balmatchum_server/src/generated/greetings/greeting.dart'
     as _id6ypawo;
+import 'package:balmatchum_server/src/generated/records/gps_record.dart'
+    as _i3f7m4hi;
+import 'package:balmatchum_server/src/generated/records/gps_record_input.dart'
+    as _iax46414;
+import 'package:balmatchum_server/src/generated/records/record_receipt.dart'
+    as _i7o4egsw;
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_test/serverpod_test.dart' as _ist;
 import 'package:balmatchum_server/src/generated/protocol.dart';
@@ -151,6 +157,8 @@ void withServerpod(
 
 class TestEndpoints {
   late final _GreetingEndpoint greeting;
+
+  late final _RecordsEndpoint records;
 }
 
 class _InternalTestEndpoints extends TestEndpoints
@@ -161,6 +169,10 @@ class _InternalTestEndpoints extends TestEndpoints
     _is.EndpointDispatch endpoints,
   ) {
     greeting = _GreetingEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    records = _RecordsEndpoint(
       endpoints,
       serializationManager,
     );
@@ -201,6 +213,79 @@ class _GreetingEndpoint {
                   _localCallContext.arguments,
                 )
                 as _ida.Future<_id6ypawo.Greeting>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+}
+
+class _RecordsEndpoint {
+  _RecordsEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_i7o4egsw.RecordReceipt> saveConfirmed(
+    _ist.TestSessionBuilder sessionBuilder,
+    _iax46414.GpsRecordInput input,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'records',
+            method: 'saveConfirmed',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'records',
+          methodName: 'saveConfirmed',
+          parameters: _ist.testObjectToJson({'input': input}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_i7o4egsw.RecordReceipt>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_i3f7m4hi.GpsRecord> getMine(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue recordId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'records',
+            method: 'getMine',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'records',
+          methodName: 'getMine',
+          parameters: _ist.testObjectToJson({'recordId': recordId}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_i3f7m4hi.GpsRecord>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

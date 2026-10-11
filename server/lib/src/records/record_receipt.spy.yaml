@@ -1,0 +1,6 @@
+class: RecordReceipt
+fields:
+  clientRecordId: UuidValue
+  recordId: UuidValue
+  persistedAt: DateTime
+  schemaVersion: int
