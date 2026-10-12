@@ -11,6 +11,8 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _ida;
+import 'package:balmatchum_client/src/protocol/auth/login_challenge.dart'
+    as _iypdqt9k;
 import 'package:balmatchum_client/src/protocol/greetings/greeting.dart'
     as _ipkbb44w;
 import 'package:balmatchum_client/src/protocol/records/gps_record.dart'
@@ -20,8 +22,40 @@ import 'package:balmatchum_client/src/protocol/records/gps_record_input.dart'
 import 'package:balmatchum_client/src/protocol/records/record_receipt.dart'
     as _ixlh9bse;
 import 'package:http/http.dart' as _i85jenna;
+import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
+    as _iacc;
+import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
+    as _iaic;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'protocol.dart' as _il2as5qe;
+
+/// {@category Endpoint}
+class EndpointKakao extends _isc.EndpointRef {
+  EndpointKakao(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'kakao';
+
+  _ida.Future<_iypdqt9k.LoginChallenge> beginLogin({
+    required String provider,
+  }) => caller.callServerEndpoint<_iypdqt9k.LoginChallenge>(
+    'kakao',
+    'beginLogin',
+    {'provider': provider},
+  );
+
+  _ida.Future<_iacc.AuthSuccess> loginKakao({
+    required _isc.UuidValue attemptId,
+    required String idToken,
+  }) => caller.callServerEndpoint<_iacc.AuthSuccess>(
+    'kakao',
+    'loginKakao',
+    {
+      'attemptId': attemptId,
+      'idToken': idToken,
+    },
+  );
+}
 
 /// This is an example endpoint that returns a greeting message through
 /// its [hello] method.
@@ -64,6 +98,17 @@ class EndpointRecords extends _isc.EndpointRef {
       );
 }
 
+class Modules {
+  Modules(Client client) {
+    serverpod_auth_core = _iacc.Caller(client);
+    serverpod_auth_idp = _iaic.Caller(client);
+  }
+
+  late final _iacc.Caller serverpod_auth_core;
+
+  late final _iaic.Caller serverpod_auth_idp;
+}
+
 class Client extends _isc.ServerpodClientShared {
   Client(
     String host, {
@@ -91,20 +136,30 @@ class Client extends _isc.ServerpodClientShared {
              disconnectStreamsOnLostInternetConnection,
          httpClientOverride: httpClientOverride,
        ) {
+    kakao = EndpointKakao(this);
     greeting = EndpointGreeting(this);
     records = EndpointRecords(this);
+    modules = Modules(this);
   }
+
+  late final EndpointKakao kakao;
 
   late final EndpointGreeting greeting;
 
   late final EndpointRecords records;
 
+  late final Modules modules;
+
   @override
   Map<String, _isc.EndpointRef> get endpointRefLookup => {
+    'kakao': kakao,
     'greeting': greeting,
     'records': records,
   };
 
   @override
-  Map<String, _isc.ModuleEndpointCaller> get moduleLookup => {};
+  Map<String, _isc.ModuleEndpointCaller> get moduleLookup => {
+    'serverpod_auth_core': modules.serverpod_auth_core,
+    'serverpod_auth_idp': modules.serverpod_auth_idp,
+  };
 }

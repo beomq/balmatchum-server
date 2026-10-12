@@ -1,0 +1,14 @@
+class: ExternalIdentity
+serverOnly: true
+table: external_identity
+fields:
+  provider: String
+  issuer: String
+  audience: String
+  subjectNamespace: String
+  subject: String
+  authUserId: UuidValue
+indexes:
+  external_identity_provider_subject:
+    fields: provider, issuer, audience, subjectNamespace, subject
+    unique: true
