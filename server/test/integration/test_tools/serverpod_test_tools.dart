@@ -13,6 +13,8 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _ida;
 import 'dart:io' as _idi;
+import 'package:balmatchum_server/src/generated/auth/login_challenge.dart'
+    as _i7mkon7c;
 import 'package:balmatchum_server/src/generated/greetings/greeting.dart'
     as _id6ypawo;
 import 'package:balmatchum_server/src/generated/records/gps_record.dart'
@@ -22,6 +24,8 @@ import 'package:balmatchum_server/src/generated/records/gps_record_input.dart'
 import 'package:balmatchum_server/src/generated/records/record_receipt.dart'
     as _i7o4egsw;
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+    as _iacs;
 import 'package:serverpod_test/serverpod_test.dart' as _ist;
 import 'package:balmatchum_server/src/generated/protocol.dart';
 import 'package:balmatchum_server/src/generated/endpoints.dart';
@@ -156,6 +160,8 @@ void withServerpod(
 }
 
 class TestEndpoints {
+  late final _KakaoEndpoint kakao;
+
   late final _GreetingEndpoint greeting;
 
   late final _RecordsEndpoint records;
@@ -168,6 +174,10 @@ class _InternalTestEndpoints extends TestEndpoints
     _is.SerializationManager serializationManager,
     _is.EndpointDispatch endpoints,
   ) {
+    kakao = _KakaoEndpoint(
+      endpoints,
+      serializationManager,
+    );
     greeting = _GreetingEndpoint(
       endpoints,
       serializationManager,
@@ -176,6 +186,83 @@ class _InternalTestEndpoints extends TestEndpoints
       endpoints,
       serializationManager,
     );
+  }
+}
+
+class _KakaoEndpoint {
+  _KakaoEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_i7mkon7c.LoginChallenge> beginLogin(
+    _ist.TestSessionBuilder sessionBuilder, {
+    required String provider,
+  }) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'kakao',
+            method: 'beginLogin',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'kakao',
+          methodName: 'beginLogin',
+          parameters: _ist.testObjectToJson({'provider': provider}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_i7mkon7c.LoginChallenge>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_iacs.AuthSuccess> loginKakao(
+    _ist.TestSessionBuilder sessionBuilder, {
+    required _is.UuidValue attemptId,
+    required String idToken,
+  }) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'kakao',
+            method: 'loginKakao',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'kakao',
+          methodName: 'loginKakao',
+          parameters: _ist.testObjectToJson({
+            'attemptId': attemptId,
+            'idToken': idToken,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_iacs.AuthSuccess>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
   }
 }
 

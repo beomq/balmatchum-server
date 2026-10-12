@@ -10,7 +10,22 @@
 | test | `server/config/test.yaml`, `dataPath: .serverpod/test/pgdata` | 내장 PostgreSQL, 테스트 그룹별 임시 DB |
 | staging / production | 아직 없음 | 배포 설계·승인 전. 모드만 바꿔 실행하지 않음 |
 
-API 개발 포트는 8080, 테스트 API 포트는 0(동적 배정)입니다. Redis·웹·인증 provider는 설정하지 않았습니다. `serviceSecret`이 없어 Insights는 경고와 함께 비활성화되며 API는 정상 실행됩니다.
+API 개발 포트는 8080, 테스트 API 포트는 0(동적 배정)입니다. Redis·웹은 설정하지 않았습니다. 카카오 OIDC와 서버 세션은 아래 환경 설정을 주입했을 때 활성화됩니다. `serviceSecret`이 없어 Insights는 경고와 함께 비활성화되며 API는 정상 실행됩니다.
+
+## 카카오 인증 설정
+
+`SERVERPOD_PASSWORD_serverSideSessionKeyHashPepper`, `SERVERPOD_PASSWORD_kakaoAudience`,
+`SERVERPOD_PASSWORD_kakaoIssuer`를 주입합니다. 같은 이름의 password 키도 지원합니다.
+audience는 카카오 네이티브 앱 키이며 issuer는 `https://kauth.kakao.com`만 허용합니다.
+값을 저장소에 기록하지 않습니다. 누락되면 로그인은 `configurationMissing`으로 거부되며
+임시 사용자/자동 비밀값 생성으로 대체하지 않습니다.
+
+서버 세션만 등록하며 JWT는 사용하지 않습니다. 비활동 만료는 90일, 절대 만료는 없습니다.
+로그인 시도는 5분 후 만료하며 nonce digest만 저장하고 한 번만 소비합니다.
+단일 로그인 정리는 commit 뒤 `(createdAt, id)` 순서로 가장 최신인 같은 사용자 세션을
+남깁니다. commit과 정리 사이 이중 유효 구간, 정리 실패 가능성은 남습니다.
+실제 카카오 콘솔 등록과 앱 로그인 검증은 별도 단계입니다. 테스트는 공개 테스트 키와
+주입된 JWKS/clock을 사용하며 실제 자격증명을 요구하지 않습니다.
 
 일반 설정은 YAML보다 대응 `SERVERPOD_*` 환경변수가 우선합니다. 예: `SERVERPOD_DATABASE_HOST`, `SERVERPOD_DATABASE_PORT`. Dart `config`/`configOverride`를 전달하는 별도 코드도 가능하지만 현재 진입점은 사용하지 않습니다. 프로세스에 남아 있는 DB 환경변수가 파일 값을 덮을 수 있으므로 실행 모드와 함께 점검합니다.
 

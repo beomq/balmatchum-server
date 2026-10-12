@@ -11,13 +11,21 @@
 // ignore_for_file: dead_code, unnecessary_type_check
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
+    as _iacc;
+import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
+    as _iaic;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+import 'auth/login_challenge.dart' as _izhe0wsm;
+import 'auth/login_exception.dart' as _iskwpc4e;
 import 'greetings/greeting.dart' as _izw8z7ou;
 import 'records/gps_record.dart' as _ixays1el;
 import 'records/gps_record_input.dart' as _ijl0tr6b;
 import 'records/record_exception.dart' as _ihyrwhon;
 import 'records/record_receipt.dart' as _ipyparvp;
 import 'records/route_point.dart' as _ir7rvxr1;
+export 'auth/login_challenge.dart';
+export 'auth/login_exception.dart';
 export 'greetings/greeting.dart';
 export 'records/gps_record.dart';
 export 'records/gps_record_input.dart';
@@ -31,7 +39,7 @@ class Protocol extends _isc.SerializationManager {
 
   factory Protocol() => _instance;
 
-  static final Protocol _instance = Protocol._();
+  static final Protocol _instance = Protocol._().._registerHostProtocols();
 
   static String? getClassNameFromObjectJson(dynamic data) {
     if (data is! Map) return null;
@@ -60,6 +68,12 @@ class Protocol extends _isc.SerializationManager {
       }
     }
 
+    if (t == _izhe0wsm.LoginChallenge) {
+      return _izhe0wsm.LoginChallenge.fromJson(data) as T;
+    }
+    if (t == _iskwpc4e.LoginException) {
+      return _iskwpc4e.LoginException.fromJson(data) as T;
+    }
     if (t == _izw8z7ou.Greeting) {
       return _izw8z7ou.Greeting.fromJson(data) as T;
     }
@@ -77,6 +91,14 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _ir7rvxr1.RoutePoint) {
       return _ir7rvxr1.RoutePoint.fromJson(data) as T;
+    }
+    if (t == _isc.getType<_izhe0wsm.LoginChallenge?>()) {
+      return (data != null ? _izhe0wsm.LoginChallenge.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_iskwpc4e.LoginException?>()) {
+      return (data != null ? _iskwpc4e.LoginException.fromJson(data) : null)
+          as T;
     }
     if (t == _isc.getType<_izw8z7ou.Greeting?>()) {
       return (data != null ? _izw8z7ou.Greeting.fromJson(data) : null) as T;
@@ -105,11 +127,19 @@ class Protocol extends _isc.SerializationManager {
               .toList()
           as T;
     }
+    try {
+      return _iacc.Protocol().deserialize<T>(data, t);
+    } on _isc.DeserializationTypeNotFoundException catch (_) {}
+    try {
+      return _iaic.Protocol().deserialize<T>(data, t);
+    } on _isc.DeserializationTypeNotFoundException catch (_) {}
     return super.deserialize<T>(data, t);
   }
 
   static String? getClassNameForType(Type type) {
     return switch (type) {
+      _izhe0wsm.LoginChallenge => 'LoginChallenge',
+      _iskwpc4e.LoginException => 'LoginException',
       _izw8z7ou.Greeting => 'Greeting',
       _ixays1el.GpsRecord => 'GpsRecord',
       _ijl0tr6b.GpsRecordInput => 'GpsRecordInput',
@@ -130,6 +160,10 @@ class Protocol extends _isc.SerializationManager {
     }
 
     switch (data) {
+      case _izhe0wsm.LoginChallenge():
+        return 'LoginChallenge';
+      case _iskwpc4e.LoginException():
+        return 'LoginException';
       case _izw8z7ou.Greeting():
         return 'Greeting';
       case _ixays1el.GpsRecord():
@@ -143,6 +177,18 @@ class Protocol extends _isc.SerializationManager {
       case _ir7rvxr1.RoutePoint():
         return 'RoutePoint';
     }
+    className = _iacc.Protocol().getClassNameForObject(data);
+    if (className != null) {
+      return className.contains('.')
+          ? className
+          : 'serverpod_auth_core.$className';
+    }
+    className = _iaic.Protocol().getClassNameForObject(data);
+    if (className != null) {
+      return className.contains('.')
+          ? className
+          : 'serverpod_auth_idp.$className';
+    }
     return null;
   }
 
@@ -151,6 +197,12 @@ class Protocol extends _isc.SerializationManager {
     var dataClassName = data['className'];
     if (dataClassName is! String) {
       return super.deserializeByClassName(data);
+    }
+    if (dataClassName == 'LoginChallenge') {
+      return deserialize<_izhe0wsm.LoginChallenge>(data['data']);
+    }
+    if (dataClassName == 'LoginException') {
+      return deserialize<_iskwpc4e.LoginException>(data['data']);
     }
     if (dataClassName == 'Greeting') {
       return deserialize<_izw8z7ou.Greeting>(data['data']);
@@ -170,7 +222,20 @@ class Protocol extends _isc.SerializationManager {
     if (dataClassName == 'RoutePoint') {
       return deserialize<_ir7rvxr1.RoutePoint>(data['data']);
     }
+    if (dataClassName.startsWith('serverpod_auth_core.')) {
+      data['className'] = dataClassName.substring(20);
+      return _iacc.Protocol().deserializeByClassName(data);
+    }
+    if (dataClassName.startsWith('serverpod_auth_idp.')) {
+      data['className'] = dataClassName.substring(19);
+      return _iaic.Protocol().deserializeByClassName(data);
+    }
     return super.deserializeByClassName(data);
+  }
+
+  void _registerHostProtocols() {
+    _iacc.Protocol().registerHostProtocol('balmatchum', this);
+    _iaic.Protocol().registerHostProtocol('balmatchum', this);
   }
 
   @override
@@ -185,6 +250,12 @@ class Protocol extends _isc.SerializationManager {
     if (record == null) {
       return null;
     }
+    try {
+      return _iacc.Protocol().mapRecordToJson(record);
+    } catch (_) {}
+    try {
+      return _iaic.Protocol().mapRecordToJson(record);
+    } catch (_) {}
     throw Exception('Unsupported record type ${record.runtimeType}');
   }
 }

@@ -13,6 +13,14 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/protocol.dart' as _isp;
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+    as _iacs;
+import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
+    as _iais;
+import 'auth/external_identity.dart' as _i8thru7x;
+import 'auth/login_attempt.dart' as _i1apu3f2;
+import 'auth/login_challenge.dart' as _izhe0wsm;
+import 'auth/login_exception.dart' as _iskwpc4e;
 import 'greetings/greeting.dart' as _izw8z7ou;
 import 'records/gps_record.dart' as _ixays1el;
 import 'records/gps_record_input.dart' as _ijl0tr6b;
@@ -20,6 +28,10 @@ import 'records/record_exception.dart' as _ihyrwhon;
 import 'records/record_receipt.dart' as _ipyparvp;
 import 'records/route_point.dart' as _ir7rvxr1;
 import 'records/stored_gps_record.dart' as _iyylbrve;
+export 'auth/external_identity.dart';
+export 'auth/login_attempt.dart';
+export 'auth/login_challenge.dart';
+export 'auth/login_exception.dart';
 export 'greetings/greeting.dart';
 export 'records/gps_record.dart';
 export 'records/gps_record_input.dart';
@@ -33,9 +45,93 @@ class Protocol extends _is.DatabaseSerializationManager {
 
   factory Protocol() => _instance;
 
-  static final Protocol _instance = Protocol._();
+  static final Protocol _instance = Protocol._().._registerHostProtocols();
 
   static List<_isp.TableDefinition> get targetTableDefinitions => [
+    _isp.TableDefinition(
+      name: 'external_identity',
+      dartName: 'ExternalIdentity',
+      schema: 'public',
+      module: 'balmatchum',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'provider',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'issuer',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'audience',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'subjectNamespace',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'subject',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'authUserId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'external_identity_provider_subject',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'provider',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'issuer',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'audience',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'subjectNamespace',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'subject',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
     _isp.TableDefinition(
       name: 'gps_record',
       dartName: 'StoredGpsRecord',
@@ -96,6 +192,44 @@ class Protocol extends _is.DatabaseSerializationManager {
       ],
       managed: true,
     ),
+    _isp.TableDefinition(
+      name: 'login_attempt',
+      dartName: 'LoginAttempt',
+      schema: 'public',
+      module: 'balmatchum',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue?',
+          columnDefault: 'random_v7',
+        ),
+        _isp.ColumnDefinition(
+          name: 'nonceHash',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'expiresAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'consumedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [],
+      managed: true,
+    ),
+    ..._iacs.Protocol.targetTableDefinitions,
+    ..._iais.Protocol.targetTableDefinitions,
     ..._isp.Protocol.targetTableDefinitions,
   ];
 
@@ -126,6 +260,18 @@ class Protocol extends _is.DatabaseSerializationManager {
       }
     }
 
+    if (t == _i8thru7x.ExternalIdentity) {
+      return _i8thru7x.ExternalIdentity.fromJson(data) as T;
+    }
+    if (t == _i1apu3f2.LoginAttempt) {
+      return _i1apu3f2.LoginAttempt.fromJson(data) as T;
+    }
+    if (t == _izhe0wsm.LoginChallenge) {
+      return _izhe0wsm.LoginChallenge.fromJson(data) as T;
+    }
+    if (t == _iskwpc4e.LoginException) {
+      return _iskwpc4e.LoginException.fromJson(data) as T;
+    }
     if (t == _izw8z7ou.Greeting) {
       return _izw8z7ou.Greeting.fromJson(data) as T;
     }
@@ -146,6 +292,21 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (t == _iyylbrve.StoredGpsRecord) {
       return _iyylbrve.StoredGpsRecord.fromJson(data) as T;
+    }
+    if (t == _is.getType<_i8thru7x.ExternalIdentity?>()) {
+      return (data != null ? _i8thru7x.ExternalIdentity.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_i1apu3f2.LoginAttempt?>()) {
+      return (data != null ? _i1apu3f2.LoginAttempt.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_izhe0wsm.LoginChallenge?>()) {
+      return (data != null ? _izhe0wsm.LoginChallenge.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_iskwpc4e.LoginException?>()) {
+      return (data != null ? _iskwpc4e.LoginException.fromJson(data) : null)
+          as T;
     }
     if (t == _is.getType<_izw8z7ou.Greeting?>()) {
       return (data != null ? _izw8z7ou.Greeting.fromJson(data) : null) as T;
@@ -179,6 +340,12 @@ class Protocol extends _is.DatabaseSerializationManager {
           as T;
     }
     try {
+      return _iacs.Protocol().deserialize<T>(data, t);
+    } on _is.DeserializationTypeNotFoundException catch (_) {}
+    try {
+      return _iais.Protocol().deserialize<T>(data, t);
+    } on _is.DeserializationTypeNotFoundException catch (_) {}
+    try {
       return _isp.Protocol().deserialize<T>(data, t);
     } on _is.DeserializationTypeNotFoundException catch (_) {}
     return super.deserialize<T>(data, t);
@@ -186,6 +353,10 @@ class Protocol extends _is.DatabaseSerializationManager {
 
   static String? getClassNameForType(Type type) {
     return switch (type) {
+      _i8thru7x.ExternalIdentity => 'ExternalIdentity',
+      _i1apu3f2.LoginAttempt => 'LoginAttempt',
+      _izhe0wsm.LoginChallenge => 'LoginChallenge',
+      _iskwpc4e.LoginException => 'LoginException',
       _izw8z7ou.Greeting => 'Greeting',
       _ixays1el.GpsRecord => 'GpsRecord',
       _ijl0tr6b.GpsRecordInput => 'GpsRecordInput',
@@ -207,6 +378,14 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
 
     switch (data) {
+      case _i8thru7x.ExternalIdentity():
+        return 'ExternalIdentity';
+      case _i1apu3f2.LoginAttempt():
+        return 'LoginAttempt';
+      case _izhe0wsm.LoginChallenge():
+        return 'LoginChallenge';
+      case _iskwpc4e.LoginException():
+        return 'LoginException';
       case _izw8z7ou.Greeting():
         return 'Greeting';
       case _ixays1el.GpsRecord():
@@ -222,6 +401,18 @@ class Protocol extends _is.DatabaseSerializationManager {
       case _iyylbrve.StoredGpsRecord():
         return 'StoredGpsRecord';
     }
+    className = _iacs.Protocol().getClassNameForObject(data);
+    if (className != null) {
+      return className.contains('.')
+          ? className
+          : 'serverpod_auth_core.$className';
+    }
+    className = _iais.Protocol().getClassNameForObject(data);
+    if (className != null) {
+      return className.contains('.')
+          ? className
+          : 'serverpod_auth_idp.$className';
+    }
     className = _isp.Protocol().getClassNameForObject(data);
     if (className != null) {
       return className.contains('.') ? className : 'serverpod.$className';
@@ -234,6 +425,18 @@ class Protocol extends _is.DatabaseSerializationManager {
     var dataClassName = data['className'];
     if (dataClassName is! String) {
       return super.deserializeByClassName(data);
+    }
+    if (dataClassName == 'ExternalIdentity') {
+      return deserialize<_i8thru7x.ExternalIdentity>(data['data']);
+    }
+    if (dataClassName == 'LoginAttempt') {
+      return deserialize<_i1apu3f2.LoginAttempt>(data['data']);
+    }
+    if (dataClassName == 'LoginChallenge') {
+      return deserialize<_izhe0wsm.LoginChallenge>(data['data']);
+    }
+    if (dataClassName == 'LoginException') {
+      return deserialize<_iskwpc4e.LoginException>(data['data']);
     }
     if (dataClassName == 'Greeting') {
       return deserialize<_izw8z7ou.Greeting>(data['data']);
@@ -256,6 +459,14 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (dataClassName == 'StoredGpsRecord') {
       return deserialize<_iyylbrve.StoredGpsRecord>(data['data']);
     }
+    if (dataClassName.startsWith('serverpod_auth_core.')) {
+      data['className'] = dataClassName.substring(20);
+      return _iacs.Protocol().deserializeByClassName(data);
+    }
+    if (dataClassName.startsWith('serverpod_auth_idp.')) {
+      data['className'] = dataClassName.substring(19);
+      return _iais.Protocol().deserializeByClassName(data);
+    }
     if (dataClassName.startsWith('serverpod.')) {
       data['className'] = dataClassName.substring(10);
       return _isp.Protocol().deserializeByClassName(data);
@@ -263,8 +474,25 @@ class Protocol extends _is.DatabaseSerializationManager {
     return super.deserializeByClassName(data);
   }
 
+  void _registerHostProtocols() {
+    _iacs.Protocol().registerHostProtocol('balmatchum', this);
+    _iais.Protocol().registerHostProtocol('balmatchum', this);
+  }
+
   @override
   _is.Table? getTableForType(Type t) {
+    {
+      var table = _iacs.Protocol().getTableForType(t);
+      if (table != null) {
+        return table;
+      }
+    }
+    {
+      var table = _iais.Protocol().getTableForType(t);
+      if (table != null) {
+        return table;
+      }
+    }
     {
       var table = _isp.Protocol().getTableForType(t);
       if (table != null) {
@@ -272,6 +500,10 @@ class Protocol extends _is.DatabaseSerializationManager {
       }
     }
     switch (t) {
+      case _i8thru7x.ExternalIdentity:
+        return _i8thru7x.ExternalIdentity.t;
+      case _i1apu3f2.LoginAttempt:
+        return _i1apu3f2.LoginAttempt.t;
       case _iyylbrve.StoredGpsRecord:
         return _iyylbrve.StoredGpsRecord.t;
     }
@@ -295,7 +527,10 @@ class Protocol extends _is.DatabaseSerializationManager {
       return null;
     }
     try {
-      return _isp.Protocol().mapRecordToJson(record);
+      return _iacs.Protocol().mapRecordToJson(record);
+    } catch (_) {}
+    try {
+      return _iais.Protocol().mapRecordToJson(record);
     } catch (_) {}
     throw Exception('Unsupported record type ${record.runtimeType}');
   }

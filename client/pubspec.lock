@@ -9,6 +9,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.13.1"
+  clock:
+    dependency: transitive
+    description:
+      name: clock
+      sha256: e51d50bca3217c9a9fa2b41a30e4a38971133f5f9ec7a3d57bae095007f1d28e
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.3"
   collection:
     dependency: transitive
     description:
@@ -65,6 +73,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.9.1"
+  serverpod_auth_core_client:
+    dependency: "direct main"
+    description:
+      name: serverpod_auth_core_client
+      sha256: cb21124db2bdcecbdb6405ee0f8f8c802787bae1ae08faced7b3ba9b3aa74a9d
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.0.3"
+  serverpod_auth_idp_client:
+    dependency: "direct main"
+    description:
+      name: serverpod_auth_idp_client
+      sha256: "8d122d71d4a79be3441f0e5ded7dd566cb3cd14b164a23ff56f82f2a640e51a3"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.0.3"
   serverpod_client:
     dependency: "direct main"
     description:

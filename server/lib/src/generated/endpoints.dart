@@ -13,6 +13,11 @@
 import 'package:balmatchum_server/src/generated/records/gps_record_input.dart'
     as _iax46414;
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+    as _iacs;
+import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
+    as _iais;
+import '../auth/kakao_endpoint.dart' as _if7olpvl;
 import '../greetings/greeting_endpoint.dart' as _il624ik7;
 import '../records/records_endpoint.dart' as _imwf5oma;
 
@@ -20,6 +25,12 @@ class Endpoints extends _is.EndpointDispatch {
   @override
   void initializeEndpoints(_is.Server server) {
     var endpoints = <String, _is.Endpoint>{
+      'kakao': _if7olpvl.KakaoEndpoint()
+        ..initialize(
+          server,
+          'kakao',
+          null,
+        ),
       'greeting': _il624ik7.GreetingEndpoint()
         ..initialize(
           server,
@@ -33,6 +44,56 @@ class Endpoints extends _is.EndpointDispatch {
           null,
         ),
     };
+    connectors['kakao'] = _is.EndpointConnector(
+      name: 'kakao',
+      endpoint: endpoints['kakao']!,
+      methodConnectors: {
+        'beginLogin': _is.MethodConnector(
+          name: 'beginLogin',
+          params: {
+            'provider': _is.ParameterDescription(
+              name: 'provider',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['kakao'] as _if7olpvl.KakaoEndpoint).beginLogin(
+                    session,
+                    provider: params['provider'],
+                  ),
+        ),
+        'loginKakao': _is.MethodConnector(
+          name: 'loginKakao',
+          params: {
+            'attemptId': _is.ParameterDescription(
+              name: 'attemptId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'idToken': _is.ParameterDescription(
+              name: 'idToken',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['kakao'] as _if7olpvl.KakaoEndpoint).loginKakao(
+                    session,
+                    attemptId: params['attemptId'],
+                    idToken: params['idToken'],
+                  ),
+        ),
+      },
+    );
     connectors['greeting'] = _is.EndpointConnector(
       name: 'greeting',
       endpoint: endpoints['greeting']!,
@@ -102,5 +163,9 @@ class Endpoints extends _is.EndpointDispatch {
         ),
       },
     );
+    modules['serverpod_auth_core'] = _iacs.Endpoints()
+      ..initializeEndpoints(server);
+    modules['serverpod_auth_idp'] = _iais.Endpoints()
+      ..initializeEndpoints(server);
   }
 }

@@ -1,0 +1,5 @@
+class: LoginChallenge
+fields:
+  attemptId: UuidValue
+  nonce: String
+  expiresAt: DateTime
