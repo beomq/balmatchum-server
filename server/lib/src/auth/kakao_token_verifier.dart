@@ -4,17 +4,60 @@ import 'package:clock/clock.dart';
 import 'package:crypto/crypto.dart';
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 
-/// Verifies Kakao ID tokens without owning JWKS fetching or nonce consumption.
+/// A JWKS fetch failed and no unexpired cached keys are available.
+class JwksUnavailableException implements Exception {
+  const JwksUnavailableException();
+}
+
+/// Verifies Kakao ID tokens with cached JWKS, without owning nonce consumption.
 class KakaoTokenVerifier {
   KakaoTokenVerifier({
     required this.audience,
     required this.loadJwks,
     this.clock = const Clock(),
+    this.clockSkew = const Duration(seconds: 60),
   });
+
+  static const jwksCacheTtl = Duration(hours: 1);
 
   final String audience;
   final Future<Map<String, dynamic>> Function() loadJwks;
   final Clock clock;
+  final Duration clockSkew;
+  Map<String, dynamic>? _cachedJwks;
+  DateTime? _cacheExpiresAt;
+  Future<Map<String, dynamic>>? _inflightJwks;
+
+  bool get _hasValidCache =>
+      _cachedJwks != null && clock.now().isBefore(_cacheExpiresAt!);
+
+  Future<Map<String, dynamic>> _getJwks() {
+    if (_inflightJwks != null) return _inflightJwks!;
+    if (_hasValidCache) return Future.value(_cachedJwks!);
+    return _refreshJwks();
+  }
+
+  Future<Map<String, dynamic>> _refreshJwks() => _inflightJwks ??= _fetchJwks();
+
+  Future<Map<String, dynamic>> _fetchJwks() async {
+    try {
+      final Map<String, dynamic> jwks;
+      try {
+        jwks = await Future.sync(loadJwks);
+      } catch (_) {
+        if (_hasValidCache) return _cachedJwks!;
+        throw const JwksUnavailableException();
+      }
+      if (jwks['keys'] is! List) {
+        throw const FormatException('Invalid JWKS');
+      }
+      _cachedJwks = jwks;
+      _cacheExpiresAt = clock.now().add(jwksCacheTtl);
+      return jwks;
+    } finally {
+      _inflightJwks = null;
+    }
+  }
 
   Future<String> verify(String idToken, {required String nonceHash}) async {
     try {
@@ -32,14 +75,20 @@ class KakaoTokenVerifier {
           header.containsKey('crit')) {
         throw const FormatException('Invalid ID token header');
       }
-      final jwks = await loadJwks();
-      final keys = jwks['keys'];
-      if (keys is! List) {
-        throw const FormatException('Invalid JWKS');
-      }
-      final matches = keys.where(
+      final joinedRefresh = _inflightJwks != null;
+      var jwks = await _getJwks();
+      var matches = (jwks['keys'] as List).where(
         (key) => key is Map<String, dynamic> && key['kid'] == header['kid'],
       );
+      if (matches.isEmpty && !joinedRefresh) {
+        // Another verifier call may already have refreshed this snapshot.
+        jwks = identical(jwks, _cachedJwks)
+            ? await _refreshJwks()
+            : await _getJwks();
+        matches = (jwks['keys'] as List).where(
+          (key) => key is Map<String, dynamic> && key['kid'] == header['kid'],
+        );
+      }
       if (matches.length != 1) {
         throw const FormatException('Unknown or ambiguous signing key');
       }
@@ -79,6 +128,7 @@ class KakaoTokenVerifier {
                   aud.contains(audience) &&
                   (aud.length == 1 || claims['azp'] == audience)));
       final now = clock.now().millisecondsSinceEpoch / 1000;
+      final skew = clockSkew.inMicroseconds / Duration.microsecondsPerSecond;
       final exp = claims['exp'];
       final iat = claims['iat'];
       final nbf = claims['nbf'];
@@ -89,13 +139,13 @@ class KakaoTokenVerifier {
           (claims.containsKey('azp') && claims['azp'] != audience) ||
           exp is! num ||
           !exp.isFinite ||
-          exp <= now ||
+          exp <= now - skew ||
           iat is! num ||
           !iat.isFinite ||
-          iat > now ||
+          iat > now + skew ||
           iat >= exp ||
           (claims.containsKey('nbf') &&
-              (nbf is! num || !nbf.isFinite || nbf > now)) ||
+              (nbf is! num || !nbf.isFinite || nbf > now + skew)) ||
           nonce is! String ||
           nonce.isEmpty ||
           sha256.convert(utf8.encode(nonce)).toString() != nonceHash ||
@@ -104,6 +154,8 @@ class KakaoTokenVerifier {
         throw const FormatException('Invalid ID token claims');
       }
       return sub;
+    } on JwksUnavailableException {
+      rethrow;
     } on FormatException {
       rethrow;
     } catch (_) {

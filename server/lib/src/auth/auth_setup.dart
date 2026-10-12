@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:clock/clock.dart';
 import 'package:http/http.dart' as http;
@@ -15,12 +16,19 @@ void configureAuth(
   String? sessionPepper,
   Future<Map<String, dynamic>> Function()? loadJwks,
   Clock clock = const Clock(),
+  Future<void> Function(Session, UuidValue) cleanupSessions =
+      removeOlderSessions,
 }) {
   audience ??= pod.getPassword('kakaoAudience');
   issuer ??= pod.getPassword('kakaoIssuer');
   sessionPepper ??= pod.getPassword('serverSideSessionKeyHashPepper');
   // Missing deployment settings must not silently generate ephemeral secrets.
-  if (sessionPepper == null || sessionPepper.isEmpty) return;
+  if (sessionPepper == null || sessionPepper.isEmpty) {
+    stderr.writeln(
+      'WARNING: Authentication disabled: session hash pepper is missing.',
+    );
+    return;
+  }
   pod.initializeAuthServices(
     tokenManagerBuilders: [
       ServerSideSessionsConfig(
@@ -57,6 +65,7 @@ void configureAuth(
                     },
               ),
         clock: clock,
+        cleanupSessions: cleanupSessions,
       ),
     ],
   );

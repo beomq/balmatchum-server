@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:balmatchum_client/balmatchum_client.dart' as api;
 import 'package:balmatchum_server/src/auth/auth_setup.dart';
 import 'package:balmatchum_server/src/auth/kakao_provider.dart';
+import 'package:balmatchum_server/src/auth/login_attempt_cleanup.dart';
 import 'package:balmatchum_server/src/generated/protocol.dart';
 import 'package:balmatchum_server/src/generated/serverpod.dart' as generated;
 import 'package:clock/clock.dart';
@@ -78,6 +79,9 @@ void main() {
     String? audience = 'test-native-key',
     String? pepper = 'public-test-only',
     String? issuer = 'https://kauth.kakao.com',
+    Future<Map<String, dynamic>> Function()? loadJwks,
+    Future<void> Function(Session, UuidValue) cleanupSessions =
+        removeOlderSessions,
   }) async {
     database = await Directory.systemTemp.createTemp('kakao-http-');
     pod = generated.Serverpod(
@@ -96,7 +100,8 @@ void main() {
       issuer: issuer,
       sessionPepper: pepper,
       clock: fakeClock,
-      loadJwks: () async => KakaoTestKeys.jwks(),
+      cleanupSessions: cleanupSessions,
+      loadJwks: loadJwks ?? () async => KakaoTestKeys.jwks(),
     );
     await withClock(fakeClock, () => pod.start(runInGuardedZone: false));
     session = await pod.createSession();
@@ -159,8 +164,114 @@ void main() {
     expect(await ServerSideSession.db.count(session), 0);
   });
 
+  test('JWKS outage is temporary and does not consume the attempt', () async {
+    var unavailable = true;
+    await start(
+      loadJwks: () async {
+        if (unavailable) throw const SocketException('injected outage');
+        return KakaoTestKeys.jwks();
+      },
+    );
+    final caller = client();
+    final attempt = await caller.kakao.beginLogin(provider: 'kakao');
+    final token = KakaoTestKeys.sign(claims(attempt.nonce, 'outage'));
+    await expectLater(
+      caller.kakao.loginKakao(attemptId: attempt.attemptId, idToken: token),
+      _loginError('temporarilyUnavailable'),
+    );
+    expect(await ServerSideSession.db.count(session), 0);
+    expect(
+      (await LoginAttempt.db.findById(session, attempt.attemptId))!.consumedAt,
+      isNull,
+    );
+    unavailable = false;
+    final auth = await caller.kakao.loginKakao(
+      attemptId: attempt.attemptId,
+      idToken: token,
+    );
+    await client(auth.token).records.saveConfirmed(_record());
+  });
+
+  test(
+    'cleanup failure preserves committed login and next login retries',
+    () async {
+      var failCleanup = true;
+      await start(
+        cleanupSessions: (session, owner) async {
+          if (failCleanup) throw StateError('injected cleanup failure');
+          await removeOlderSessions(session, owner);
+        },
+      );
+      final first = await login(client(), 'cleanup');
+      await client(first.token).records.saveConfirmed(_record());
+      failCleanup = false;
+      now = now.add(const Duration(seconds: 1));
+      final second = await login(client(), 'cleanup');
+      await client(second.token).records.saveConfirmed(_record());
+      await expectLater(
+        client(first.token).records.saveConfirmed(_record()),
+        _unauthorized,
+      );
+      expect(await ServerSideSession.db.count(session), 1);
+    },
+  );
+
   group('real generated client HTTP authentication', () {
     setUp(start);
+
+    test('identity FK rejects missing user and restricts deletion', () async {
+      final auth = await login(client(), 'foreign-key');
+      final identity = (await ExternalIdentity.db.find(session)).single;
+      final violation = throwsA(
+        isA<DatabaseQueryException>().having(
+          (error) => error.code,
+          'sqlstate',
+          '23503',
+        ),
+      );
+      await expectLater(
+        ExternalIdentity.db.insertRow(
+          session,
+          identity.copyWith(
+            id: null,
+            subject: 'orphan',
+            authUserId: const Uuid().v4obj(),
+          ),
+        ),
+        violation,
+      );
+      await expectLater(
+        AuthUser.db.deleteWhere(
+          session,
+          where: (t) => t.id.equals(auth.authUserId),
+        ),
+        violation,
+      );
+      expect(await ExternalIdentity.db.count(session), 1);
+    });
+
+    test(
+      'stale attempts delete only beyond expiry retention boundary',
+      () async {
+        final boundary = now.subtract(expiredAttemptRetention);
+        for (final expiry in [
+          boundary.subtract(const Duration(microseconds: 1)),
+          boundary,
+          now,
+          now.add(const Duration(minutes: 5)),
+        ]) {
+          await LoginAttempt.db.insertRow(
+            session,
+            LoginAttempt(nonceHash: 'test-digest', expiresAt: expiry),
+          );
+        }
+        expect(await deleteStaleLoginAttempts(session, clock: fakeClock), 1);
+        expect(await LoginAttempt.db.count(session), 3);
+        expect(await deleteStaleLoginAttempts(session, clock: fakeClock), 0);
+        now = now.add(const Duration(microseconds: 1));
+        expect(await deleteStaleLoginAttempts(session, clock: fakeClock), 1);
+      },
+    );
 
     test('valid signed token saves and queries owner records', () async {
       final auth = await login(client(), 'valid');
@@ -184,7 +295,13 @@ void main() {
         final attempt = await caller.kakao.beginLogin(provider: 'kakao');
         final payload = claims(attempt.nonce, 'bad-$field');
         if (['iss', 'aud', 'nonce'].contains(field)) payload[field] = 'wrong';
-        if (field == 'exp') payload[field] = now.millisecondsSinceEpoch ~/ 1000;
+        if (field == 'exp') {
+          payload[field] =
+              now
+                  .subtract(const Duration(seconds: 60))
+                  .millisecondsSinceEpoch ~/
+              1000;
+        }
         final token = KakaoTestKeys.sign(
           payload,
           header: field == 'kid' ? {'kid': 'unknown'} : null,
