@@ -352,6 +352,63 @@ void main() {
       expect(fetches, 2);
     });
 
+    test('unknown kids share a one-minute forced refresh cooldown', () async {
+      await verify();
+      final initialFetches = fetches;
+      for (final kid in ['random-a', 'random-b', 'random-c']) {
+        await expectLater(verify(header: {'kid': kid}), throwsFormatException);
+      }
+      expect(fetches - initialFetches, 1);
+      currentTime = now.add(const Duration(seconds: 59));
+      await expectLater(
+        verify(header: {'kid': 'random-d'}),
+        throwsFormatException,
+      );
+      expect(fetches - initialFetches, 1);
+      currentTime = now.add(const Duration(minutes: 1));
+      await expectLater(
+        verify(header: {'kid': 'random-e'}),
+        throwsFormatException,
+      );
+      expect(fetches - initialFetches, 2);
+    });
+
+    test('rotated key becomes usable after forced refresh cooldown', () async {
+      await verify();
+      await expectLater(
+        verify(header: {'kid': 'rotated'}),
+        throwsFormatException,
+      );
+      fetch = () async => rotatedKeys();
+      currentTime = now.add(const Duration(seconds: 59));
+      await expectLater(
+        verify(header: {'kid': 'rotated'}),
+        throwsFormatException,
+      );
+      expect(fetches, 2);
+      currentTime = now.add(const Duration(minutes: 1));
+      expect(await verify(header: {'kid': 'rotated'}), claims['sub']);
+      expect(fetches, 3);
+    });
+
+    test(
+      'normal TTL refresh is not blocked by forced refresh cooldown',
+      () async {
+        await verify();
+        currentTime = now.add(const Duration(minutes: 59, seconds: 30));
+        fetch = () async => throw StateError('outage');
+        await expectLater(
+          verify(header: {'kid': 'unknown'}),
+          throwsFormatException,
+        );
+        expect(fetches, 2);
+        currentTime = now.add(KakaoTokenVerifier.jwksCacheTtl);
+        fetch = () async => jwks;
+        expect(await verify(), claims['sub']);
+        expect(fetches, 3);
+      },
+    );
+
     for (final expired in [false, true]) {
       test('shares concurrent ${expired ? 'TTL' : 'initial'} fetch', () async {
         if (expired) {

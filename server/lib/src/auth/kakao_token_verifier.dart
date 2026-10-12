@@ -19,6 +19,7 @@ class KakaoTokenVerifier {
   });
 
   static const jwksCacheTtl = Duration(hours: 1);
+  static const forcedRefreshCooldown = Duration(minutes: 1);
 
   final String audience;
   final Future<Map<String, dynamic>> Function() loadJwks;
@@ -27,6 +28,7 @@ class KakaoTokenVerifier {
   Map<String, dynamic>? _cachedJwks;
   DateTime? _cacheExpiresAt;
   Future<Map<String, dynamic>>? _inflightJwks;
+  DateTime? _nextForcedRefreshAt;
 
   bool get _hasValidCache =>
       _cachedJwks != null && clock.now().isBefore(_cacheExpiresAt!);
@@ -82,9 +84,16 @@ class KakaoTokenVerifier {
       );
       if (matches.isEmpty && !joinedRefresh) {
         // Another verifier call may already have refreshed this snapshot.
-        jwks = identical(jwks, _cachedJwks)
-            ? await _refreshJwks()
-            : await _getJwks();
+        if (!identical(jwks, _cachedJwks)) {
+          jwks = await _getJwks();
+        } else if (_inflightJwks != null) {
+          jwks = await _inflightJwks!;
+        } else if (_nextForcedRefreshAt == null ||
+            !clock.now().isBefore(_nextForcedRefreshAt!)) {
+          // Reserve before awaiting: failed fetches also consume the cooldown.
+          _nextForcedRefreshAt = clock.now().add(forcedRefreshCooldown);
+          jwks = await _refreshJwks();
+        }
         matches = (jwks['keys'] as List).where(
           (key) => key is Map<String, dynamic> && key['kid'] == header['kid'],
         );
