@@ -7,7 +7,7 @@ fields:
   audience: String
   subjectNamespace: String
   subject: String
-  authUserId: UuidValue
+  authUser: module:serverpod_auth_core:AuthUser?, relation(onDelete=Restrict)
 indexes:
   external_identity_provider_subject:
     fields: provider, issuer, audience, subjectNamespace, subject

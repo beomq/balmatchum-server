@@ -98,7 +98,18 @@ class Protocol extends _is.DatabaseSerializationManager {
           dartType: 'UuidValue',
         ),
       ],
-      foreignKeys: [],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'external_identity_fk_0',
+          columns: ['authUserId'],
+          referenceTable: 'serverpod_auth_core_user',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.restrict,
+          matchType: null,
+        ),
+      ],
       indexes: [
         _isp.IndexDefinition(
           indexName: 'external_identity_provider_subject',

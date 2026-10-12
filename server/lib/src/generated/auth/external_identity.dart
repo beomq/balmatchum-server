@@ -8,9 +8,13 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: dead_code, unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:balmatchum_server/src/generated/protocol.dart' as _iu3f2ih9;
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+    as _iacs;
 
 abstract class ExternalIdentity
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
@@ -22,6 +26,7 @@ abstract class ExternalIdentity
     required this.subjectNamespace,
     required this.subject,
     required this.authUserId,
+    this.authUser,
   });
 
   factory ExternalIdentity({
@@ -32,6 +37,7 @@ abstract class ExternalIdentity
     required String subjectNamespace,
     required String subject,
     required _is.UuidValue authUserId,
+    _iacs.AuthUser? authUser,
   }) = _ExternalIdentityImpl;
 
   factory ExternalIdentity.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -45,6 +51,11 @@ abstract class ExternalIdentity
       authUserId: _is.UuidValueJsonExtension.fromJson(
         jsonSerialization['authUserId'],
       ),
+      authUser: jsonSerialization['authUser'] == null
+          ? null
+          : _iu3f2ih9.Protocol().deserialize<_iacs.AuthUser>(
+              jsonSerialization['authUser'],
+            ),
     );
   }
 
@@ -67,6 +78,8 @@ abstract class ExternalIdentity
 
   _is.UuidValue authUserId;
 
+  _iacs.AuthUser? authUser;
+
   @override
   _is.Table<int?> get table => t;
 
@@ -81,6 +94,7 @@ abstract class ExternalIdentity
     String? subjectNamespace,
     String? subject,
     _is.UuidValue? authUserId,
+    _iacs.AuthUser? authUser,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -93,6 +107,7 @@ abstract class ExternalIdentity
       'subjectNamespace': subjectNamespace,
       'subject': subject,
       'authUserId': authUserId.toJson(),
+      if (authUser != null) 'authUser': authUser?.toJson(),
     };
   }
 
@@ -101,8 +116,8 @@ abstract class ExternalIdentity
     return {};
   }
 
-  static ExternalIdentityInclude include() {
-    return ExternalIdentityInclude._();
+  static ExternalIdentityInclude include({_iacs.AuthUserInclude? authUser}) {
+    return ExternalIdentityInclude._(authUser: authUser);
   }
 
   static ExternalIdentityIncludeList includeList({
@@ -140,6 +155,7 @@ class _ExternalIdentityImpl extends ExternalIdentity {
     required String subjectNamespace,
     required String subject,
     required _is.UuidValue authUserId,
+    _iacs.AuthUser? authUser,
   }) : super._(
          id: id,
          provider: provider,
@@ -148,6 +164,7 @@ class _ExternalIdentityImpl extends ExternalIdentity {
          subjectNamespace: subjectNamespace,
          subject: subject,
          authUserId: authUserId,
+         authUser: authUser,
        );
 
   /// Returns a shallow copy of this [ExternalIdentity]
@@ -162,6 +179,7 @@ class _ExternalIdentityImpl extends ExternalIdentity {
     String? subjectNamespace,
     String? subject,
     _is.UuidValue? authUserId,
+    Object? authUser = _Undefined,
   }) {
     return ExternalIdentity(
       id: id is int? ? id : this.id,
@@ -171,6 +189,9 @@ class _ExternalIdentityImpl extends ExternalIdentity {
       subjectNamespace: subjectNamespace ?? this.subjectNamespace,
       subject: subject ?? this.subject,
       authUserId: authUserId ?? this.authUserId,
+      authUser: authUser is _iacs.AuthUser?
+          ? authUser
+          : this.authUser?.copyWith(),
     );
   }
 }
@@ -257,6 +278,21 @@ class ExternalIdentityTable extends _is.Table<int?> {
 
   late final _is.ColumnUuid authUserId;
 
+  _iacs.AuthUserTable? _authUser;
+
+  _iacs.AuthUserTable get authUser {
+    if (_authUser != null) return _authUser!;
+    _authUser = _is.createRelationTable(
+      relationFieldName: 'authUser',
+      field: ExternalIdentity.t.authUserId,
+      foreignField: _iacs.AuthUser.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _iacs.AuthUserTable(tableRelation: foreignTableRelation),
+    );
+    return _authUser!;
+  }
+
   @override
   List<_is.Column> get columns => [
     id,
@@ -267,13 +303,25 @@ class ExternalIdentityTable extends _is.Table<int?> {
     subject,
     authUserId,
   ];
+
+  @override
+  _is.Table? getRelationTable(String relationField) {
+    if (relationField == 'authUser') {
+      return authUser;
+    }
+    return null;
+  }
 }
 
 class ExternalIdentityInclude extends _is.IncludeObject {
-  ExternalIdentityInclude._();
+  ExternalIdentityInclude._({_iacs.AuthUserInclude? authUser}) {
+    _authUser = authUser;
+  }
+
+  _iacs.AuthUserInclude? _authUser;
 
   @override
-  Map<String, _is.Include?> get includes => {};
+  Map<String, _is.Include?> get includes => {'authUser': _authUser};
 
   @override
   _is.Table<int?> get table => ExternalIdentity.t;
@@ -300,6 +348,8 @@ class ExternalIdentityIncludeList extends _is.IncludeList {
 
 class ExternalIdentityRepository {
   const ExternalIdentityRepository._();
+
+  final attachRow = const ExternalIdentityAttachRowRepository._();
 
   /// Returns a list of [ExternalIdentity]s matching the given query parameters.
   ///
@@ -331,6 +381,7 @@ class ExternalIdentityRepository {
     _is.OrderByBuilder<ExternalIdentityTable>? orderBy,
     _is.OrderByListBuilder<ExternalIdentityTable>? orderByList,
     _is.Transaction? transaction,
+    ExternalIdentityInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
@@ -341,6 +392,7 @@ class ExternalIdentityRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -370,6 +422,7 @@ class ExternalIdentityRepository {
     _is.OrderByBuilder<ExternalIdentityTable>? orderBy,
     _is.OrderByListBuilder<ExternalIdentityTable>? orderByList,
     _is.Transaction? transaction,
+    ExternalIdentityInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
@@ -379,6 +432,7 @@ class ExternalIdentityRepository {
       orderByList: orderByList?.call(ExternalIdentity.t),
       offset: offset,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -389,12 +443,14 @@ class ExternalIdentityRepository {
     _is.DatabaseSession session,
     int id, {
     _is.Transaction? transaction,
+    ExternalIdentityInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
     return session.db.findById<ExternalIdentity>(
       id,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -690,6 +746,33 @@ class ExternalIdentityRepository {
       where: where(ExternalIdentity.t),
       lockMode: lockMode,
       lockBehavior: lockBehavior,
+      transaction: transaction,
+    );
+  }
+}
+
+class ExternalIdentityAttachRowRepository {
+  const ExternalIdentityAttachRowRepository._();
+
+  /// Creates a relation between the given [ExternalIdentity] and [AuthUser]
+  /// by setting the [ExternalIdentity]'s foreign key `authUserId` to refer to the [AuthUser].
+  Future<void> authUser(
+    _is.DatabaseSession session,
+    ExternalIdentity externalIdentity,
+    _iacs.AuthUser authUser, {
+    _is.Transaction? transaction,
+  }) async {
+    if (externalIdentity.id == null) {
+      throw ArgumentError.notNull('externalIdentity.id');
+    }
+    if (authUser.id == null) {
+      throw ArgumentError.notNull('authUser.id');
+    }
+
+    var $externalIdentity = externalIdentity.copyWith(authUserId: authUser.id);
+    await session.db.updateRow<ExternalIdentity>(
+      $externalIdentity,
+      columns: [ExternalIdentity.t.authUserId],
       transaction: transaction,
     );
   }

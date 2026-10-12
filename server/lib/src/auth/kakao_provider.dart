@@ -16,6 +16,7 @@ class KakaoProvider implements IdentityProvider {
     required this.audience,
     required this.verifier,
     this.clock = const Clock(),
+    this.cleanupSessions = removeOlderSessions,
   });
 
   static KakaoProvider get current {
@@ -31,6 +32,7 @@ class KakaoProvider implements IdentityProvider {
   final String? audience;
   final KakaoTokenVerifier? verifier;
   final Clock clock;
+  final Future<void> Function(Session, UuidValue) cleanupSessions;
 
   @override
   String get method => 'kakao';
@@ -81,6 +83,8 @@ class KakaoProvider implements IdentityProvider {
     final String subject;
     try {
       subject = await verifier!.verify(idToken, nonceHash: attempt.nonceHash);
+    } on JwksUnavailableException {
+      throw LoginException(code: 'temporarilyUnavailable');
     } on FormatException {
       throw LoginException(code: 'invalidToken');
     }
@@ -144,7 +148,14 @@ class KakaoProvider implements IdentityProvider {
     }
     // This is after the login transaction commit. A late older login must
     // never remove a newer session: order by (createdAt, UUID text).
-    await removeOlderSessions(session, success.authUserId);
+    try {
+      await cleanupSessions(session, success.authUserId);
+    } catch (_) {
+      session.log(
+        'Post-commit session cleanup failed; retry on next login.',
+        level: LogLevel.warning,
+      );
+    }
     return success;
   }
 
@@ -161,10 +172,13 @@ class KakaoProvider implements IdentityProvider {
 
 /// A late commit may have an older creation time than an already committed
 /// login. Use the latest committed session, never completion/response order.
+// Serverpod auth core 4.0.3 generated ServerSideSessionTable.tableName.
+const serverSideSessionTable = 'serverpod_auth_core_session';
+
 Future<void> removeOlderSessions(Session session, UuidValue authUserId) async {
   final deleted = await session.db.unsafeQuery(
-    'DELETE FROM serverpod_auth_core_session AS old USING '
-    '(SELECT "createdAt", id FROM serverpod_auth_core_session '
+    'DELETE FROM $serverSideSessionTable AS old USING '
+    '(SELECT "createdAt", id FROM $serverSideSessionTable '
     'WHERE "authUserId" = CAST(@owner AS uuid) ORDER BY "createdAt" DESC, id DESC LIMIT 1) AS latest '
     'WHERE old."authUserId" = CAST(@owner AS uuid) AND '
     '(old."createdAt", old.id) < (latest."createdAt", latest.id) RETURNING old.id',
@@ -183,10 +197,12 @@ class KakaoProviderBuilder extends IdentityProviderBuilder<KakaoProvider> {
     required this.audience,
     required this.verifier,
     this.clock = const Clock(),
+    this.cleanupSessions = removeOlderSessions,
   });
   final String? audience;
   final KakaoTokenVerifier? verifier;
   final Clock clock;
+  final Future<void> Function(Session, UuidValue) cleanupSessions;
   @override
   KakaoProvider build({
     required TokenManager tokenManager,
@@ -198,5 +214,6 @@ class KakaoProviderBuilder extends IdentityProviderBuilder<KakaoProvider> {
     audience: audience,
     verifier: verifier,
     clock: clock,
+    cleanupSessions: cleanupSessions,
   );
 }
