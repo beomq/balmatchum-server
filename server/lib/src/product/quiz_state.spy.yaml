@@ -1,0 +1,14 @@
+class: QuizState
+serverOnly: true
+table: quiz_state
+fields:
+  owner: String
+  date: String
+  questionId: String
+  answerIndex: int?
+  answeredAt: DateTime?
+  awardedPoints: int, default=0
+indexes:
+  quiz_state_key:
+    fields: owner, date
+    unique: true

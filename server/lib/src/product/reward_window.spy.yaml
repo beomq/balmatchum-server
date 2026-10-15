@@ -1,0 +1,7 @@
+class: RewardWindow
+serverOnly: true
+fields:
+  fromUnits: int
+  throughUnits: int
+  confirmedAt: DateTime
+  freeUntil: DateTime

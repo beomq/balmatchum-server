@@ -11,6 +11,10 @@
 // ignore_for_file: dead_code, unnecessary_type_check
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:balmatchum_server/src/generated/product/daily_quiz.dart'
+    as _is16fueh;
+import 'package:balmatchum_server/src/generated/product/daily_record.dart'
+    as _iny5mdqa;
 import 'package:serverpod/protocol.dart' as _isp;
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
@@ -22,6 +26,23 @@ import 'auth/login_attempt.dart' as _i1apu3f2;
 import 'auth/login_challenge.dart' as _izhe0wsm;
 import 'auth/login_exception.dart' as _iskwpc4e;
 import 'greetings/greeting.dart' as _izw8z7ou;
+import 'product/daily_quiz.dart' as _i94q6xjz;
+import 'product/daily_record.dart' as _ie37ihl8;
+import 'product/daily_step_input.dart' as _i4z7ptb2;
+import 'product/day_route.dart' as _i7moag3o;
+import 'product/point_entry.dart' as _i3g927ck;
+import 'product/product_account.dart' as _itm94d4x;
+import 'product/product_day.dart' as _in1xh7b4;
+import 'product/product_exception.dart' as _ixe21ogc;
+import 'product/product_request.dart' as _ixso8684;
+import 'product/quiz_state.dart' as _i4w5p872;
+import 'product/reward_grant.dart' as _iod7wzhm;
+import 'product/reward_window.dart' as _itmku246;
+import 'product/step_revision.dart' as _iypt9oiw;
+import 'product/theme_item.dart' as _i4gtfwun;
+import 'product/theme_ownership.dart' as _ileabnff;
+import 'product/theme_store.dart' as _iotuzcr6;
+import 'product/wallet_view.dart' as _izf11uf3;
 import 'records/gps_record.dart' as _ixays1el;
 import 'records/gps_record_input.dart' as _ijl0tr6b;
 import 'records/record_exception.dart' as _ihyrwhon;
@@ -33,6 +54,23 @@ export 'auth/login_attempt.dart';
 export 'auth/login_challenge.dart';
 export 'auth/login_exception.dart';
 export 'greetings/greeting.dart';
+export 'product/daily_quiz.dart';
+export 'product/daily_record.dart';
+export 'product/daily_step_input.dart';
+export 'product/day_route.dart';
+export 'product/point_entry.dart';
+export 'product/product_account.dart';
+export 'product/product_day.dart';
+export 'product/product_exception.dart';
+export 'product/product_request.dart';
+export 'product/quiz_state.dart';
+export 'product/reward_grant.dart';
+export 'product/reward_window.dart';
+export 'product/step_revision.dart';
+export 'product/theme_item.dart';
+export 'product/theme_ownership.dart';
+export 'product/theme_store.dart';
+export 'product/wallet_view.dart';
 export 'records/gps_record.dart';
 export 'records/gps_record_input.dart';
 export 'records/record_exception.dart';
@@ -177,8 +215,15 @@ class Protocol extends _is.DatabaseSerializationManager {
         _isp.ColumnDefinition(
           name: 'payload',
           columnType: _isp.ColumnType.json,
+          isNullable: true,
+          dartType: 'protocol:GpsRecordInput?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'deleted',
+          columnType: _isp.ColumnType.boolean,
           isNullable: false,
-          dartType: 'protocol:GpsRecordInput',
+          dartType: 'bool',
+          columnDefault: 'false',
         ),
       ],
       foreignKeys: [],
@@ -239,6 +284,538 @@ class Protocol extends _is.DatabaseSerializationManager {
       indexes: [],
       managed: true,
     ),
+    _isp.TableDefinition(
+      name: 'point_entry',
+      dartName: 'PointEntry',
+      schema: 'public',
+      module: 'balmatchum',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'owner',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'entryKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'kind',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'date',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'amount',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'fromUnits',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'throughUnits',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'policyVersion',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'point_entry_key',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'owner',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'entryKey',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'product_account',
+      dartName: 'ProductAccount',
+      schema: 'public',
+      module: 'balmatchum',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'owner',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'streamGeneration',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'deletionVersion',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'equippedTheme',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+          columnDefault: '\'sunny\'',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'product_account_owner',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'owner',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'product_day',
+      dartName: 'ProductDay',
+      schema: 'public',
+      module: 'balmatchum',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'owner',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'date',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'revision',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'deleted',
+          columnType: _isp.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'false',
+        ),
+        _isp.ColumnDefinition(
+          name: 'deletionVersion',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'steps',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'availability',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+          columnDefault: '\'unknown\'',
+        ),
+        _isp.ColumnDefinition(
+          name: 'streamGeneration',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'stepRevision',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'grantedUnits',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'confirmedUnits',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'policyVersion',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'windows',
+          columnType: _isp.ColumnType.json,
+          isNullable: false,
+          dartType: 'List<protocol:RewardWindow>',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'product_day_owner_date',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'owner',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'date',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'product_request',
+      dartName: 'ProductRequest',
+      schema: 'public',
+      module: 'balmatchum',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'owner',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'requestId',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'digest',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'result',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'product_request_key',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'owner',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'requestId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'quiz_state',
+      dartName: 'QuizState',
+      schema: 'public',
+      module: 'balmatchum',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'owner',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'date',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'questionId',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'answerIndex',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'answeredAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'awardedPoints',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'quiz_state_key',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'owner',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'date',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'step_revision',
+      dartName: 'StepRevision',
+      schema: 'public',
+      module: 'balmatchum',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'owner',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'date',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'generation',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'revision',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'digest',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'step_revision_key',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'owner',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'date',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'generation',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'revision',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'theme_ownership',
+      dartName: 'ThemeOwnership',
+      schema: 'public',
+      module: 'balmatchum',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'owner',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'themeId',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'purchasedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'theme_ownership_key',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'owner',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'themeId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
     ..._iacs.Protocol.targetTableDefinitions,
     ..._iais.Protocol.targetTableDefinitions,
     ..._isp.Protocol.targetTableDefinitions,
@@ -286,6 +863,57 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _izw8z7ou.Greeting) {
       return _izw8z7ou.Greeting.fromJson(data) as T;
     }
+    if (t == _i94q6xjz.DailyQuiz) {
+      return _i94q6xjz.DailyQuiz.fromJson(data) as T;
+    }
+    if (t == _ie37ihl8.DailyRecord) {
+      return _ie37ihl8.DailyRecord.fromJson(data) as T;
+    }
+    if (t == _i4z7ptb2.DailyStepInput) {
+      return _i4z7ptb2.DailyStepInput.fromJson(data) as T;
+    }
+    if (t == _i7moag3o.DayRoute) {
+      return _i7moag3o.DayRoute.fromJson(data) as T;
+    }
+    if (t == _i3g927ck.PointEntry) {
+      return _i3g927ck.PointEntry.fromJson(data) as T;
+    }
+    if (t == _itm94d4x.ProductAccount) {
+      return _itm94d4x.ProductAccount.fromJson(data) as T;
+    }
+    if (t == _in1xh7b4.ProductDay) {
+      return _in1xh7b4.ProductDay.fromJson(data) as T;
+    }
+    if (t == _ixe21ogc.ProductException) {
+      return _ixe21ogc.ProductException.fromJson(data) as T;
+    }
+    if (t == _ixso8684.ProductRequest) {
+      return _ixso8684.ProductRequest.fromJson(data) as T;
+    }
+    if (t == _i4w5p872.QuizState) {
+      return _i4w5p872.QuizState.fromJson(data) as T;
+    }
+    if (t == _iod7wzhm.RewardGrant) {
+      return _iod7wzhm.RewardGrant.fromJson(data) as T;
+    }
+    if (t == _itmku246.RewardWindow) {
+      return _itmku246.RewardWindow.fromJson(data) as T;
+    }
+    if (t == _iypt9oiw.StepRevision) {
+      return _iypt9oiw.StepRevision.fromJson(data) as T;
+    }
+    if (t == _i4gtfwun.ThemeItem) {
+      return _i4gtfwun.ThemeItem.fromJson(data) as T;
+    }
+    if (t == _ileabnff.ThemeOwnership) {
+      return _ileabnff.ThemeOwnership.fromJson(data) as T;
+    }
+    if (t == _iotuzcr6.ThemeStore) {
+      return _iotuzcr6.ThemeStore.fromJson(data) as T;
+    }
+    if (t == _izf11uf3.WalletView) {
+      return _izf11uf3.WalletView.fromJson(data) as T;
+    }
     if (t == _ixays1el.GpsRecord) {
       return _ixays1el.GpsRecord.fromJson(data) as T;
     }
@@ -322,6 +950,62 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _is.getType<_izw8z7ou.Greeting?>()) {
       return (data != null ? _izw8z7ou.Greeting.fromJson(data) : null) as T;
     }
+    if (t == _is.getType<_i94q6xjz.DailyQuiz?>()) {
+      return (data != null ? _i94q6xjz.DailyQuiz.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_ie37ihl8.DailyRecord?>()) {
+      return (data != null ? _ie37ihl8.DailyRecord.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_i4z7ptb2.DailyStepInput?>()) {
+      return (data != null ? _i4z7ptb2.DailyStepInput.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_i7moag3o.DayRoute?>()) {
+      return (data != null ? _i7moag3o.DayRoute.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_i3g927ck.PointEntry?>()) {
+      return (data != null ? _i3g927ck.PointEntry.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_itm94d4x.ProductAccount?>()) {
+      return (data != null ? _itm94d4x.ProductAccount.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_in1xh7b4.ProductDay?>()) {
+      return (data != null ? _in1xh7b4.ProductDay.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_ixe21ogc.ProductException?>()) {
+      return (data != null ? _ixe21ogc.ProductException.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_ixso8684.ProductRequest?>()) {
+      return (data != null ? _ixso8684.ProductRequest.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_i4w5p872.QuizState?>()) {
+      return (data != null ? _i4w5p872.QuizState.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_iod7wzhm.RewardGrant?>()) {
+      return (data != null ? _iod7wzhm.RewardGrant.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_itmku246.RewardWindow?>()) {
+      return (data != null ? _itmku246.RewardWindow.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_iypt9oiw.StepRevision?>()) {
+      return (data != null ? _iypt9oiw.StepRevision.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_i4gtfwun.ThemeItem?>()) {
+      return (data != null ? _i4gtfwun.ThemeItem.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_ileabnff.ThemeOwnership?>()) {
+      return (data != null ? _ileabnff.ThemeOwnership.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_iotuzcr6.ThemeStore?>()) {
+      return (data != null ? _iotuzcr6.ThemeStore.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_izf11uf3.WalletView?>()) {
+      return (data != null ? _izf11uf3.WalletView.fromJson(data) : null) as T;
+    }
     if (t == _is.getType<_ixays1el.GpsRecord?>()) {
       return (data != null ? _ixays1el.GpsRecord.fromJson(data) : null) as T;
     }
@@ -344,9 +1028,42 @@ class Protocol extends _is.DatabaseSerializationManager {
       return (data != null ? _iyylbrve.StoredGpsRecord.fromJson(data) : null)
           as T;
     }
+    if (t == List<String>) {
+      return (data as List).map((e) => deserialize<String>(e)).toList() as T;
+    }
+    if (t == List<_i7moag3o.DayRoute>) {
+      return (data as List)
+              .map((e) => deserialize<_i7moag3o.DayRoute>(e))
+              .toList()
+          as T;
+    }
     if (t == List<_ir7rvxr1.RoutePoint>) {
       return (data as List)
               .map((e) => deserialize<_ir7rvxr1.RoutePoint>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_itmku246.RewardWindow>) {
+      return (data as List)
+              .map((e) => deserialize<_itmku246.RewardWindow>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i4gtfwun.ThemeItem>) {
+      return (data as List)
+              .map((e) => deserialize<_i4gtfwun.ThemeItem>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_iny5mdqa.DailyRecord>) {
+      return (data as List)
+              .map((e) => deserialize<_iny5mdqa.DailyRecord>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_is16fueh.DailyQuiz>) {
+      return (data as List)
+              .map((e) => deserialize<_is16fueh.DailyQuiz>(e))
               .toList()
           as T;
     }
@@ -369,6 +1086,23 @@ class Protocol extends _is.DatabaseSerializationManager {
       _izhe0wsm.LoginChallenge => 'LoginChallenge',
       _iskwpc4e.LoginException => 'LoginException',
       _izw8z7ou.Greeting => 'Greeting',
+      _i94q6xjz.DailyQuiz => 'DailyQuiz',
+      _ie37ihl8.DailyRecord => 'DailyRecord',
+      _i4z7ptb2.DailyStepInput => 'DailyStepInput',
+      _i7moag3o.DayRoute => 'DayRoute',
+      _i3g927ck.PointEntry => 'PointEntry',
+      _itm94d4x.ProductAccount => 'ProductAccount',
+      _in1xh7b4.ProductDay => 'ProductDay',
+      _ixe21ogc.ProductException => 'ProductException',
+      _ixso8684.ProductRequest => 'ProductRequest',
+      _i4w5p872.QuizState => 'QuizState',
+      _iod7wzhm.RewardGrant => 'RewardGrant',
+      _itmku246.RewardWindow => 'RewardWindow',
+      _iypt9oiw.StepRevision => 'StepRevision',
+      _i4gtfwun.ThemeItem => 'ThemeItem',
+      _ileabnff.ThemeOwnership => 'ThemeOwnership',
+      _iotuzcr6.ThemeStore => 'ThemeStore',
+      _izf11uf3.WalletView => 'WalletView',
       _ixays1el.GpsRecord => 'GpsRecord',
       _ijl0tr6b.GpsRecordInput => 'GpsRecordInput',
       _ihyrwhon.RecordException => 'RecordException',
@@ -399,6 +1133,40 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'LoginException';
       case _izw8z7ou.Greeting():
         return 'Greeting';
+      case _i94q6xjz.DailyQuiz():
+        return 'DailyQuiz';
+      case _ie37ihl8.DailyRecord():
+        return 'DailyRecord';
+      case _i4z7ptb2.DailyStepInput():
+        return 'DailyStepInput';
+      case _i7moag3o.DayRoute():
+        return 'DayRoute';
+      case _i3g927ck.PointEntry():
+        return 'PointEntry';
+      case _itm94d4x.ProductAccount():
+        return 'ProductAccount';
+      case _in1xh7b4.ProductDay():
+        return 'ProductDay';
+      case _ixe21ogc.ProductException():
+        return 'ProductException';
+      case _ixso8684.ProductRequest():
+        return 'ProductRequest';
+      case _i4w5p872.QuizState():
+        return 'QuizState';
+      case _iod7wzhm.RewardGrant():
+        return 'RewardGrant';
+      case _itmku246.RewardWindow():
+        return 'RewardWindow';
+      case _iypt9oiw.StepRevision():
+        return 'StepRevision';
+      case _i4gtfwun.ThemeItem():
+        return 'ThemeItem';
+      case _ileabnff.ThemeOwnership():
+        return 'ThemeOwnership';
+      case _iotuzcr6.ThemeStore():
+        return 'ThemeStore';
+      case _izf11uf3.WalletView():
+        return 'WalletView';
       case _ixays1el.GpsRecord():
         return 'GpsRecord';
       case _ijl0tr6b.GpsRecordInput():
@@ -451,6 +1219,57 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (dataClassName == 'Greeting') {
       return deserialize<_izw8z7ou.Greeting>(data['data']);
+    }
+    if (dataClassName == 'DailyQuiz') {
+      return deserialize<_i94q6xjz.DailyQuiz>(data['data']);
+    }
+    if (dataClassName == 'DailyRecord') {
+      return deserialize<_ie37ihl8.DailyRecord>(data['data']);
+    }
+    if (dataClassName == 'DailyStepInput') {
+      return deserialize<_i4z7ptb2.DailyStepInput>(data['data']);
+    }
+    if (dataClassName == 'DayRoute') {
+      return deserialize<_i7moag3o.DayRoute>(data['data']);
+    }
+    if (dataClassName == 'PointEntry') {
+      return deserialize<_i3g927ck.PointEntry>(data['data']);
+    }
+    if (dataClassName == 'ProductAccount') {
+      return deserialize<_itm94d4x.ProductAccount>(data['data']);
+    }
+    if (dataClassName == 'ProductDay') {
+      return deserialize<_in1xh7b4.ProductDay>(data['data']);
+    }
+    if (dataClassName == 'ProductException') {
+      return deserialize<_ixe21ogc.ProductException>(data['data']);
+    }
+    if (dataClassName == 'ProductRequest') {
+      return deserialize<_ixso8684.ProductRequest>(data['data']);
+    }
+    if (dataClassName == 'QuizState') {
+      return deserialize<_i4w5p872.QuizState>(data['data']);
+    }
+    if (dataClassName == 'RewardGrant') {
+      return deserialize<_iod7wzhm.RewardGrant>(data['data']);
+    }
+    if (dataClassName == 'RewardWindow') {
+      return deserialize<_itmku246.RewardWindow>(data['data']);
+    }
+    if (dataClassName == 'StepRevision') {
+      return deserialize<_iypt9oiw.StepRevision>(data['data']);
+    }
+    if (dataClassName == 'ThemeItem') {
+      return deserialize<_i4gtfwun.ThemeItem>(data['data']);
+    }
+    if (dataClassName == 'ThemeOwnership') {
+      return deserialize<_ileabnff.ThemeOwnership>(data['data']);
+    }
+    if (dataClassName == 'ThemeStore') {
+      return deserialize<_iotuzcr6.ThemeStore>(data['data']);
+    }
+    if (dataClassName == 'WalletView') {
+      return deserialize<_izf11uf3.WalletView>(data['data']);
     }
     if (dataClassName == 'GpsRecord') {
       return deserialize<_ixays1el.GpsRecord>(data['data']);
@@ -515,6 +1334,20 @@ class Protocol extends _is.DatabaseSerializationManager {
         return _i8thru7x.ExternalIdentity.t;
       case _i1apu3f2.LoginAttempt:
         return _i1apu3f2.LoginAttempt.t;
+      case _i3g927ck.PointEntry:
+        return _i3g927ck.PointEntry.t;
+      case _itm94d4x.ProductAccount:
+        return _itm94d4x.ProductAccount.t;
+      case _in1xh7b4.ProductDay:
+        return _in1xh7b4.ProductDay.t;
+      case _ixso8684.ProductRequest:
+        return _ixso8684.ProductRequest.t;
+      case _i4w5p872.QuizState:
+        return _i4w5p872.QuizState.t;
+      case _iypt9oiw.StepRevision:
+        return _iypt9oiw.StepRevision.t;
+      case _ileabnff.ThemeOwnership:
+        return _ileabnff.ThemeOwnership.t;
       case _iyylbrve.StoredGpsRecord:
         return _iyylbrve.StoredGpsRecord.t;
     }

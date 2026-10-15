@@ -1,0 +1,11 @@
+class: ThemeOwnership
+serverOnly: true
+table: theme_ownership
+fields:
+  owner: String
+  themeId: String
+  purchasedAt: DateTime
+indexes:
+  theme_ownership_key:
+    fields: owner, themeId
+    unique: true

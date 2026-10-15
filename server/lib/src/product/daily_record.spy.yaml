@@ -1,0 +1,15 @@
+class: DailyRecord
+fields:
+  date: String
+  revision: int
+  deleted: bool
+  deletionVersion: int
+  steps: int?
+  availability: String
+  streamGeneration: int
+  stepRevision: int
+  rewardStatus: String
+  claimablePoints: int?
+  grantedPoints: int
+  fixtureLabel: String?
+  routes: List<DayRoute>

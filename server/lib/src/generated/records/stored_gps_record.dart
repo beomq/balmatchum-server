@@ -21,15 +21,17 @@ abstract class StoredGpsRecord
     required this.owner,
     required this.clientRecordId,
     required this.persistedAt,
-    required this.payload,
-  });
+    this.payload,
+    bool? deleted,
+  }) : deleted = deleted ?? false;
 
   factory StoredGpsRecord({
     _is.UuidValue? id,
     required String owner,
     required _is.UuidValue clientRecordId,
     required DateTime persistedAt,
-    required _i7qho75c.GpsRecordInput payload,
+    _i7qho75c.GpsRecordInput? payload,
+    bool? deleted,
   }) = _StoredGpsRecordImpl;
 
   factory StoredGpsRecord.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -44,9 +46,14 @@ abstract class StoredGpsRecord
       persistedAt: _is.DateTimeJsonExtension.fromJson(
         jsonSerialization['persistedAt'],
       ),
-      payload: _iu3f2ih9.Protocol().deserialize<_i7qho75c.GpsRecordInput>(
-        jsonSerialization['payload'],
-      ),
+      payload: jsonSerialization['payload'] == null
+          ? null
+          : _iu3f2ih9.Protocol().deserialize<_i7qho75c.GpsRecordInput>(
+              jsonSerialization['payload'],
+            ),
+      deleted: jsonSerialization['deleted'] == null
+          ? null
+          : _is.BoolJsonExtension.fromJson(jsonSerialization['deleted']),
     );
   }
 
@@ -63,7 +70,9 @@ abstract class StoredGpsRecord
 
   DateTime persistedAt;
 
-  _i7qho75c.GpsRecordInput payload;
+  _i7qho75c.GpsRecordInput? payload;
+
+  bool deleted;
 
   @override
   _is.Table<_is.UuidValue?> get table => t;
@@ -77,6 +86,7 @@ abstract class StoredGpsRecord
     _is.UuidValue? clientRecordId,
     DateTime? persistedAt,
     _i7qho75c.GpsRecordInput? payload,
+    bool? deleted,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -86,7 +96,8 @@ abstract class StoredGpsRecord
       'owner': owner,
       'clientRecordId': clientRecordId.toJson(),
       'persistedAt': persistedAt.toJson(),
-      'payload': payload.toJson(),
+      if (payload != null) 'payload': payload?.toJson(),
+      'deleted': deleted,
     };
   }
 
@@ -131,13 +142,15 @@ class _StoredGpsRecordImpl extends StoredGpsRecord {
     required String owner,
     required _is.UuidValue clientRecordId,
     required DateTime persistedAt,
-    required _i7qho75c.GpsRecordInput payload,
+    _i7qho75c.GpsRecordInput? payload,
+    bool? deleted,
   }) : super._(
          id: id,
          owner: owner,
          clientRecordId: clientRecordId,
          persistedAt: persistedAt,
          payload: payload,
+         deleted: deleted,
        );
 
   /// Returns a shallow copy of this [StoredGpsRecord]
@@ -149,14 +162,18 @@ class _StoredGpsRecordImpl extends StoredGpsRecord {
     String? owner,
     _is.UuidValue? clientRecordId,
     DateTime? persistedAt,
-    _i7qho75c.GpsRecordInput? payload,
+    Object? payload = _Undefined,
+    bool? deleted,
   }) {
     return StoredGpsRecord(
       id: id is _is.UuidValue? ? id : this.id,
       owner: owner ?? this.owner,
       clientRecordId: clientRecordId ?? this.clientRecordId,
       persistedAt: persistedAt ?? this.persistedAt,
-      payload: payload ?? this.payload.copyWith(),
+      payload: payload is _i7qho75c.GpsRecordInput?
+          ? payload
+          : this.payload?.copyWith(),
+      deleted: deleted ?? this.deleted,
     );
   }
 }
@@ -183,9 +200,14 @@ class StoredGpsRecordUpdateTable extends _is.UpdateTable<StoredGpsRecordTable> {
       );
 
   _is.ColumnValue<_i7qho75c.GpsRecordInput, _i7qho75c.GpsRecordInput> payload(
-    _i7qho75c.GpsRecordInput value,
+    _i7qho75c.GpsRecordInput? value,
   ) => _is.ColumnValue(
     table.payload,
+    value,
+  );
+
+  _is.ColumnValue<bool, bool> deleted(bool value) => _is.ColumnValue(
+    table.deleted,
     value,
   );
 }
@@ -209,6 +231,11 @@ class StoredGpsRecordTable extends _is.Table<_is.UuidValue?> {
       'payload',
       this,
     );
+    deleted = _is.ColumnBool(
+      'deleted',
+      this,
+      hasDefault: true,
+    );
   }
 
   late final StoredGpsRecordUpdateTable updateTable;
@@ -221,6 +248,8 @@ class StoredGpsRecordTable extends _is.Table<_is.UuidValue?> {
 
   late final _is.ColumnSerializable<_i7qho75c.GpsRecordInput> payload;
 
+  late final _is.ColumnBool deleted;
+
   @override
   List<_is.Column> get columns => [
     id,
@@ -228,6 +257,7 @@ class StoredGpsRecordTable extends _is.Table<_is.UuidValue?> {
     clientRecordId,
     persistedAt,
     payload,
+    deleted,
   ];
 }
 

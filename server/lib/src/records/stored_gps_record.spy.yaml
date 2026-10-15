@@ -6,7 +6,8 @@ fields:
   owner: String
   clientRecordId: UuidValue
   persistedAt: DateTime
-  payload: GpsRecordInput
+  payload: GpsRecordInput?
+  deleted: bool, default=false
 indexes:
   gps_record_owner_client_unique:
     fields: owner, clientRecordId

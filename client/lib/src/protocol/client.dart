@@ -15,6 +15,18 @@ import 'package:balmatchum_client/src/protocol/auth/login_challenge.dart'
     as _iypdqt9k;
 import 'package:balmatchum_client/src/protocol/greetings/greeting.dart'
     as _ipkbb44w;
+import 'package:balmatchum_client/src/protocol/product/daily_quiz.dart'
+    as _ig075m1r;
+import 'package:balmatchum_client/src/protocol/product/daily_record.dart'
+    as _i6924b5v;
+import 'package:balmatchum_client/src/protocol/product/daily_step_input.dart'
+    as _ijhmyv9t;
+import 'package:balmatchum_client/src/protocol/product/reward_grant.dart'
+    as _itb00fx7;
+import 'package:balmatchum_client/src/protocol/product/theme_store.dart'
+    as _i65j0qt2;
+import 'package:balmatchum_client/src/protocol/product/wallet_view.dart'
+    as _iurawp5p;
 import 'package:balmatchum_client/src/protocol/records/gps_record.dart'
     as _iy4m6z9c;
 import 'package:balmatchum_client/src/protocol/records/gps_record_input.dart'
@@ -73,6 +85,152 @@ class EndpointGreeting extends _isc.EndpointRef {
         'hello',
         {'name': name},
       );
+}
+
+/// {@category Endpoint}
+class EndpointProduct extends _isc.EndpointRef {
+  EndpointProduct(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'product';
+
+  _ida.Future<_i6924b5v.DailyRecord> getDay(String date) =>
+      caller.callServerEndpoint<_i6924b5v.DailyRecord>(
+        'product',
+        'getDay',
+        {'date': date},
+      );
+
+  _ida.Future<List<_i6924b5v.DailyRecord>> listDays(
+    String fromDate,
+    String toDate,
+  ) => caller.callServerEndpoint<List<_i6924b5v.DailyRecord>>(
+    'product',
+    'listDays',
+    {
+      'fromDate': fromDate,
+      'toDate': toDate,
+    },
+  );
+
+  _ida.Future<_iurawp5p.WalletView> getWallet() =>
+      caller.callServerEndpoint<_iurawp5p.WalletView>(
+        'product',
+        'getWallet',
+        {},
+      );
+
+  _ida.Future<int> registerStepStream(
+    String requestId,
+    int expectedGeneration,
+  ) => caller.callServerEndpoint<int>(
+    'product',
+    'registerStepStream',
+    {
+      'requestId': requestId,
+      'expectedGeneration': expectedGeneration,
+    },
+  );
+
+  _ida.Future<_i6924b5v.DailyRecord> submitSteps(
+    _ijhmyv9t.DailyStepInput input,
+  ) => caller.callServerEndpoint<_i6924b5v.DailyRecord>(
+    'product',
+    'submitSteps',
+    {'input': input},
+  );
+
+  _ida.Future<_i6924b5v.DailyRecord> deleteDay(
+    String date,
+    String requestId,
+  ) => caller.callServerEndpoint<_i6924b5v.DailyRecord>(
+    'product',
+    'deleteDay',
+    {
+      'date': date,
+      'requestId': requestId,
+    },
+  );
+
+  _ida.Future<List<_i6924b5v.DailyRecord>> listDeletions(int afterVersion) =>
+      caller.callServerEndpoint<List<_i6924b5v.DailyRecord>>(
+        'product',
+        'listDeletions',
+        {'afterVersion': afterVersion},
+      );
+
+  _ida.Future<_itb00fx7.RewardGrant> claimDay(
+    String date,
+    String requestId,
+    int expectedRevision,
+  ) => caller.callServerEndpoint<_itb00fx7.RewardGrant>(
+    'product',
+    'claimDay',
+    {
+      'date': date,
+      'requestId': requestId,
+      'expectedRevision': expectedRevision,
+    },
+  );
+
+  _ida.Future<_ig075m1r.DailyQuiz> getQuiz(String date) =>
+      caller.callServerEndpoint<_ig075m1r.DailyQuiz>(
+        'product',
+        'getQuiz',
+        {'date': date},
+      );
+
+  _ida.Future<List<_ig075m1r.DailyQuiz>> listQuizHistory(String beforeDate) =>
+      caller.callServerEndpoint<List<_ig075m1r.DailyQuiz>>(
+        'product',
+        'listQuizHistory',
+        {'beforeDate': beforeDate},
+      );
+
+  _ida.Future<_ig075m1r.DailyQuiz> answerQuiz(
+    String date,
+    int answerIndex,
+    String requestId,
+  ) => caller.callServerEndpoint<_ig075m1r.DailyQuiz>(
+    'product',
+    'answerQuiz',
+    {
+      'date': date,
+      'answerIndex': answerIndex,
+      'requestId': requestId,
+    },
+  );
+
+  _ida.Future<_i65j0qt2.ThemeStore> listThemes() =>
+      caller.callServerEndpoint<_i65j0qt2.ThemeStore>(
+        'product',
+        'listThemes',
+        {},
+      );
+
+  _ida.Future<_i65j0qt2.ThemeStore> purchaseTheme(
+    String themeId,
+    String requestId,
+  ) => caller.callServerEndpoint<_i65j0qt2.ThemeStore>(
+    'product',
+    'purchaseTheme',
+    {
+      'themeId': themeId,
+      'requestId': requestId,
+    },
+  );
+
+  _ida.Future<_i65j0qt2.ThemeStore> equipTheme(
+    String themeId,
+    String requestId,
+  ) => caller.callServerEndpoint<_i65j0qt2.ThemeStore>(
+    'product',
+    'equipTheme',
+    {
+      'themeId': themeId,
+      'requestId': requestId,
+    },
+  );
 }
 
 /// {@category Endpoint}
@@ -138,6 +296,7 @@ class Client extends _isc.ServerpodClientShared {
        ) {
     kakao = EndpointKakao(this);
     greeting = EndpointGreeting(this);
+    product = EndpointProduct(this);
     records = EndpointRecords(this);
     modules = Modules(this);
   }
@@ -145,6 +304,8 @@ class Client extends _isc.ServerpodClientShared {
   late final EndpointKakao kakao;
 
   late final EndpointGreeting greeting;
+
+  late final EndpointProduct product;
 
   late final EndpointRecords records;
 
@@ -154,6 +315,7 @@ class Client extends _isc.ServerpodClientShared {
   Map<String, _isc.EndpointRef> get endpointRefLookup => {
     'kakao': kakao,
     'greeting': greeting,
+    'product': product,
     'records': records,
   };
 

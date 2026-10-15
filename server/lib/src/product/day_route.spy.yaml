@@ -1,0 +1,5 @@
+class: DayRoute
+fields:
+  recordId: UuidValue
+  source: String
+  points: List<RoutePoint>
