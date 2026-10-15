@@ -10,6 +10,8 @@
 // ignore_for_file: invalid_use_of_internal_member
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:balmatchum_server/src/generated/product/daily_step_input.dart'
+    as _if016xvg;
 import 'package:balmatchum_server/src/generated/records/gps_record_input.dart'
     as _iax46414;
 import 'package:serverpod/serverpod.dart' as _is;
@@ -19,6 +21,7 @@ import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
     as _iais;
 import '../auth/kakao_endpoint.dart' as _if7olpvl;
 import '../greetings/greeting_endpoint.dart' as _il624ik7;
+import '../product/product_endpoint.dart' as _itexbxyn;
 import '../records/records_endpoint.dart' as _imwf5oma;
 
 class Endpoints extends _is.EndpointDispatch {
@@ -35,6 +38,12 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'greeting',
+          null,
+        ),
+      'product': _itexbxyn.ProductEndpoint()
+        ..initialize(
+          server,
+          'product',
           null,
         ),
       'records': _imwf5oma.RecordsEndpoint()
@@ -115,6 +124,314 @@ class Endpoints extends _is.EndpointDispatch {
                   (endpoints['greeting'] as _il624ik7.GreetingEndpoint).hello(
                     session,
                     params['name'],
+                  ),
+        ),
+      },
+    );
+    connectors['product'] = _is.EndpointConnector(
+      name: 'product',
+      endpoint: endpoints['product']!,
+      methodConnectors: {
+        'getDay': _is.MethodConnector(
+          name: 'getDay',
+          params: {
+            'date': _is.ParameterDescription(
+              name: 'date',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['product'] as _itexbxyn.ProductEndpoint).getDay(
+                    session,
+                    params['date'],
+                  ),
+        ),
+        'listDays': _is.MethodConnector(
+          name: 'listDays',
+          params: {
+            'fromDate': _is.ParameterDescription(
+              name: 'fromDate',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'toDate': _is.ParameterDescription(
+              name: 'toDate',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['product'] as _itexbxyn.ProductEndpoint).listDays(
+                    session,
+                    params['fromDate'],
+                    params['toDate'],
+                  ),
+        ),
+        'getWallet': _is.MethodConnector(
+          name: 'getWallet',
+          params: {},
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['product'] as _itexbxyn.ProductEndpoint)
+                  .getWallet(session),
+        ),
+        'registerStepStream': _is.MethodConnector(
+          name: 'registerStepStream',
+          params: {
+            'requestId': _is.ParameterDescription(
+              name: 'requestId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'expectedGeneration': _is.ParameterDescription(
+              name: 'expectedGeneration',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['product'] as _itexbxyn.ProductEndpoint)
+                  .registerStepStream(
+                    session,
+                    params['requestId'],
+                    params['expectedGeneration'],
+                  ),
+        ),
+        'submitSteps': _is.MethodConnector(
+          name: 'submitSteps',
+          params: {
+            'input': _is.ParameterDescription(
+              name: 'input',
+              type: _is.getType<_if016xvg.DailyStepInput>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['product'] as _itexbxyn.ProductEndpoint)
+                  .submitSteps(
+                    session,
+                    params['input'],
+                  ),
+        ),
+        'deleteDay': _is.MethodConnector(
+          name: 'deleteDay',
+          params: {
+            'date': _is.ParameterDescription(
+              name: 'date',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'requestId': _is.ParameterDescription(
+              name: 'requestId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['product'] as _itexbxyn.ProductEndpoint).deleteDay(
+                    session,
+                    params['date'],
+                    params['requestId'],
+                  ),
+        ),
+        'listDeletions': _is.MethodConnector(
+          name: 'listDeletions',
+          params: {
+            'afterVersion': _is.ParameterDescription(
+              name: 'afterVersion',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['product'] as _itexbxyn.ProductEndpoint)
+                  .listDeletions(
+                    session,
+                    params['afterVersion'],
+                  ),
+        ),
+        'claimDay': _is.MethodConnector(
+          name: 'claimDay',
+          params: {
+            'date': _is.ParameterDescription(
+              name: 'date',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'requestId': _is.ParameterDescription(
+              name: 'requestId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'expectedRevision': _is.ParameterDescription(
+              name: 'expectedRevision',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['product'] as _itexbxyn.ProductEndpoint).claimDay(
+                    session,
+                    params['date'],
+                    params['requestId'],
+                    params['expectedRevision'],
+                  ),
+        ),
+        'getQuiz': _is.MethodConnector(
+          name: 'getQuiz',
+          params: {
+            'date': _is.ParameterDescription(
+              name: 'date',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['product'] as _itexbxyn.ProductEndpoint).getQuiz(
+                    session,
+                    params['date'],
+                  ),
+        ),
+        'listQuizHistory': _is.MethodConnector(
+          name: 'listQuizHistory',
+          params: {
+            'beforeDate': _is.ParameterDescription(
+              name: 'beforeDate',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['product'] as _itexbxyn.ProductEndpoint)
+                  .listQuizHistory(
+                    session,
+                    params['beforeDate'],
+                  ),
+        ),
+        'answerQuiz': _is.MethodConnector(
+          name: 'answerQuiz',
+          params: {
+            'date': _is.ParameterDescription(
+              name: 'date',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'answerIndex': _is.ParameterDescription(
+              name: 'answerIndex',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'requestId': _is.ParameterDescription(
+              name: 'requestId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['product'] as _itexbxyn.ProductEndpoint)
+                  .answerQuiz(
+                    session,
+                    params['date'],
+                    params['answerIndex'],
+                    params['requestId'],
+                  ),
+        ),
+        'listThemes': _is.MethodConnector(
+          name: 'listThemes',
+          params: {},
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['product'] as _itexbxyn.ProductEndpoint)
+                  .listThemes(session),
+        ),
+        'purchaseTheme': _is.MethodConnector(
+          name: 'purchaseTheme',
+          params: {
+            'themeId': _is.ParameterDescription(
+              name: 'themeId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'requestId': _is.ParameterDescription(
+              name: 'requestId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['product'] as _itexbxyn.ProductEndpoint)
+                  .purchaseTheme(
+                    session,
+                    params['themeId'],
+                    params['requestId'],
+                  ),
+        ),
+        'equipTheme': _is.MethodConnector(
+          name: 'equipTheme',
+          params: {
+            'themeId': _is.ParameterDescription(
+              name: 'themeId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'requestId': _is.ParameterDescription(
+              name: 'requestId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['product'] as _itexbxyn.ProductEndpoint)
+                  .equipTheme(
+                    session,
+                    params['themeId'],
+                    params['requestId'],
                   ),
         ),
       },

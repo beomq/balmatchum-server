@@ -1,0 +1,13 @@
+class: StepRevision
+serverOnly: true
+table: step_revision
+fields:
+  owner: String
+  date: String
+  generation: int
+  revision: int
+  digest: String
+indexes:
+  step_revision_key:
+    fields: owner, date, generation, revision
+    unique: true

@@ -1,0 +1,11 @@
+class: DailyQuiz
+fields:
+  date: String
+  questionId: String
+  question: String
+  choices: List<String>
+  answerIndex: int?
+  correctIndex: int?
+  explanation: String?
+  awardedPoints: int
+  fixtureLabel: String

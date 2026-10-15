@@ -3,6 +3,21 @@ kakao:
   - loginKakao:
 greeting:
   - hello:
+product:
+  - getDay:
+  - listDays:
+  - getWallet:
+  - registerStepStream:
+  - submitSteps:
+  - deleteDay:
+  - listDeletions:
+  - claimDay:
+  - getQuiz:
+  - listQuizHistory:
+  - answerQuiz:
+  - listThemes:
+  - purchaseTheme:
+  - equipTheme:
 records:
   - saveConfirmed:
   - getMine:
