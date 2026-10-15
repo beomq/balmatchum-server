@@ -38,10 +38,12 @@ Future<void> main(List<String> args) async {
     ),
   );
   configureAuth(pod, sessionPepper: 'local-disposable-product-harness');
-  await pod.start(runInGuardedZone: false);
-  final session = await pod.createSession(enableLogging: false);
+  Session? session;
+  Directory? output;
   try {
-    final output = await prepareDevTestOutput();
+    await pod.start(runInGuardedZone: false);
+    session = await pod.createSession(enableLogging: false);
+    output = await prepareDevTestOutput();
     final auth = await bootstrapDevTestUser(session);
     await File('${output.path}/session.json').writeAsString(
       jsonEncode(auth.toJson()),
@@ -50,8 +52,19 @@ Future<void> main(List<String> args) async {
     stdout.writeln(
       'PRODUCT_HARNESS_READY ${output.absolute.path}/session.json',
     );
+  } catch (_) {
+    await session?.close();
+    session = null;
+    try {
+      await pod.shutdown(exitProcess: false);
+    } finally {
+      if (output != null) await output.delete(recursive: true);
+      await directory.delete(recursive: true);
+    }
+    stderr.writeln('Product harness startup failed.');
+    exitCode = 1;
   } finally {
-    await session.close();
+    await session?.close();
   }
   // The monitor owns this process tree. Its teardown also stops the embedded DB.
 }
