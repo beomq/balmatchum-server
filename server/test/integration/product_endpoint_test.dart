@@ -56,6 +56,16 @@ void main() {
         {},
       ),
     );
+    setUp(() async {
+      final session = owner.build();
+      await AuthUser.db.insertRow(
+        session,
+        AuthUser(
+          id: UuidValue.fromString(session.authenticated!.userIdentifier),
+          scopeNames: {},
+        ),
+      );
+    });
     test('every product method requires authentication', () async {
       final calls = <Future<dynamic>>[
         endpoints.product.getDay(builder, date),
@@ -121,8 +131,10 @@ void main() {
 
     Future<Session> owner([String? id]) async {
       final s = await pod.createSession(enableLogging: false);
+      final userId =
+          id ?? (await AuthServices.instance.authUsers.create(s)).id.uuid;
       s.updateAuthenticated(
-        AuthenticationInfo(id ?? const Uuid().v4(), {}, authId: 'test'),
+        AuthenticationInfo(userId, {}, authId: 'test'),
       );
       sessions.add(s);
       return s;

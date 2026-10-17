@@ -38,7 +38,9 @@ ID token 시간 검증은 기본 60초 오차를 허용합니다. JWKS는 프로
 `deleteStaleLoginAttempts`는 만료 후 1일을 초과한 행만 삭제합니다. 이번에는 자동 스케줄을
 등록하지 않았습니다. 운영 시 Serverpod 4.0.3의 생성 FutureCall dispatch `callAtTime`을 이용한
 주기 정리를 검토할 수 있으나 실행 주기·실패 재실행·중복 등록 정책은 배포 설계에서 확정합니다.
-ExternalIdentity의 authUserId는 FK이며 사용자 삭제는 RESTRICT로 막습니다.
+ExternalIdentity의 authUserId는 RESTRICT FK입니다. [계정 삭제 API](ACCOUNT_API.md)는
+같은 트랜잭션에서 이 identity를 먼저 지운 뒤 SDK 사용자와 세션을 삭제합니다.
+Kakao 외부 연결 해제는 수행하지 않습니다.
 실제 카카오 콘솔 등록과 앱 로그인 검증은 별도 단계입니다. 테스트는 공개 테스트 키와
 주입된 JWKS/clock을 사용하며 실제 자격증명을 요구하지 않습니다.
 

@@ -21,6 +21,7 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as _iacs;
 import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
     as _iais;
+import '../account/account_endpoint.dart' as _it9bm8zx;
 import '../auth/kakao_endpoint.dart' as _if7olpvl;
 import '../greetings/greeting_endpoint.dart' as _il624ik7;
 import '../product/product_endpoint.dart' as _itexbxyn;
@@ -31,6 +32,12 @@ class Endpoints extends _is.EndpointDispatch {
   @override
   void initializeEndpoints(_is.Server server) {
     var endpoints = <String, _is.Endpoint>{
+      'account': _it9bm8zx.AccountEndpoint()
+        ..initialize(
+          server,
+          'account',
+          null,
+        ),
       'kakao': _if7olpvl.KakaoEndpoint()
         ..initialize(
           server,
@@ -62,6 +69,22 @@ class Endpoints extends _is.EndpointDispatch {
           null,
         ),
     };
+    connectors['account'] = _is.EndpointConnector(
+      name: 'account',
+      endpoint: endpoints['account']!,
+      methodConnectors: {
+        'deleteAccount': _is.MethodConnector(
+          name: 'deleteAccount',
+          params: {},
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['account'] as _it9bm8zx.AccountEndpoint)
+                  .deleteAccount(session),
+        ),
+      },
+    );
     connectors['kakao'] = _is.EndpointConnector(
       name: 'kakao',
       endpoint: endpoints['kakao']!,

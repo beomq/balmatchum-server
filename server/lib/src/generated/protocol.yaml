@@ -1,3 +1,5 @@
+account:
+  - deleteAccount:
 kakao:
   - beginLogin:
   - loginKakao:

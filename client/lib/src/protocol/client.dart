@@ -46,6 +46,21 @@ import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'protocol.dart' as _il2as5qe;
 
 /// {@category Endpoint}
+class EndpointAccount extends _isc.EndpointRef {
+  EndpointAccount(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'account';
+
+  /// Deletes only the authenticated account and its locally stored data.
+  _ida.Future<void> deleteAccount() => caller.callServerEndpoint<void>(
+    'account',
+    'deleteAccount',
+    {},
+  );
+}
+
+/// {@category Endpoint}
 class EndpointKakao extends _isc.EndpointRef {
   EndpointKakao(_isc.EndpointCaller caller) : super(caller);
 
@@ -353,6 +368,7 @@ class Client extends _isc.ServerpodClientShared {
              disconnectStreamsOnLostInternetConnection,
          httpClientOverride: httpClientOverride,
        ) {
+    account = EndpointAccount(this);
     kakao = EndpointKakao(this);
     greeting = EndpointGreeting(this);
     product = EndpointProduct(this);
@@ -360,6 +376,8 @@ class Client extends _isc.ServerpodClientShared {
     records = EndpointRecords(this);
     modules = Modules(this);
   }
+
+  late final EndpointAccount account;
 
   late final EndpointKakao kakao;
 
@@ -375,6 +393,7 @@ class Client extends _isc.ServerpodClientShared {
 
   @override
   Map<String, _isc.EndpointRef> get endpointRefLookup => {
+    'account': account,
     'kakao': kakao,
     'greeting': greeting,
     'product': product,

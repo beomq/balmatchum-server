@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:balmatchum_server/src/generated/protocol.dart';
 import 'package:balmatchum_server/src/records/records_endpoint.dart';
 import 'package:serverpod/serverpod.dart';
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
 import 'package:test/test.dart';
 
 import 'test_tools/serverpod_test_tools.dart';
@@ -47,6 +48,19 @@ void main() {
         {},
       ),
     );
+
+    setUp(() async {
+      for (final user in [owner, other]) {
+        final session = user.build();
+        await AuthUser.db.insertRow(
+          session,
+          AuthUser(
+            id: UuidValue.fromString(session.authenticated!.userIdentifier),
+            scopeNames: {},
+          ),
+        );
+      }
+    });
 
     test('requires authentication for both endpoints', () async {
       await expectLater(
@@ -275,6 +289,16 @@ void main() {
         {},
       ),
     );
+    setUp(() async {
+      final session = owner.build();
+      await AuthUser.db.insertRow(
+        session,
+        AuthUser(
+          id: UuidValue.fromString(session.authenticated!.userIdentifier),
+          scopeNames: {},
+        ),
+      );
+    });
     test('concurrent retries commit exactly one full record', () async {
       final input = record();
       final receipts = await Future.wait([

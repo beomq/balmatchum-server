@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:clock/clock.dart';
 import 'package:crypto/crypto.dart';
 import 'package:serverpod/serverpod.dart';
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
 
 import '../generated/protocol.dart';
 
@@ -48,13 +49,26 @@ bool touchesDay(GpsRecordInput input, String date) {
   return input.startedAt.isBefore(end) && !input.endedAt.isBefore(start);
 }
 
-/// One owner lock covers money, generations, day deletion, GPS and reads.
-/// This intentionally trades per-owner parallelism for a single lock order.
+/// Lock the existing auth user BEFORE creating or locking product state.
+/// A request authenticated before account deletion must recheck existence here.
+/// FOR UPDATE waits for deletion to commit, then returns no row; conversely a
+/// mutation holding this lock must commit before deletion can purge its writes.
 Future<ProductAccount> lockProductAccount(
   Session session,
   String owner,
   Transaction tx,
 ) async {
+  final user = await AuthUser.db.findFirstRow(
+    session,
+    where: (t) => t.id.equals(UuidValue.fromString(owner)),
+    lockMode: LockMode.forUpdate,
+    transaction: tx,
+  );
+  if (user == null) {
+    throw NotAuthorizedException(
+      reason: AuthenticationFailureReason.unauthenticated,
+    );
+  }
   await ProductAccount.db.insert(
     session,
     [ProductAccount(owner: owner)],

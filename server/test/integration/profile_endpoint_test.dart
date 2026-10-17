@@ -43,6 +43,19 @@ void main() {
       ),
     );
 
+    setUp(() async {
+      for (final owner in [a, b]) {
+        final session = owner.build();
+        await AuthUser.db.insertRow(
+          session,
+          AuthUser(
+            id: UuidValue.fromString(session.authenticated!.userIdentifier),
+            scopeNames: {},
+          ),
+        );
+      }
+    });
+
     test('all methods reject anonymous requests', () async {
       await Future.wait(
         [
