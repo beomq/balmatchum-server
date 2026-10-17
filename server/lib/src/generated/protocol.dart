@@ -43,6 +43,10 @@ import 'product/theme_item.dart' as _i4gtfwun;
 import 'product/theme_ownership.dart' as _ileabnff;
 import 'product/theme_store.dart' as _iotuzcr6;
 import 'product/wallet_view.dart' as _izf11uf3;
+import 'profile/dog_profile.dart' as _i4zjkzo6;
+import 'profile/profile_exception.dart' as _ie17qpis;
+import 'profile/profile_input.dart' as _ib0yiys4;
+import 'profile/profile_view.dart' as _i7a0m7me;
 import 'records/gps_record.dart' as _ixays1el;
 import 'records/gps_record_input.dart' as _ijl0tr6b;
 import 'records/record_exception.dart' as _ihyrwhon;
@@ -71,6 +75,10 @@ export 'product/theme_item.dart';
 export 'product/theme_ownership.dart';
 export 'product/theme_store.dart';
 export 'product/wallet_view.dart';
+export 'profile/dog_profile.dart';
+export 'profile/profile_exception.dart';
+export 'profile/profile_input.dart';
+export 'profile/profile_view.dart';
 export 'records/gps_record.dart';
 export 'records/gps_record_input.dart';
 export 'records/record_exception.dart';
@@ -86,6 +94,81 @@ class Protocol extends _is.DatabaseSerializationManager {
   static final Protocol _instance = Protocol._().._registerHostProtocols();
 
   static List<_isp.TableDefinition> get targetTableDefinitions => [
+    _isp.TableDefinition(
+      name: 'dog_profile',
+      dartName: 'DogProfile',
+      schema: 'public',
+      module: 'balmatchum',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'owner',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'breedId',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'name',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'sex',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'dailyGoal',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'firstMetAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'revision',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '1',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'dog_profile_owner',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'owner',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
     _isp.TableDefinition(
       name: 'external_identity',
       dartName: 'ExternalIdentity',
@@ -914,6 +997,18 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _izf11uf3.WalletView) {
       return _izf11uf3.WalletView.fromJson(data) as T;
     }
+    if (t == _i4zjkzo6.DogProfile) {
+      return _i4zjkzo6.DogProfile.fromJson(data) as T;
+    }
+    if (t == _ie17qpis.ProfileException) {
+      return _ie17qpis.ProfileException.fromJson(data) as T;
+    }
+    if (t == _ib0yiys4.ProfileInput) {
+      return _ib0yiys4.ProfileInput.fromJson(data) as T;
+    }
+    if (t == _i7a0m7me.ProfileView) {
+      return _i7a0m7me.ProfileView.fromJson(data) as T;
+    }
     if (t == _ixays1el.GpsRecord) {
       return _ixays1el.GpsRecord.fromJson(data) as T;
     }
@@ -1005,6 +1100,19 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (t == _is.getType<_izf11uf3.WalletView?>()) {
       return (data != null ? _izf11uf3.WalletView.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_i4zjkzo6.DogProfile?>()) {
+      return (data != null ? _i4zjkzo6.DogProfile.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_ie17qpis.ProfileException?>()) {
+      return (data != null ? _ie17qpis.ProfileException.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_ib0yiys4.ProfileInput?>()) {
+      return (data != null ? _ib0yiys4.ProfileInput.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_i7a0m7me.ProfileView?>()) {
+      return (data != null ? _i7a0m7me.ProfileView.fromJson(data) : null) as T;
     }
     if (t == _is.getType<_ixays1el.GpsRecord?>()) {
       return (data != null ? _ixays1el.GpsRecord.fromJson(data) : null) as T;
@@ -1103,6 +1211,10 @@ class Protocol extends _is.DatabaseSerializationManager {
       _ileabnff.ThemeOwnership => 'ThemeOwnership',
       _iotuzcr6.ThemeStore => 'ThemeStore',
       _izf11uf3.WalletView => 'WalletView',
+      _i4zjkzo6.DogProfile => 'DogProfile',
+      _ie17qpis.ProfileException => 'ProfileException',
+      _ib0yiys4.ProfileInput => 'ProfileInput',
+      _i7a0m7me.ProfileView => 'ProfileView',
       _ixays1el.GpsRecord => 'GpsRecord',
       _ijl0tr6b.GpsRecordInput => 'GpsRecordInput',
       _ihyrwhon.RecordException => 'RecordException',
@@ -1167,6 +1279,14 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'ThemeStore';
       case _izf11uf3.WalletView():
         return 'WalletView';
+      case _i4zjkzo6.DogProfile():
+        return 'DogProfile';
+      case _ie17qpis.ProfileException():
+        return 'ProfileException';
+      case _ib0yiys4.ProfileInput():
+        return 'ProfileInput';
+      case _i7a0m7me.ProfileView():
+        return 'ProfileView';
       case _ixays1el.GpsRecord():
         return 'GpsRecord';
       case _ijl0tr6b.GpsRecordInput():
@@ -1271,6 +1391,18 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (dataClassName == 'WalletView') {
       return deserialize<_izf11uf3.WalletView>(data['data']);
     }
+    if (dataClassName == 'DogProfile') {
+      return deserialize<_i4zjkzo6.DogProfile>(data['data']);
+    }
+    if (dataClassName == 'ProfileException') {
+      return deserialize<_ie17qpis.ProfileException>(data['data']);
+    }
+    if (dataClassName == 'ProfileInput') {
+      return deserialize<_ib0yiys4.ProfileInput>(data['data']);
+    }
+    if (dataClassName == 'ProfileView') {
+      return deserialize<_i7a0m7me.ProfileView>(data['data']);
+    }
     if (dataClassName == 'GpsRecord') {
       return deserialize<_ixays1el.GpsRecord>(data['data']);
     }
@@ -1348,6 +1480,8 @@ class Protocol extends _is.DatabaseSerializationManager {
         return _iypt9oiw.StepRevision.t;
       case _ileabnff.ThemeOwnership:
         return _ileabnff.ThemeOwnership.t;
+      case _i4zjkzo6.DogProfile:
+        return _i4zjkzo6.DogProfile.t;
       case _iyylbrve.StoredGpsRecord:
         return _iyylbrve.StoredGpsRecord.t;
     }

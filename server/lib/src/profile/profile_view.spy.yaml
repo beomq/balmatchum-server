@@ -1,0 +1,8 @@
+class: ProfileView
+fields:
+  breedId: String
+  name: String
+  sex: String
+  dailyGoal: int
+  firstMetAt: DateTime
+  revision: int

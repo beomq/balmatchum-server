@@ -18,6 +18,11 @@ product:
   - listThemes:
   - purchaseTheme:
   - equipTheme:
+profile:
+  - getProfile:
+  - createProfile:
+  - renameDog:
+  - updateGoal:
 records:
   - saveConfirmed:
   - getMine:

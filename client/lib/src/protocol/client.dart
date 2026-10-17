@@ -27,6 +27,10 @@ import 'package:balmatchum_client/src/protocol/product/theme_store.dart'
     as _i65j0qt2;
 import 'package:balmatchum_client/src/protocol/product/wallet_view.dart'
     as _iurawp5p;
+import 'package:balmatchum_client/src/protocol/profile/profile_input.dart'
+    as _i6wqbm42;
+import 'package:balmatchum_client/src/protocol/profile/profile_view.dart'
+    as _i9lgbyro;
 import 'package:balmatchum_client/src/protocol/records/gps_record.dart'
     as _iy4m6z9c;
 import 'package:balmatchum_client/src/protocol/records/gps_record_input.dart'
@@ -234,6 +238,61 @@ class EndpointProduct extends _isc.EndpointRef {
 }
 
 /// {@category Endpoint}
+class EndpointProfile extends _isc.EndpointRef {
+  EndpointProfile(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'profile';
+
+  _ida.Future<_i9lgbyro.ProfileView?> getProfile() =>
+      caller.callServerEndpoint<_i9lgbyro.ProfileView?>(
+        'profile',
+        'getProfile',
+        {},
+      );
+
+  _ida.Future<_i9lgbyro.ProfileView> createProfile(
+    _i6wqbm42.ProfileInput input,
+    String requestId,
+  ) => caller.callServerEndpoint<_i9lgbyro.ProfileView>(
+    'profile',
+    'createProfile',
+    {
+      'input': input,
+      'requestId': requestId,
+    },
+  );
+
+  _ida.Future<_i9lgbyro.ProfileView> renameDog(
+    String name,
+    String requestId,
+    int expectedRevision,
+  ) => caller.callServerEndpoint<_i9lgbyro.ProfileView>(
+    'profile',
+    'renameDog',
+    {
+      'name': name,
+      'requestId': requestId,
+      'expectedRevision': expectedRevision,
+    },
+  );
+
+  _ida.Future<_i9lgbyro.ProfileView> updateGoal(
+    int goal,
+    String requestId,
+    int expectedRevision,
+  ) => caller.callServerEndpoint<_i9lgbyro.ProfileView>(
+    'profile',
+    'updateGoal',
+    {
+      'goal': goal,
+      'requestId': requestId,
+      'expectedRevision': expectedRevision,
+    },
+  );
+}
+
+/// {@category Endpoint}
 class EndpointRecords extends _isc.EndpointRef {
   EndpointRecords(_isc.EndpointCaller caller) : super(caller);
 
@@ -297,6 +356,7 @@ class Client extends _isc.ServerpodClientShared {
     kakao = EndpointKakao(this);
     greeting = EndpointGreeting(this);
     product = EndpointProduct(this);
+    profile = EndpointProfile(this);
     records = EndpointRecords(this);
     modules = Modules(this);
   }
@@ -307,6 +367,8 @@ class Client extends _isc.ServerpodClientShared {
 
   late final EndpointProduct product;
 
+  late final EndpointProfile profile;
+
   late final EndpointRecords records;
 
   late final Modules modules;
@@ -316,6 +378,7 @@ class Client extends _isc.ServerpodClientShared {
     'kakao': kakao,
     'greeting': greeting,
     'product': product,
+    'profile': profile,
     'records': records,
   };
 

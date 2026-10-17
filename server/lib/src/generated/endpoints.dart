@@ -12,6 +12,8 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:balmatchum_server/src/generated/product/daily_step_input.dart'
     as _if016xvg;
+import 'package:balmatchum_server/src/generated/profile/profile_input.dart'
+    as _ij17w8zz;
 import 'package:balmatchum_server/src/generated/records/gps_record_input.dart'
     as _iax46414;
 import 'package:serverpod/serverpod.dart' as _is;
@@ -22,6 +24,7 @@ import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
 import '../auth/kakao_endpoint.dart' as _if7olpvl;
 import '../greetings/greeting_endpoint.dart' as _il624ik7;
 import '../product/product_endpoint.dart' as _itexbxyn;
+import '../profile/profile_endpoint.dart' as _i6ky944g;
 import '../records/records_endpoint.dart' as _imwf5oma;
 
 class Endpoints extends _is.EndpointDispatch {
@@ -44,6 +47,12 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'product',
+          null,
+        ),
+      'profile': _i6ky944g.ProfileEndpoint()
+        ..initialize(
+          server,
+          'profile',
           null,
         ),
       'records': _imwf5oma.RecordsEndpoint()
@@ -432,6 +441,109 @@ class Endpoints extends _is.EndpointDispatch {
                     session,
                     params['themeId'],
                     params['requestId'],
+                  ),
+        ),
+      },
+    );
+    connectors['profile'] = _is.EndpointConnector(
+      name: 'profile',
+      endpoint: endpoints['profile']!,
+      methodConnectors: {
+        'getProfile': _is.MethodConnector(
+          name: 'getProfile',
+          params: {},
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['profile'] as _i6ky944g.ProfileEndpoint)
+                  .getProfile(session),
+        ),
+        'createProfile': _is.MethodConnector(
+          name: 'createProfile',
+          params: {
+            'input': _is.ParameterDescription(
+              name: 'input',
+              type: _is.getType<_ij17w8zz.ProfileInput>(),
+              nullable: false,
+            ),
+            'requestId': _is.ParameterDescription(
+              name: 'requestId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['profile'] as _i6ky944g.ProfileEndpoint)
+                  .createProfile(
+                    session,
+                    params['input'],
+                    params['requestId'],
+                  ),
+        ),
+        'renameDog': _is.MethodConnector(
+          name: 'renameDog',
+          params: {
+            'name': _is.ParameterDescription(
+              name: 'name',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'requestId': _is.ParameterDescription(
+              name: 'requestId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'expectedRevision': _is.ParameterDescription(
+              name: 'expectedRevision',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['profile'] as _i6ky944g.ProfileEndpoint).renameDog(
+                    session,
+                    params['name'],
+                    params['requestId'],
+                    params['expectedRevision'],
+                  ),
+        ),
+        'updateGoal': _is.MethodConnector(
+          name: 'updateGoal',
+          params: {
+            'goal': _is.ParameterDescription(
+              name: 'goal',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'requestId': _is.ParameterDescription(
+              name: 'requestId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'expectedRevision': _is.ParameterDescription(
+              name: 'expectedRevision',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['profile'] as _i6ky944g.ProfileEndpoint)
+                  .updateGoal(
+                    session,
+                    params['goal'],
+                    params['requestId'],
+                    params['expectedRevision'],
                   ),
         ),
       },
