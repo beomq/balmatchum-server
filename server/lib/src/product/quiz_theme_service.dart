@@ -135,7 +135,7 @@ extension QuizThemeService on ProductService {
           ),
       ],
       equippedTheme: account.equippedTheme,
-      balance: await balance(),
+      balance: await balance(fixture: fixture),
       fixtureLabel: fixture ? productFixtureLabel : null,
     );
   }

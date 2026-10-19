@@ -6,4 +6,8 @@ fields:
   fromUnits: int
   throughUnits: int
   grantedAt: DateTime
-  fixtureLabel: String
+  fixtureLabel: String?
+  policyVersion: String?
+  basePoints: int?
+  multiplier: int?
+  slices: List<RewardSlice>?

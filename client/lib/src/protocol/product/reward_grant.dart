@@ -10,7 +10,9 @@
 // ignore_for_file: invalid_use_of_internal_member
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:balmatchum_client/src/protocol/protocol.dart' as _i5u3fx7i;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+import '../product/reward_slice.dart' as _i03s1ada;
 
 abstract class RewardGrant
     implements _isc.SerializableModel, _isc.ProtocolSerialization {
@@ -21,7 +23,11 @@ abstract class RewardGrant
     required this.fromUnits,
     required this.throughUnits,
     required this.grantedAt,
-    required this.fixtureLabel,
+    this.fixtureLabel,
+    this.policyVersion,
+    this.basePoints,
+    this.multiplier,
+    this.slices,
   });
 
   factory RewardGrant({
@@ -31,7 +37,11 @@ abstract class RewardGrant
     required int fromUnits,
     required int throughUnits,
     required DateTime grantedAt,
-    required String fixtureLabel,
+    String? fixtureLabel,
+    String? policyVersion,
+    int? basePoints,
+    int? multiplier,
+    List<_i03s1ada.RewardSlice>? slices,
   }) = _RewardGrantImpl;
 
   factory RewardGrant.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -44,7 +54,15 @@ abstract class RewardGrant
       grantedAt: _isc.DateTimeJsonExtension.fromJson(
         jsonSerialization['grantedAt'],
       ),
-      fixtureLabel: jsonSerialization['fixtureLabel'] as String,
+      fixtureLabel: jsonSerialization['fixtureLabel'] as String?,
+      policyVersion: jsonSerialization['policyVersion'] as String?,
+      basePoints: jsonSerialization['basePoints'] as int?,
+      multiplier: jsonSerialization['multiplier'] as int?,
+      slices: jsonSerialization['slices'] == null
+          ? null
+          : _i5u3fx7i.Protocol().deserialize<List<_i03s1ada.RewardSlice>>(
+              jsonSerialization['slices'],
+            ),
     );
   }
 
@@ -60,7 +78,15 @@ abstract class RewardGrant
 
   DateTime grantedAt;
 
-  String fixtureLabel;
+  String? fixtureLabel;
+
+  String? policyVersion;
+
+  int? basePoints;
+
+  int? multiplier;
+
+  List<_i03s1ada.RewardSlice>? slices;
 
   /// Returns a shallow copy of this [RewardGrant]
   /// with some or all fields replaced by the given arguments.
@@ -73,6 +99,10 @@ abstract class RewardGrant
     int? throughUnits,
     DateTime? grantedAt,
     String? fixtureLabel,
+    String? policyVersion,
+    int? basePoints,
+    int? multiplier,
+    List<_i03s1ada.RewardSlice>? slices,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -84,7 +114,12 @@ abstract class RewardGrant
       'fromUnits': fromUnits,
       'throughUnits': throughUnits,
       'grantedAt': grantedAt.toJson(),
-      'fixtureLabel': fixtureLabel,
+      if (fixtureLabel != null) 'fixtureLabel': fixtureLabel,
+      if (policyVersion != null) 'policyVersion': policyVersion,
+      if (basePoints != null) 'basePoints': basePoints,
+      if (multiplier != null) 'multiplier': multiplier,
+      if (slices != null)
+        'slices': slices?.toJson(valueToJson: (v) => v.toJson()),
     };
   }
 
@@ -98,7 +133,12 @@ abstract class RewardGrant
       'fromUnits': fromUnits,
       'throughUnits': throughUnits,
       'grantedAt': grantedAt.toJson(),
-      'fixtureLabel': fixtureLabel,
+      if (fixtureLabel != null) 'fixtureLabel': fixtureLabel,
+      if (policyVersion != null) 'policyVersion': policyVersion,
+      if (basePoints != null) 'basePoints': basePoints,
+      if (multiplier != null) 'multiplier': multiplier,
+      if (slices != null)
+        'slices': slices?.toJson(valueToJson: (v) => v.toJsonForProtocol()),
     };
   }
 
@@ -108,6 +148,8 @@ abstract class RewardGrant
   }
 }
 
+class _Undefined {}
+
 class _RewardGrantImpl extends RewardGrant {
   _RewardGrantImpl({
     required int ledgerId,
@@ -116,7 +158,11 @@ class _RewardGrantImpl extends RewardGrant {
     required int fromUnits,
     required int throughUnits,
     required DateTime grantedAt,
-    required String fixtureLabel,
+    String? fixtureLabel,
+    String? policyVersion,
+    int? basePoints,
+    int? multiplier,
+    List<_i03s1ada.RewardSlice>? slices,
   }) : super._(
          ledgerId: ledgerId,
          date: date,
@@ -125,6 +171,10 @@ class _RewardGrantImpl extends RewardGrant {
          throughUnits: throughUnits,
          grantedAt: grantedAt,
          fixtureLabel: fixtureLabel,
+         policyVersion: policyVersion,
+         basePoints: basePoints,
+         multiplier: multiplier,
+         slices: slices,
        );
 
   /// Returns a shallow copy of this [RewardGrant]
@@ -138,7 +188,11 @@ class _RewardGrantImpl extends RewardGrant {
     int? fromUnits,
     int? throughUnits,
     DateTime? grantedAt,
-    String? fixtureLabel,
+    Object? fixtureLabel = _Undefined,
+    Object? policyVersion = _Undefined,
+    Object? basePoints = _Undefined,
+    Object? multiplier = _Undefined,
+    Object? slices = _Undefined,
   }) {
     return RewardGrant(
       ledgerId: ledgerId ?? this.ledgerId,
@@ -147,7 +201,15 @@ class _RewardGrantImpl extends RewardGrant {
       fromUnits: fromUnits ?? this.fromUnits,
       throughUnits: throughUnits ?? this.throughUnits,
       grantedAt: grantedAt ?? this.grantedAt,
-      fixtureLabel: fixtureLabel ?? this.fixtureLabel,
+      fixtureLabel: fixtureLabel is String? ? fixtureLabel : this.fixtureLabel,
+      policyVersion: policyVersion is String?
+          ? policyVersion
+          : this.policyVersion,
+      basePoints: basePoints is int? ? basePoints : this.basePoints,
+      multiplier: multiplier is int? ? multiplier : this.multiplier,
+      slices: slices is List<_i03s1ada.RewardSlice>?
+          ? slices
+          : this.slices?.map((e0) => e0.copyWith()).toList(),
     );
   }
 }

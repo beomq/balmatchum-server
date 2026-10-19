@@ -46,7 +46,7 @@ class _Token implements api.ClientAuthKeyProvider {
 }
 
 void main() {
-  withServerpod('Unconfigured product policy and authentication', (
+  withServerpod('Production steps and fixture authentication', (
     builder,
     endpoints,
   ) {
@@ -76,6 +76,7 @@ void main() {
         endpoints.product.deleteDay(builder, date, 'delete'),
         endpoints.product.listDeletions(builder, 0),
         endpoints.product.claimDay(builder, date, 'claim', 0),
+        endpoints.product.claimDayWithAd(builder, date, 'ad', 0, 'intent'),
         endpoints.product.getQuiz(builder, date),
         endpoints.product.listQuizHistory(builder, date),
         endpoints.product.answerQuiz(builder, date, 0, 'answer'),
@@ -92,33 +93,58 @@ void main() {
         ),
       );
     });
-    test('test mode cannot issue fixture points or prices', () async {
-      await endpoints.product.registerStepStream(owner, 'register', 0);
-      final day = await endpoints.product.submitSteps(owner, snapshot(7000));
-      expect(day.steps, 7000);
-      expect(day.claimablePoints, isNull);
-      expect(day.fixtureLabel, isNull);
-      expect(day.rewardStatus, 'policyUnconfigured');
-      await expectLater(
-        endpoints.product.claimDay(owner, date, 'claim', day.revision),
-        productError('policyUnconfigured'),
-      );
-      await expectLater(
-        endpoints.product.purchaseTheme(owner, 'cloudy', 'purchase'),
-        productError('policyUnconfigured'),
-      );
-      await expectLater(
-        endpoints.product.getQuiz(owner, date),
-        productError('policyUnconfigured'),
-      );
-      expect(
-        (await endpoints.product.listThemes(
-          owner,
-        )).items.every((t) => t.price == null),
-        isTrue,
-      );
-      expect(await PointEntry.db.count(owner.build()), 0);
-    });
+    test(
+      'production steps are enabled but fixture quiz and prices are not',
+      () async {
+        await withClock(fixedClock, () async {
+          await endpoints.product.registerStepStream(owner, 'register', 0);
+          final day = await endpoints.product.submitSteps(
+            owner,
+            snapshot(7000),
+          );
+          expect(day.claimablePoints, 70);
+          expect(day.adClaimablePoints, 140);
+          expect(day.fixtureLabel, isNull);
+          expect(day.policyVersion, stepPolicyVersion);
+          final grant = await endpoints.product.claimDay(
+            owner,
+            date,
+            'claim',
+            day.revision,
+          );
+          expect(grant.amount, 70);
+          expect(grant.fixtureLabel, isNull);
+          final session = owner.build();
+          await PointEntry.db.insertRow(
+            session,
+            PointEntry(
+              owner: session.authenticated!.userIdentifier,
+              entryKey: 'legacy-fixture',
+              kind: 'quiz',
+              amount: 2,
+              policyVersion: productFixtureLabel,
+              createdAt: fixedNow,
+            ),
+          );
+          expect((await endpoints.product.getWallet(owner)).balance, 70);
+          expect((await endpoints.product.listThemes(owner)).balance, 70);
+          await expectLater(
+            endpoints.product.purchaseTheme(owner, 'cloudy', 'purchase'),
+            productError('policyUnconfigured'),
+          );
+          await expectLater(
+            endpoints.product.getQuiz(owner, date),
+            productError('policyUnconfigured'),
+          );
+          expect(
+            (await endpoints.product.listThemes(
+              owner,
+            )).items.every((t) => t.price == null),
+            isTrue,
+          );
+        });
+      },
+    );
   });
 
   group('Product fixtures on disposable development database', () {
@@ -226,10 +252,10 @@ void main() {
           ),
         );
         expect(result.steps, 7000);
-        expect(result.fixtureLabel, productFixtureLabel);
+        expect(result.fixtureLabel, isNull);
         expect((await b.product.getDay(today)).steps, isNull);
         final grant = await a.product.claimDay(today, 'claim', result.revision);
-        expect(grant.amount, 7);
+        expect(grant.amount, 70);
         expect((await b.product.getWallet()).balance, 0);
         await a.product.deleteDay(today, 'delete');
         expect(await b.product.listDeletions(0), isEmpty);
@@ -321,6 +347,168 @@ void main() {
       },
     );
 
+    test(
+      '100 step threshold, daily cap and goal-independent increments',
+      () async {
+        final s = await ready(steps: 99);
+        await at(() async {
+          var day = await endpoint.getDay(s, date);
+          expect(day.claimablePoints, 0);
+          expect(day.basePoints, 0);
+          expect(day.stepsPerPoint, 100);
+          expect(day.dailyBaseCap, 100);
+          await expectLater(
+            endpoint.claimDay(s, date, 'below', day.revision),
+            productError('nothingToClaim'),
+          );
+          day = await endpoint.submitSteps(s, snapshot(100, revision: 2));
+          expect(day.claimablePoints, 1);
+          expect(
+            (await endpoint.claimDay(s, date, 'one', day.revision)).amount,
+            1,
+          );
+          day = await endpoint.submitSteps(s, snapshot(199, revision: 3));
+          expect(day.claimablePoints, 0);
+          day = await endpoint.submitSteps(s, snapshot(9999, revision: 4));
+          expect(
+            (await endpoint.claimDay(
+              s,
+              date,
+              'ninety-eight',
+              day.revision,
+            )).amount,
+            98,
+          );
+          day = await endpoint.submitSteps(s, snapshot(10000, revision: 5));
+          expect(
+            (await endpoint.claimDay(s, date, 'cap', day.revision)).amount,
+            1,
+          );
+          day = await endpoint.submitSteps(s, snapshot(90000, revision: 6));
+          expect(day.claimablePoints, 0);
+          expect(day.basePoints, 100);
+          expect((await endpoint.getWallet(s)).balance, 100);
+        });
+      },
+    );
+
+    test('free deadline is exclusive next midnight plus seven days', () async {
+      final s = await ready();
+      final deadline = dayStart('2026-10-22');
+      final value = await ProductDay.db.findFirstRow(
+        s,
+        where: (t) => t.owner.equals(s.authenticated!.userIdentifier),
+      );
+      expect(value!.windows.single.freeUntil, deadline);
+      await withClock(
+        Clock.fixed(deadline.subtract(const Duration(microseconds: 1))),
+        () async {
+          expect((await endpoint.getDay(s, date)).claimablePoints, 70);
+        },
+      );
+      await withClock(Clock.fixed(deadline), () async {
+        expect((await endpoint.getDay(s, date)).claimablePoints, 0);
+        expect((await endpoint.getDay(s, date)).adClaimablePoints, 140);
+        await expectLater(
+          endpoint.claimDay(s, date, 'at-deadline', 1),
+          productError('adRequired'),
+        );
+        await endpoint.submitSteps(s, snapshot(7000, revision: 2));
+        final unchanged = await ProductDay.db.findById(s, value.id!);
+        expect(unchanged!.windows.single.freeUntil, deadline);
+      });
+    });
+
+    test('legacy fixture and unversioned days are never revalued', () async {
+      final s = await owner();
+      final id = s.authenticated!.userIdentifier;
+      await endpoint.registerStepStream(s, 'register', 0);
+      await ProductDay.db.insertRow(
+        s,
+        ProductDay(
+          owner: id,
+          date: date,
+          steps: 7000,
+          availability: 'confirmed',
+          policyVersion: productFixtureLabel,
+          grantedUnits: 7,
+          confirmedUnits: 7,
+          windows: [
+            RewardWindow(
+              fromUnits: 0,
+              throughUnits: 7,
+              confirmedAt: fixedNow,
+              freeUntil: fixedNow.add(const Duration(days: 7)),
+            ),
+          ],
+        ),
+      );
+      await PointEntry.db.insertRow(
+        s,
+        PointEntry(
+          owner: id,
+          entryKey: 'steps:$date:7',
+          kind: 'steps',
+          date: date,
+          amount: 7,
+          policyVersion: productFixtureLabel,
+          createdAt: fixedNow,
+        ),
+      );
+      await ProductDay.db.insertRow(
+        s,
+        ProductDay(owner: id, date: '2026-10-13', windows: []),
+      );
+      await at(() async {
+        final day = await endpoint.submitSteps(s, snapshot(9000, revision: 2));
+        expect(day.rewardStatus, 'legacyPolicyExcluded');
+        expect(day.fixtureLabel, productFixtureLabel);
+        expect(day.claimablePoints, isNull);
+        expect(day.grantedPoints, 0);
+        await expectLater(
+          endpoint.claimDay(s, date, 'legacy', day.revision),
+          productError('legacyPolicyExcluded'),
+        );
+        final unversioned = await endpoint.submitSteps(
+          s,
+          snapshot(9000, on: '2026-10-13'),
+        );
+        expect(unversioned.rewardStatus, 'legacyPolicyExcluded');
+        expect(unversioned.policyVersion, isNull);
+        expect((await endpoint.getWallet(s)).balance, 0);
+        final row = await ProductDay.db.findFirstRow(
+          s,
+          where: (t) => t.owner.equals(id) & t.date.equals(date),
+        );
+        expect(row!.grantedUnits, 7);
+        expect(row.confirmedUnits, 7);
+        expect(row.windows.single.throughUnits, 7);
+      });
+      expect((await endpoint.listThemes(s)).balance, 7);
+    });
+
+    test('future dates never permit free or ad grants', () async {
+      final s = await ready();
+      await at(() async {
+        expect(
+          (await endpoint.getDay(s, '2026-10-15')).rewardStatus,
+          'futureDate',
+        );
+        await expectLater(
+          endpoint.claimDay(s, '2026-10-15', 'future', 0),
+          productError('futureDate'),
+        );
+        await expectLater(
+          endpoint.claimDayWithAd(s, '2026-10-15', 'future-ad', 0, 'any'),
+          productError('futureDate'),
+        );
+        await expectLater(
+          endpoint.submitSteps(s, snapshot(100, on: '2026-10-15')),
+          productError('invalidSnapshot'),
+        );
+      });
+    });
+
     test('parallel claims produce exactly one immutable grant', () async {
       final a = await ready();
       final b = await owner(a.authenticated!.userIdentifier);
@@ -343,11 +531,11 @@ void main() {
       expect(outcomes.whereType<RewardGrant>(), hasLength(1));
       expect(
         outcomes.whereType<ProductException>().every(
-          (e) => e.code == 'nothingToClaim',
+          (e) => e.code == 'staleProjection',
         ),
         isTrue,
       );
-      expect((await endpoint.getWallet(a)).balance, 7);
+      expect((await endpoint.getWallet(a)).balance, 70);
       expect(
         await PointEntry.db.count(
           a,
@@ -362,7 +550,7 @@ void main() {
       () async {
         final s = await ready();
         final first = await at(() => endpoint.claimDay(s, date, 'first', 1));
-        expect(first.amount, 7);
+        expect(first.amount, 70);
         var day = await at(
           () => endpoint.submitSteps(s, snapshot(8000, revision: 2)),
         );
@@ -370,7 +558,7 @@ void main() {
           (await at(
             () => endpoint.claimDay(s, date, 'second', day.revision),
           )).amount,
-          1,
+          10,
         );
         for (final (revision, steps) in [(3, 6500), (4, 7500)]) {
           day = await at(
@@ -390,10 +578,10 @@ void main() {
         final third = await at(
           () => endpoint.claimDay(s, date, 'third', day.revision),
         );
-        expect(third.amount, 1);
-        expect(third.fromUnits, 8);
-        expect(third.throughUnits, 9);
-        expect((await endpoint.getWallet(s)).balance, 9);
+        expect(third.amount, 15);
+        expect(third.fromUnits, 80);
+        expect(third.throughUnits, 95);
+        expect((await endpoint.getWallet(s)).balance, 95);
         final replay = await at(() => endpoint.claimDay(s, date, 'first', 1));
         expect(replay.toJson(), first.toJson());
         await expectLater(
@@ -408,7 +596,7 @@ void main() {
     );
 
     test(
-      'replay does not restart grace and delayed new units get 72 hours',
+      'late tranches keep exclusive deadlines without extending old units',
       () async {
         final s = await ready(on: '2026-10-01');
         final original = await ProductDay.db.findFirstRow(
@@ -417,7 +605,31 @@ void main() {
         );
         expect(
           original!.windows.single.freeUntil,
-          fixedNow.add(const Duration(days: 3)),
+          fixedNow.add(const Duration(hours: 72)),
+        );
+        expect(original.windows.single.confirmedAt, fixedNow);
+        await withClock(
+          Clock.fixed(
+            fixedNow
+                .add(const Duration(hours: 72))
+                .subtract(const Duration(microseconds: 1)),
+          ),
+          () async {
+            expect(
+              (await endpoint.getDay(s, '2026-10-01')).claimablePoints,
+              70,
+            );
+          },
+        );
+        await withClock(
+          Clock.fixed(fixedNow.add(const Duration(hours: 72))),
+          () async {
+            expect((await endpoint.getDay(s, '2026-10-01')).claimablePoints, 0);
+            await expectLater(
+              endpoint.claimDay(s, '2026-10-01', 'deadline', 1),
+              productError('adRequired'),
+            );
+          },
         );
         await withClock(
           Clock.fixed(fixedNow.add(const Duration(days: 4))),
@@ -426,22 +638,46 @@ void main() {
               s,
               snapshot(7000, on: '2026-10-01'),
             );
+            expect(replay.rewardStatus, 'adRequired');
             expect(replay.claimablePoints, 0);
             final delayed = await endpoint.submitSteps(
               s,
               snapshot(9000, revision: 2, on: '2026-10-01'),
             );
-            expect(delayed.claimablePoints, 2);
+            expect(delayed.claimablePoints, 20);
+            expect(delayed.adClaimablePoints, 180);
             final grant = await endpoint.claimDay(
               s,
               '2026-10-01',
               'delayed',
               delayed.revision,
             );
-            expect(grant.amount, 2);
+            expect(grant.amount, 20);
+            expect(grant.slices!.single.fromUnits, 70);
+            final remaining = await endpoint.getDay(s, '2026-10-01');
+            expect(remaining.claimablePoints, 0);
+            expect(remaining.adClaimablePoints, 140);
           },
         );
-        expect((await endpoint.getWallet(s)).balance, 2);
+        final updated = await ProductDay.db.findById(s, original.id!);
+        expect(updated!.windows.map((w) => w.throughUnits), [70, 90]);
+        expect(
+          updated.windows.first.confirmedAt,
+          original.windows.first.confirmedAt,
+        );
+        expect(
+          updated.windows.last.confirmedAt,
+          fixedNow.add(const Duration(days: 4)),
+        );
+        expect(
+          updated.windows.first.freeUntil,
+          original.windows.first.freeUntil,
+        );
+        expect(
+          updated.windows.last.freeUntil,
+          fixedNow.add(const Duration(days: 7)),
+        );
+        expect((await endpoint.getWallet(s)).balance, 20);
       },
     );
 
@@ -464,7 +700,7 @@ void main() {
         release.complete();
         final grant = await claim;
         expect((await deletion).deleted, isTrue);
-        expect((await endpoint.getWallet(a)).balance, 7);
+        expect((await endpoint.getWallet(a)).balance, 70);
         expect(
           (await endpoint.claimDay(a, date, 'claim', 1)).toJson(),
           grant.toJson(),
@@ -574,7 +810,8 @@ void main() {
           ]),
         );
         expect(answers.map((q) => q.awardedPoints), [2, 2]);
-        expect((await endpoint.getWallet(a)).balance, 2);
+        expect((await endpoint.getWallet(a)).balance, 0);
+        expect((await endpoint.listThemes(a)).balance, 2);
         final review = await withClock(
           Clock.fixed(fixedNow.add(const Duration(days: 1))),
           () => endpoint.getQuiz(a, date),
@@ -611,6 +848,17 @@ void main() {
       final a = await ready();
       final b = await owner(a.authenticated!.userIdentifier);
       await at(() => endpoint.claimDay(a, date, 'claim', 1));
+      await PointEntry.db.insertRow(
+        a,
+        PointEntry(
+          owner: a.authenticated!.userIdentifier,
+          entryKey: 'fixture-test',
+          kind: 'fixture',
+          amount: 7,
+          policyVersion: productFixtureLabel,
+          createdAt: fixedNow,
+        ),
+      );
       final stores = await Future.wait([
         endpoint.purchaseTheme(a, 'cloudy', 'buy-a'),
         endpoint.purchaseTheme(b, 'cloudy', 'buy-b'),
@@ -621,7 +869,8 @@ void main() {
         ),
         isTrue,
       );
-      expect((await endpoint.getWallet(a)).balance, 4);
+      expect((await endpoint.getWallet(a)).balance, 70);
+      expect((await endpoint.listThemes(a)).balance, 4);
       expect((await endpoint.listThemes(a)).equippedTheme, 'sunny');
       expect(
         (await endpoint.equipTheme(a, 'cloudy', 'equip')).equippedTheme,

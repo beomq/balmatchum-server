@@ -26,6 +26,7 @@ product:
   - deleteDay:
   - listDeletions:
   - claimDay:
+  - claimDayWithAd:
   - getQuiz:
   - listQuizHistory:
   - answerQuiz:

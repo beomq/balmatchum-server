@@ -311,6 +311,22 @@ class EndpointProduct extends _isc.EndpointRef {
     },
   );
 
+  _ida.Future<_itb00fx7.RewardGrant> claimDayWithAd(
+    String date,
+    String requestId,
+    int expectedRevision,
+    String intentId,
+  ) => caller.callServerEndpoint<_itb00fx7.RewardGrant>(
+    'product',
+    'claimDayWithAd',
+    {
+      'date': date,
+      'requestId': requestId,
+      'expectedRevision': expectedRevision,
+      'intentId': intentId,
+    },
+  );
+
   _ida.Future<_ig075m1r.DailyQuiz> getQuiz(String date) =>
       caller.callServerEndpoint<_ig075m1r.DailyQuiz>(
         'product',

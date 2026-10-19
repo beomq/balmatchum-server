@@ -51,6 +51,17 @@ class ProductEndpoint extends Endpoint {
     (s) => s.claim(date, requestId, expectedRevision),
   );
 
+  Future<RewardGrant> claimDayWithAd(
+    Session session,
+    String date,
+    String requestId,
+    int expectedRevision,
+    String intentId,
+  ) => ProductService.run(
+    session,
+    (s) => s.claim(date, requestId, expectedRevision, intentId: intentId),
+  );
+
   Future<DailyQuiz> getQuiz(Session session, String date) =>
       ProductService.run(session, (s) => s.quiz(date));
 

@@ -31,6 +31,7 @@ import 'product/daily_step_input.dart' as _i4z7ptb2;
 import 'product/day_route.dart' as _i7moag3o;
 import 'product/product_exception.dart' as _ixe21ogc;
 import 'product/reward_grant.dart' as _iod7wzhm;
+import 'product/reward_slice.dart' as _ip4tl29k;
 import 'product/theme_item.dart' as _i4gtfwun;
 import 'product/theme_store.dart' as _iotuzcr6;
 import 'product/wallet_view.dart' as _izf11uf3;
@@ -53,6 +54,7 @@ export 'product/daily_step_input.dart';
 export 'product/day_route.dart';
 export 'product/product_exception.dart';
 export 'product/reward_grant.dart';
+export 'product/reward_slice.dart';
 export 'product/theme_item.dart';
 export 'product/theme_store.dart';
 export 'product/wallet_view.dart';
@@ -133,6 +135,9 @@ class Protocol extends _isc.SerializationManager {
     if (t == _iod7wzhm.RewardGrant) {
       return _iod7wzhm.RewardGrant.fromJson(data) as T;
     }
+    if (t == _ip4tl29k.RewardSlice) {
+      return _ip4tl29k.RewardSlice.fromJson(data) as T;
+    }
     if (t == _i4gtfwun.ThemeItem) {
       return _i4gtfwun.ThemeItem.fromJson(data) as T;
     }
@@ -203,6 +208,9 @@ class Protocol extends _isc.SerializationManager {
     if (t == _isc.getType<_iod7wzhm.RewardGrant?>()) {
       return (data != null ? _iod7wzhm.RewardGrant.fromJson(data) : null) as T;
     }
+    if (t == _isc.getType<_ip4tl29k.RewardSlice?>()) {
+      return (data != null ? _ip4tl29k.RewardSlice.fromJson(data) : null) as T;
+    }
     if (t == _isc.getType<_i4gtfwun.ThemeItem?>()) {
       return (data != null ? _i4gtfwun.ThemeItem.fromJson(data) : null) as T;
     }
@@ -255,6 +263,20 @@ class Protocol extends _isc.SerializationManager {
               .toList()
           as T;
     }
+    if (t == List<_ip4tl29k.RewardSlice>) {
+      return (data as List)
+              .map((e) => deserialize<_ip4tl29k.RewardSlice>(e))
+              .toList()
+          as T;
+    }
+    if (t == _isc.getType<List<_ip4tl29k.RewardSlice>?>()) {
+      return (data != null
+              ? (data as List)
+                    .map((e) => deserialize<_ip4tl29k.RewardSlice>(e))
+                    .toList()
+              : null)
+          as T;
+    }
     if (t == List<_i4gtfwun.ThemeItem>) {
       return (data as List)
               .map((e) => deserialize<_i4gtfwun.ThemeItem>(e))
@@ -295,6 +317,7 @@ class Protocol extends _isc.SerializationManager {
       _i7moag3o.DayRoute => 'DayRoute',
       _ixe21ogc.ProductException => 'ProductException',
       _iod7wzhm.RewardGrant => 'RewardGrant',
+      _ip4tl29k.RewardSlice => 'RewardSlice',
       _i4gtfwun.ThemeItem => 'ThemeItem',
       _iotuzcr6.ThemeStore => 'ThemeStore',
       _izf11uf3.WalletView => 'WalletView',
@@ -342,6 +365,8 @@ class Protocol extends _isc.SerializationManager {
         return 'ProductException';
       case _iod7wzhm.RewardGrant():
         return 'RewardGrant';
+      case _ip4tl29k.RewardSlice():
+        return 'RewardSlice';
       case _i4gtfwun.ThemeItem():
         return 'ThemeItem';
       case _iotuzcr6.ThemeStore():
@@ -418,6 +443,9 @@ class Protocol extends _isc.SerializationManager {
     }
     if (dataClassName == 'RewardGrant') {
       return deserialize<_iod7wzhm.RewardGrant>(data['data']);
+    }
+    if (dataClassName == 'RewardSlice') {
+      return deserialize<_ip4tl29k.RewardSlice>(data['data']);
     }
     if (dataClassName == 'ThemeItem') {
       return deserialize<_i4gtfwun.ThemeItem>(data['data']);

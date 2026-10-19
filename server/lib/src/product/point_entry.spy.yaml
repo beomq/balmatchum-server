@@ -11,6 +11,7 @@ fields:
   throughUnits: int?
   policyVersion: String
   createdAt: DateTime
+  slices: List<RewardSlice>?
 indexes:
   point_entry_key:
     fields: owner, entryKey

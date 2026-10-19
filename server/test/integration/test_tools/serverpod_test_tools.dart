@@ -1004,6 +1004,45 @@ class _ProductEndpoint {
     });
   }
 
+  _ida.Future<_iiyssm1r.RewardGrant> claimDayWithAd(
+    _ist.TestSessionBuilder sessionBuilder,
+    String date,
+    String requestId,
+    int expectedRevision,
+    String intentId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'product',
+            method: 'claimDayWithAd',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'product',
+          methodName: 'claimDayWithAd',
+          parameters: _ist.testObjectToJson({
+            'date': date,
+            'requestId': requestId,
+            'expectedRevision': expectedRevision,
+            'intentId': intentId,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_iiyssm1r.RewardGrant>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
   _ida.Future<_is16fueh.DailyQuiz> getQuiz(
     _ist.TestSessionBuilder sessionBuilder,
     String date,

@@ -60,6 +60,12 @@ class AdService {
       transaction: s.tx,
     );
     if (previous != null) return view(previous);
+    if (purpose == 'dailyReward') {
+      await withClock(clock, () => s.claimTarget(date, revision, withAd: true));
+    } else {
+      // No production extra-quiz entitlement exists in this increment.
+      throw AdException(code: 'purposeUnavailable');
+    }
     // Google timestamps have millisecond precision; do not reject an event in
     // the creation millisecond merely because the server clock has microseconds.
     final now = DateTime.fromMillisecondsSinceEpoch(

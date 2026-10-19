@@ -2,9 +2,9 @@
 
 ## 범위와 공개 계약
 
-이 증분은 광고 시청 사실만 검증합니다. 2026-10-19 승인된 보상 수치는 다음
-경제 정책 증분에서 연결합니다. 포인트 지급, extra quiz 생성, entitlement,
-클라이언트 `onUserEarnedReward`에 따른 완료 API는 없습니다.
+광고 시청 증거는 운영 걸음 보상의 `product.claimDayWithAd`와 연결됩니다.
+승인된 기본분의 총 2배를 지급하며 소비·원장·구간 전진은 같은 transaction입니다.
+extra quiz 생성, 결제 entitlement, 클라이언트 `onUserEarnedReward` 완료 API는 없습니다.
 
 생성 클라이언트 `client.ads`의 인증 필수 API:
 
@@ -15,8 +15,10 @@ Future<AdIntent> getIntent(String intentId);
 
 목적은 설정된 `dailyReward` 또는 `extraQuiz`, 날짜는 KST `YYYY-MM-DD`, revision은
 0 이상의 정수입니다. 서버가 인증 소유자를 고정합니다. 같은 소유자·목적·날짜·revision은
-동시 요청에서도 동일 인텐트를 반환합니다. revision의 실제 업무 대상 유효성/삭제 여부와
-혜택 자격은 이후 소비 통합에서 현재 서버 상태와 대조해야 합니다. 생성 자체는 자격이 아닙니다.
+동시 요청에서도 동일 인텐트를 반환합니다. 신규 dailyReward는 실제 날짜/revision/미수령량을
+검사하며 미래일·삭제일·legacy 정책·미확정/수령완료 자료를 거절합니다.
+기존 대상의 재시도는 기존 인텐트를 반환하지만 수령 시 실제 자격을 다시 검사합니다.
+extraQuiz 신규 생성은 purposeUnavailable이며 기존 증거 조회만 유지합니다.
 
 `AdIntent`는 `id`, `purpose`, `targetDate`, `targetRevision`, `adUnit`, `userId`,
 `customData`, `status`, `createdAt`, `eventExpiresAt`, `acceptUntil`, `verifiedAt?`,
@@ -94,7 +96,7 @@ Google timestamp 단위는 **epoch milliseconds**입니다.
 요청/늦은 콜백도 삭제 뒤 데이터를 재생성하지 못합니다. transaction_id 기록도 함께 삭제되지만
 서명된 nonce와 user_id가 사라진 소유자에 묶여 다른 소유자로 재사용할 수 없습니다.
 
-## 다음 서버 통합 지점
+## 실제 서버 통합 지점
 
 ```dart
 Future<void> AdService.consume(Session session, Transaction tx, {
@@ -106,8 +108,8 @@ Future<void> AdService.consume(Session session, Transaction tx, {
 });
 ```
 
-인증된 owner로 기존 소유자 잠금을 잡고, 실제 ProductDay/quiz revision과 정책 자격을 확인한 뒤
-이 헬퍼와 실제 entitlement/보상 원장을 **같은 tx** 안에서 갱신합니다. 실패하면 소비도 rollback됩니다.
+ProductService.claim은 인증된 owner 잠금 아래 실제 ProductDay revision과 정책 자격을 확인하고
+이 헬퍼와 보상 원장·구간별 지급상한·request 결과를 **같은 tx** 안에서 갱신합니다. 실패하면 소비도 rollback됩니다.
 이미 consumed면 `intentNotVerified`; 외부 RPC 소비 메서드는 없습니다. 재시도 응답은 업무 통합의
 기존 request idempotency 기록으로 처리합니다. 포인트 수량을 클라이언트나 callback에서 읽지 않습니다.
 

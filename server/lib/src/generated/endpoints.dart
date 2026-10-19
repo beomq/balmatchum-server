@@ -565,6 +565,43 @@ class Endpoints extends _is.EndpointDispatch {
                     params['expectedRevision'],
                   ),
         ),
+        'claimDayWithAd': _is.MethodConnector(
+          name: 'claimDayWithAd',
+          params: {
+            'date': _is.ParameterDescription(
+              name: 'date',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'requestId': _is.ParameterDescription(
+              name: 'requestId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'expectedRevision': _is.ParameterDescription(
+              name: 'expectedRevision',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'intentId': _is.ParameterDescription(
+              name: 'intentId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['product'] as _itexbxyn.ProductEndpoint)
+                  .claimDayWithAd(
+                    session,
+                    params['date'],
+                    params['requestId'],
+                    params['expectedRevision'],
+                    params['intentId'],
+                  ),
+        ),
         'getQuiz': _is.MethodConnector(
           name: 'getQuiz',
           params: {

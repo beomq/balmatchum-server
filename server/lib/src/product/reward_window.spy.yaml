@@ -4,4 +4,5 @@ fields:
   fromUnits: int
   throughUnits: int
   confirmedAt: DateTime
-  freeUntil: DateTime
+  freeUntil: DateTime?
+  grantedThroughUnits: int, default=0

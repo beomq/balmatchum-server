@@ -1,4 +1,95 @@
-# 제품 데이터 API와 개발 fixture
+# 제품 데이터 API와 운영 걸음 보상
+
+## 2026-10-19 운영 계약 (아래 개발 fixture 이력보다 우선)
+
+정책 버전은 `steps-v1-20261019`이다. 기본분은
+`min(100, confirmedSteps ~/ 100)`이며 목표 설정은 계산에 사용하지 않는다.
+무료 수령은 미수령 기본분만, 검증 광고 수령은 해당 기본분의 **총 2배**다.
+100걸음=1P, 9,999걸음=99P, 10,000걸음 이상=100P이며 광고를 포함한 하루 최대는 200P다.
+
+`client.product.claimDayWithAd(date, requestId, expectedRevision, intentId)`를 추가했다.
+무료는 기존 `claimDay`다. 두 API는 같은 구간을 중복 지급하지 않는다.
+성공 수령도 날짜 revision을 증가시킨다. 새로운 동작은 getDay의 최신 revision을 사용하고,
+응답 유실 시에는 원래 requestId/revision/intentId를 그대로 재전송한다.
+동일 요청은 원래 원장 결과를 반환한다. 삭제 후에도 기지급 사실 재조회는 허용한다.
+다른 payload는 idempotencyConflict이며 광고 실패는 단위나 원장을 전진시키지 않는다.
+
+### 승인된 유예와 최초 확정 구간
+
+각 신규 기본 단위 구간의 최초 서버 확정 시각과 마감을 저장한다.
+무료 마감은 `max(기록일 다음 KST 자정 + 7일, 최초 확정 + 72시간)`이다.
+판정은 `now < freeUntil`이며 정확히 같은 시각에는 무료 수령이 끝난다.
+예: 10월 19일 기록의 일반 마감은 10월 27일 00:00 KST다.
+동일 snapshot 재전송, 같은 양의 새 revision, 하향 정정 후 복구는 마감을 바꾸지 않는다.
+최대 최초 확정 단위를 넘는 신규 구간만 별도 마감을 얻는다. 유예 만료는 소멸이 아니며
+해당 미수령분은 검증 광고로 수령할 수 있다. 광고는 한 날짜에만 결합된다.
+
+각 구간의 grantedThroughUnits를 별도로 보존한다. 이전 70단위가 만료되고 신규 20단위가
+유예 중이라면 무료는 20P만 지급하며 이전 70단위는 광고 대상에 남는다. 이후 광고는
+이전 70단위에 140P만 지급한다. 지급된 구간은 정정으로 감소하거나 복구되지 않는다.
+날짜 삭제는 미수령 구간을 제거하며 기지급 원장을 환불/차감하지 않는다.
+소유자 잠금 뒤 거래 시각을 고정하여 마감 통과 중 금액과 구간 계산이 갈라지지 않게 한다.
+
+### 생성 DTO와 화면 상태
+
+- DailyRecord: policyVersion?, gracePolicyStatus, basePoints?, dailyBaseCap=100,
+  stepsPerPoint=100, claimablePoints?(무료), adClaimablePoints?(광고 총액), grantedPoints.
+  운영 응답 fixtureLabel은 null이다. 자료 미확정/legacy는 계산 금액이 null이다.
+- rewardStatus: pending(미확정), eligible(무료 가능), adRequired(무료 0·광고 가능),
+  settled(현재 추가분 없음), canceled(삭제), futureDate, legacyPolicyExcluded.
+  eligible에도 만료된 별도 구간이 있으면 광고 총액은 무료 총액의 2배보다 클 수 있다.
+- RewardGrant: policyVersion?, basePoints?, multiplier?, slices?를 추가했다.
+  운영 응답은 모두 채우며 slices의 (fromUnits, throughUnits]가 실제 지급 구간이다.
+  기존 fromUnits/throughUnits는 바깥 범위이며 구간 사이 공백을 지급한 것으로 해석하면 안 된다.
+- WalletView: balance는 운영 원장만 합산하고 policyVersion을 표시한다. fixtureLabel=null.
+- 오류: futureDate, legacyPolicyExcluded, staleProjection, stepsUnavailable,
+  nothingToClaim, adRequired, dayDeleted 및 기존 requestId 오류.
+
+### 광고 거래와 한계
+
+광고 생성은 실제 소유자의 날짜·revision·미수령 단위를 검사한다. 없는 날/임의 revision,
+미래일, 삭제일, fixture 날, 미확정 자료, 수령 완료는 새 인텐트를 만들지 못한다.
+같은 owner/purpose/date/revision의 기존 인텐트 조회 재시도는 그대로 반환한다.
+이는 지급 자격 갱신이 아니며 실제 수령 때 상태와 revision을 다시 검사한다.
+AdService.consume, 원장 삽입, 구간 전진, request 결과 저장은 하나의 DB transaction이다.
+무료 수령 후 이전 광고 수령은 staleProjection이며 이전 증거로 추가 지급하지 않는다.
+extraQuiz 새 인텐트는 purposeUnavailable이다. 구독 entitlement 연동과 퀴즈/테마 운영화는
+이 증분에 없으며 결제 권한을 가짜로 생성하지 않는다. SSV 운용 설정은 ADMOB_SSV_API.md 참조.
+
+### 명시적 fixture 전환 전략
+
+마이그레이션 20261019053232006은 point_entry.slices nullable JSON만 추가한다.
+기존 원장 amount/policyVersion, 날짜 단위, 기존 request 결과를 수정하지 않는다.
+기존 fixture 또는 policyVersion=null인 날짜는 legacyPolicyExcluded로 격리한다.
+새로 생성되는 날짜만 운영 정책을 고정한다. 기존 날에 새 snapshot을 보내도 운영 금액으로
+재평가하지 않는다. 기존 fixture claim의 동일 requestId 재생은 과거 fixtureLabel이 붙은
+결과만 반환하며 운영 잔액에 들어가지 않는다. 이 데이터의 재평가·삭제·전환은 별도 승인 대상이다.
+fixture quiz/theme는 기존 개발 DB에서만 유지하고 별도의 fixture 원장 잔액만 사용한다.
+운영 포인트로 fixture 상품을 살 수 없고 fixture 포인트로 운영 잔액을 늘릴 수 없다.
+배포 전에 기존 날짜의 policyVersion별 건수와 원장 합계를 확인하고 신규/legacy 계정을
+각각 검증한다. 자동 backfill이나 fixture 포인트의 10배 변환은 수행하지 않는다.
+
+장애 확인: 인증 소유자 → getDay revision/정책 → 구간별 마감/지급상한 → 인텐트 상태 →
+원장 slices/requestId 순서다. 직접 검증은 99→100→199→10,000걸음, 무료/광고 경합,
+정확한 KST 마감, 신규 무료 구간 뒤 과거 광고 수령, 날짜 삭제 후 동일 요청 재생이다.
+센서 자료 진위, 실제 Google 광고·콘솔/TLS 프록시, 결제, 앱 UI와 사용자 직접 확인은 별도다.
+
+### 검증 환경과 재현
+
+Dart 3.13.4 / Serverpod CLI 4.0.3을 사용한다. 명령별로
+`RUN_TMP=/tmp/stepreward`를 만들고 `TMPDIR="$RUN_TMP"`와 공개 disposable DB 비밀번호
+`SERVERPOD_PASSWORD_database=local-disposable-test-only`를 전달한다.
+두 패키지 enforce-lockfile, format, fatal-infos analyze를 검사한다. 서버 전체 테스트는
+`dart test --concurrency=1 --reporter expanded`이며 서버 빌드는
+`dart build cli --target bin/main.dart --output build`다.
+보상/SSV 통합 테스트는 28개이며 임시 PostgreSQL, 실제 인증 HTTP 생성 클라이언트,
+실제 서명·raw callback, 무료/광고 경합과 rollback을 사용한다. 전체 테스트는 201개다.
+생성 코드 재생성 diff 및 create-migration의 No changes로 드리프트를 확인한다.
+실제 운영 DB·광고 콘솔·앱 배포는 이 검증에 포함되지 않는다.
+
+---
+
+아래는 기존 API와 개발 fixture 구현 이력이다. 경제 수치·정책 미설정 설명은 위 운영 계약으로 대체한다.
 
 구현 기준: Serverpod/CLI 4.0.3, 생성 client `client/lib/src/protocol/client.dart`.
 모든 `product` 호출은 기존 인증 세션이 필요하다. 요청에 owner를 받지 않는다.

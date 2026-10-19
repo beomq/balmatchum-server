@@ -40,6 +40,7 @@ import 'product/product_exception.dart' as _ixe21ogc;
 import 'product/product_request.dart' as _ixso8684;
 import 'product/quiz_state.dart' as _i4w5p872;
 import 'product/reward_grant.dart' as _iod7wzhm;
+import 'product/reward_slice.dart' as _ip4tl29k;
 import 'product/reward_window.dart' as _itmku246;
 import 'product/step_revision.dart' as _iypt9oiw;
 import 'product/theme_item.dart' as _i4gtfwun;
@@ -75,6 +76,7 @@ export 'product/product_exception.dart';
 export 'product/product_request.dart';
 export 'product/quiz_state.dart';
 export 'product/reward_grant.dart';
+export 'product/reward_slice.dart';
 export 'product/reward_window.dart';
 export 'product/step_revision.dart';
 export 'product/theme_item.dart';
@@ -612,6 +614,12 @@ class Protocol extends _is.DatabaseSerializationManager {
           columnType: _isp.ColumnType.timestampWithoutTimeZone,
           isNullable: false,
           dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'slices',
+          columnType: _isp.ColumnType.json,
+          isNullable: true,
+          dartType: 'List<protocol:RewardSlice>?',
         ),
       ],
       foreignKeys: [],
@@ -1167,6 +1175,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _iod7wzhm.RewardGrant) {
       return _iod7wzhm.RewardGrant.fromJson(data) as T;
     }
+    if (t == _ip4tl29k.RewardSlice) {
+      return _ip4tl29k.RewardSlice.fromJson(data) as T;
+    }
     if (t == _itmku246.RewardWindow) {
       return _itmku246.RewardWindow.fromJson(data) as T;
     }
@@ -1280,6 +1291,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _is.getType<_iod7wzhm.RewardGrant?>()) {
       return (data != null ? _iod7wzhm.RewardGrant.fromJson(data) : null) as T;
     }
+    if (t == _is.getType<_ip4tl29k.RewardSlice?>()) {
+      return (data != null ? _ip4tl29k.RewardSlice.fromJson(data) : null) as T;
+    }
     if (t == _is.getType<_itmku246.RewardWindow?>()) {
       return (data != null ? _itmku246.RewardWindow.fromJson(data) : null) as T;
     }
@@ -1349,6 +1363,20 @@ class Protocol extends _is.DatabaseSerializationManager {
               .toList()
           as T;
     }
+    if (t == List<_ip4tl29k.RewardSlice>) {
+      return (data as List)
+              .map((e) => deserialize<_ip4tl29k.RewardSlice>(e))
+              .toList()
+          as T;
+    }
+    if (t == _is.getType<List<_ip4tl29k.RewardSlice>?>()) {
+      return (data != null
+              ? (data as List)
+                    .map((e) => deserialize<_ip4tl29k.RewardSlice>(e))
+                    .toList()
+              : null)
+          as T;
+    }
     if (t == List<_itmku246.RewardWindow>) {
       return (data as List)
               .map((e) => deserialize<_itmku246.RewardWindow>(e))
@@ -1406,6 +1434,7 @@ class Protocol extends _is.DatabaseSerializationManager {
       _ixso8684.ProductRequest => 'ProductRequest',
       _i4w5p872.QuizState => 'QuizState',
       _iod7wzhm.RewardGrant => 'RewardGrant',
+      _ip4tl29k.RewardSlice => 'RewardSlice',
       _itmku246.RewardWindow => 'RewardWindow',
       _iypt9oiw.StepRevision => 'StepRevision',
       _i4gtfwun.ThemeItem => 'ThemeItem',
@@ -1474,6 +1503,8 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'QuizState';
       case _iod7wzhm.RewardGrant():
         return 'RewardGrant';
+      case _ip4tl29k.RewardSlice():
+        return 'RewardSlice';
       case _itmku246.RewardWindow():
         return 'RewardWindow';
       case _iypt9oiw.StepRevision():
@@ -1588,6 +1619,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (dataClassName == 'RewardGrant') {
       return deserialize<_iod7wzhm.RewardGrant>(data['data']);
+    }
+    if (dataClassName == 'RewardSlice') {
+      return deserialize<_ip4tl29k.RewardSlice>(data['data']);
     }
     if (dataClassName == 'RewardWindow') {
       return deserialize<_itmku246.RewardWindow>(data['data']);
