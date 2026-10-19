@@ -10,6 +10,8 @@
 // ignore_for_file: invalid_use_of_internal_member
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:balmatchum_server/src/generated/billing/purchase_input.dart'
+    as _i1q0b6so;
 import 'package:balmatchum_server/src/generated/product/daily_step_input.dart'
     as _if016xvg;
 import 'package:balmatchum_server/src/generated/profile/profile_input.dart'
@@ -26,6 +28,7 @@ import '../ads/ads_endpoint.dart' as _ir7vocva;
 import '../auth/apple_idp_endpoint.dart' as _ilq63su8;
 import '../auth/google_idp_endpoint.dart' as _i71axiz0;
 import '../auth/kakao_endpoint.dart' as _if7olpvl;
+import '../billing/billing_endpoint.dart' as _irc9lmoc;
 import '../greetings/greeting_endpoint.dart' as _il624ik7;
 import '../product/product_endpoint.dart' as _itexbxyn;
 import '../profile/profile_endpoint.dart' as _i6ky944g;
@@ -64,6 +67,12 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'kakao',
+          null,
+        ),
+      'billing': _irc9lmoc.BillingEndpoint()
+        ..initialize(
+          server,
+          'billing',
           null,
         ),
       'greeting': _il624ik7.GreetingEndpoint()
@@ -367,6 +376,79 @@ class Endpoints extends _is.EndpointDispatch {
                     attemptId: params['attemptId'],
                     idToken: params['idToken'],
                   ),
+        ),
+      },
+    );
+    connectors['billing'] = _is.EndpointConnector(
+      name: 'billing',
+      endpoint: endpoints['billing']!,
+      methodConnectors: {
+        'getPurchaseConfiguration': _is.MethodConnector(
+          name: 'getPurchaseConfiguration',
+          params: {
+            'store': _is.ParameterDescription(
+              name: 'store',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['billing'] as _irc9lmoc.BillingEndpoint)
+                  .getPurchaseConfiguration(
+                    session,
+                    params['store'],
+                  ),
+        ),
+        'verifyPurchase': _is.MethodConnector(
+          name: 'verifyPurchase',
+          params: {
+            'input': _is.ParameterDescription(
+              name: 'input',
+              type: _is.getType<_i1q0b6so.PurchaseInput>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['billing'] as _irc9lmoc.BillingEndpoint)
+                  .verifyPurchase(
+                    session,
+                    params['input'],
+                  ),
+        ),
+        'restorePurchase': _is.MethodConnector(
+          name: 'restorePurchase',
+          params: {
+            'input': _is.ParameterDescription(
+              name: 'input',
+              type: _is.getType<_i1q0b6so.PurchaseInput>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['billing'] as _irc9lmoc.BillingEndpoint)
+                  .restorePurchase(
+                    session,
+                    params['input'],
+                  ),
+        ),
+        'getEntitlement': _is.MethodConnector(
+          name: 'getEntitlement',
+          params: {},
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['billing'] as _irc9lmoc.BillingEndpoint)
+                  .getEntitlement(session),
         ),
       },
     );

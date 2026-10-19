@@ -15,6 +15,11 @@ googleIdp:
 kakao:
   - beginLogin:
   - loginKakao:
+billing:
+  - getPurchaseConfiguration:
+  - verifyPurchase:
+  - restorePurchase:
+  - getEntitlement:
 greeting:
   - hello:
 product:

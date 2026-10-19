@@ -30,6 +30,15 @@ import 'auth/external_identity.dart' as _i8thru7x;
 import 'auth/login_attempt.dart' as _i1apu3f2;
 import 'auth/login_challenge.dart' as _izhe0wsm;
 import 'auth/login_exception.dart' as _iskwpc4e;
+import 'billing/billing_account.dart' as _ifeydnhg;
+import 'billing/billing_exception.dart' as _iy7y41or;
+import 'billing/entitlement_view.dart' as _ixe95a4n;
+import 'billing/purchase_configuration.dart' as _iqa89lpa;
+import 'billing/purchase_input.dart' as _i8awtsqn;
+import 'billing/purchase_product.dart' as _iiesu012;
+import 'billing/purchase_tombstone.dart' as _iwil3tvo;
+import 'billing/purchase_view.dart' as _i0fbcnhc;
+import 'billing/stored_purchase.dart' as _i7xmzgxf;
 import 'greetings/greeting.dart' as _izw8z7ou;
 import 'product/daily_quiz.dart' as _i94q6xjz;
 import 'product/daily_record.dart' as _ie37ihl8;
@@ -70,6 +79,15 @@ export 'auth/external_identity.dart';
 export 'auth/login_attempt.dart';
 export 'auth/login_challenge.dart';
 export 'auth/login_exception.dart';
+export 'billing/billing_account.dart';
+export 'billing/billing_exception.dart';
+export 'billing/entitlement_view.dart';
+export 'billing/purchase_configuration.dart';
+export 'billing/purchase_input.dart';
+export 'billing/purchase_product.dart';
+export 'billing/purchase_tombstone.dart';
+export 'billing/purchase_view.dart';
+export 'billing/stored_purchase.dart';
 export 'greetings/greeting.dart';
 export 'product/daily_quiz.dart';
 export 'product/daily_record.dart';
@@ -276,6 +294,243 @@ class Protocol extends _is.DatabaseSerializationManager {
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
               definition: 'transactionId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'billing_account',
+      dartName: 'BillingAccount',
+      schema: 'public',
+      module: 'balmatchum',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'owner',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'binding',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'sequence',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'billing_account_owner',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'owner',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'billing_account_binding',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'binding',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'billing_purchase',
+      dartName: 'StoredPurchase',
+      schema: 'public',
+      module: 'balmatchum',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'owner',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'identityHash',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'store',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'environment',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'productId',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'kind',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'purchaseReference',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'state',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'sequence',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'observedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'purchasedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'expiresAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'graceExpiresAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'revokedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'acknowledgementPending',
+          columnType: _isp.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'billing_purchase_identity',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'identityHash',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'billing_purchase_owner',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'owner',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'billing_purchase_tombstone',
+      dartName: 'PurchaseTombstone',
+      schema: 'public',
+      module: 'balmatchum',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'identityHash',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'billing_tombstone_identity',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'identityHash',
             ),
           ],
           type: 'btree',
@@ -1348,6 +1603,33 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _iskwpc4e.LoginException) {
       return _iskwpc4e.LoginException.fromJson(data) as T;
     }
+    if (t == _ifeydnhg.BillingAccount) {
+      return _ifeydnhg.BillingAccount.fromJson(data) as T;
+    }
+    if (t == _iy7y41or.BillingException) {
+      return _iy7y41or.BillingException.fromJson(data) as T;
+    }
+    if (t == _ixe95a4n.EntitlementView) {
+      return _ixe95a4n.EntitlementView.fromJson(data) as T;
+    }
+    if (t == _iqa89lpa.PurchaseConfiguration) {
+      return _iqa89lpa.PurchaseConfiguration.fromJson(data) as T;
+    }
+    if (t == _i8awtsqn.PurchaseInput) {
+      return _i8awtsqn.PurchaseInput.fromJson(data) as T;
+    }
+    if (t == _iiesu012.PurchaseProduct) {
+      return _iiesu012.PurchaseProduct.fromJson(data) as T;
+    }
+    if (t == _iwil3tvo.PurchaseTombstone) {
+      return _iwil3tvo.PurchaseTombstone.fromJson(data) as T;
+    }
+    if (t == _i0fbcnhc.PurchaseView) {
+      return _i0fbcnhc.PurchaseView.fromJson(data) as T;
+    }
+    if (t == _i7xmzgxf.StoredPurchase) {
+      return _i7xmzgxf.StoredPurchase.fromJson(data) as T;
+    }
     if (t == _izw8z7ou.Greeting) {
       return _izw8z7ou.Greeting.fromJson(data) as T;
     }
@@ -1472,6 +1754,43 @@ class Protocol extends _is.DatabaseSerializationManager {
       return (data != null ? _iskwpc4e.LoginException.fromJson(data) : null)
           as T;
     }
+    if (t == _is.getType<_ifeydnhg.BillingAccount?>()) {
+      return (data != null ? _ifeydnhg.BillingAccount.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_iy7y41or.BillingException?>()) {
+      return (data != null ? _iy7y41or.BillingException.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_ixe95a4n.EntitlementView?>()) {
+      return (data != null ? _ixe95a4n.EntitlementView.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_iqa89lpa.PurchaseConfiguration?>()) {
+      return (data != null
+              ? _iqa89lpa.PurchaseConfiguration.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_i8awtsqn.PurchaseInput?>()) {
+      return (data != null ? _i8awtsqn.PurchaseInput.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_iiesu012.PurchaseProduct?>()) {
+      return (data != null ? _iiesu012.PurchaseProduct.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_iwil3tvo.PurchaseTombstone?>()) {
+      return (data != null ? _iwil3tvo.PurchaseTombstone.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_i0fbcnhc.PurchaseView?>()) {
+      return (data != null ? _i0fbcnhc.PurchaseView.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_i7xmzgxf.StoredPurchase?>()) {
+      return (data != null ? _i7xmzgxf.StoredPurchase.fromJson(data) : null)
+          as T;
+    }
     if (t == _is.getType<_izw8z7ou.Greeting?>()) {
       return (data != null ? _izw8z7ou.Greeting.fromJson(data) : null) as T;
     }
@@ -1585,6 +1904,18 @@ class Protocol extends _is.DatabaseSerializationManager {
       return (data != null ? _iyylbrve.StoredGpsRecord.fromJson(data) : null)
           as T;
     }
+    if (t == List<_i0fbcnhc.PurchaseView>) {
+      return (data as List)
+              .map((e) => deserialize<_i0fbcnhc.PurchaseView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_iiesu012.PurchaseProduct>) {
+      return (data as List)
+              .map((e) => deserialize<_iiesu012.PurchaseProduct>(e))
+              .toList()
+          as T;
+    }
     if (t == List<String>) {
       return (data as List).map((e) => deserialize<String>(e)).toList() as T;
     }
@@ -1665,6 +1996,15 @@ class Protocol extends _is.DatabaseSerializationManager {
       _i1apu3f2.LoginAttempt => 'LoginAttempt',
       _izhe0wsm.LoginChallenge => 'LoginChallenge',
       _iskwpc4e.LoginException => 'LoginException',
+      _ifeydnhg.BillingAccount => 'BillingAccount',
+      _iy7y41or.BillingException => 'BillingException',
+      _ixe95a4n.EntitlementView => 'EntitlementView',
+      _iqa89lpa.PurchaseConfiguration => 'PurchaseConfiguration',
+      _i8awtsqn.PurchaseInput => 'PurchaseInput',
+      _iiesu012.PurchaseProduct => 'PurchaseProduct',
+      _iwil3tvo.PurchaseTombstone => 'PurchaseTombstone',
+      _i0fbcnhc.PurchaseView => 'PurchaseView',
+      _i7xmzgxf.StoredPurchase => 'StoredPurchase',
       _izw8z7ou.Greeting => 'Greeting',
       _i94q6xjz.DailyQuiz => 'DailyQuiz',
       _ie37ihl8.DailyRecord => 'DailyRecord',
@@ -1726,6 +2066,24 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'LoginChallenge';
       case _iskwpc4e.LoginException():
         return 'LoginException';
+      case _ifeydnhg.BillingAccount():
+        return 'BillingAccount';
+      case _iy7y41or.BillingException():
+        return 'BillingException';
+      case _ixe95a4n.EntitlementView():
+        return 'EntitlementView';
+      case _iqa89lpa.PurchaseConfiguration():
+        return 'PurchaseConfiguration';
+      case _i8awtsqn.PurchaseInput():
+        return 'PurchaseInput';
+      case _iiesu012.PurchaseProduct():
+        return 'PurchaseProduct';
+      case _iwil3tvo.PurchaseTombstone():
+        return 'PurchaseTombstone';
+      case _i0fbcnhc.PurchaseView():
+        return 'PurchaseView';
+      case _i7xmzgxf.StoredPurchase():
+        return 'StoredPurchase';
       case _izw8z7ou.Greeting():
         return 'Greeting';
       case _i94q6xjz.DailyQuiz():
@@ -1838,6 +2196,33 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (dataClassName == 'LoginException') {
       return deserialize<_iskwpc4e.LoginException>(data['data']);
+    }
+    if (dataClassName == 'BillingAccount') {
+      return deserialize<_ifeydnhg.BillingAccount>(data['data']);
+    }
+    if (dataClassName == 'BillingException') {
+      return deserialize<_iy7y41or.BillingException>(data['data']);
+    }
+    if (dataClassName == 'EntitlementView') {
+      return deserialize<_ixe95a4n.EntitlementView>(data['data']);
+    }
+    if (dataClassName == 'PurchaseConfiguration') {
+      return deserialize<_iqa89lpa.PurchaseConfiguration>(data['data']);
+    }
+    if (dataClassName == 'PurchaseInput') {
+      return deserialize<_i8awtsqn.PurchaseInput>(data['data']);
+    }
+    if (dataClassName == 'PurchaseProduct') {
+      return deserialize<_iiesu012.PurchaseProduct>(data['data']);
+    }
+    if (dataClassName == 'PurchaseTombstone') {
+      return deserialize<_iwil3tvo.PurchaseTombstone>(data['data']);
+    }
+    if (dataClassName == 'PurchaseView') {
+      return deserialize<_i0fbcnhc.PurchaseView>(data['data']);
+    }
+    if (dataClassName == 'StoredPurchase') {
+      return deserialize<_i7xmzgxf.StoredPurchase>(data['data']);
     }
     if (dataClassName == 'Greeting') {
       return deserialize<_izw8z7ou.Greeting>(data['data']);
@@ -1985,6 +2370,12 @@ class Protocol extends _is.DatabaseSerializationManager {
         return _i8thru7x.ExternalIdentity.t;
       case _i1apu3f2.LoginAttempt:
         return _i1apu3f2.LoginAttempt.t;
+      case _ifeydnhg.BillingAccount:
+        return _ifeydnhg.BillingAccount.t;
+      case _iwil3tvo.PurchaseTombstone:
+        return _iwil3tvo.PurchaseTombstone.t;
+      case _i7xmzgxf.StoredPurchase:
+        return _i7xmzgxf.StoredPurchase.t;
       case _i3g927ck.PointEntry:
         return _i3g927ck.PointEntry.t;
       case _itm94d4x.ProductAccount:

@@ -17,6 +17,12 @@ import 'package:balmatchum_server/src/generated/ads/ad_intent.dart'
     as _ilwsi9fk;
 import 'package:balmatchum_server/src/generated/auth/login_challenge.dart'
     as _i7mkon7c;
+import 'package:balmatchum_server/src/generated/billing/entitlement_view.dart'
+    as _i9idfddb;
+import 'package:balmatchum_server/src/generated/billing/purchase_configuration.dart'
+    as _if6gfs7w;
+import 'package:balmatchum_server/src/generated/billing/purchase_input.dart'
+    as _i1q0b6so;
 import 'package:balmatchum_server/src/generated/greetings/greeting.dart'
     as _id6ypawo;
 import 'package:balmatchum_server/src/generated/product/daily_quiz.dart'
@@ -192,6 +198,8 @@ class TestEndpoints {
 
   late final _KakaoEndpoint kakao;
 
+  late final _BillingEndpoint billing;
+
   late final _GreetingEndpoint greeting;
 
   late final _ProductEndpoint product;
@@ -227,6 +235,10 @@ class _InternalTestEndpoints extends TestEndpoints
       serializationManager,
     );
     kakao = _KakaoEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    billing = _BillingEndpoint(
       endpoints,
       serializationManager,
     );
@@ -689,6 +701,140 @@ class _KakaoEndpoint {
                   _localCallContext.arguments,
                 )
                 as _ida.Future<_iacs.AuthSuccess>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+}
+
+class _BillingEndpoint {
+  _BillingEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_if6gfs7w.PurchaseConfiguration> getPurchaseConfiguration(
+    _ist.TestSessionBuilder sessionBuilder,
+    String store,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'billing',
+            method: 'getPurchaseConfiguration',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'billing',
+          methodName: 'getPurchaseConfiguration',
+          parameters: _ist.testObjectToJson({'store': store}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_if6gfs7w.PurchaseConfiguration>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_i9idfddb.EntitlementView> verifyPurchase(
+    _ist.TestSessionBuilder sessionBuilder,
+    _i1q0b6so.PurchaseInput input,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'billing',
+            method: 'verifyPurchase',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'billing',
+          methodName: 'verifyPurchase',
+          parameters: _ist.testObjectToJson({'input': input}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_i9idfddb.EntitlementView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_i9idfddb.EntitlementView> restorePurchase(
+    _ist.TestSessionBuilder sessionBuilder,
+    _i1q0b6so.PurchaseInput input,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'billing',
+            method: 'restorePurchase',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'billing',
+          methodName: 'restorePurchase',
+          parameters: _ist.testObjectToJson({'input': input}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_i9idfddb.EntitlementView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_i9idfddb.EntitlementView> getEntitlement(
+    _ist.TestSessionBuilder sessionBuilder,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'billing',
+            method: 'getEntitlement',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'billing',
+          methodName: 'getEntitlement',
+          parameters: _ist.testObjectToJson({}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_i9idfddb.EntitlementView>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

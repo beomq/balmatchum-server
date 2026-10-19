@@ -23,33 +23,7 @@ final class GoogleBillingClient {
     if (kind == null) {
       _invalid();
     }
-    final now = clock.now().toUtc();
-    final assertion = JWT(
-      {
-        'iss': config.clientEmail,
-        'scope': 'https://www.googleapis.com/auth/androidpublisher',
-        'aud': 'https://oauth2.googleapis.com/token',
-        'iat': now.millisecondsSinceEpoch ~/ 1000,
-        'exp':
-            now.add(const Duration(minutes: 5)).millisecondsSinceEpoch ~/ 1000,
-      },
-      header: {'kid': config.keyId},
-    ).sign(config._key, algorithm: JWTAlgorithm.RS256, noIssueAt: true);
-    final oauth = await _http.send(
-      http.Request('POST', Uri.https('oauth2.googleapis.com', '/token'))
-        ..bodyFields = {
-          'grant_type': 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-          'assertion': assertion,
-        },
-    );
-    final token = _string(oauth['access_token']);
-    final lifetime = oauth['expires_in'];
-    if (oauth['token_type'] != 'Bearer' ||
-        lifetime is! int ||
-        lifetime <= 0 ||
-        !RegExp(r'^[A-Za-z0-9._~+/-]+=*$').hasMatch(token)) {
-      _invalid();
-    }
+    final token = await _accessToken();
     final endpoint = kind == BillingProductKind.subscription
         ? 'subscriptionsv2'
         : 'productsv2';
@@ -199,6 +173,75 @@ final class GoogleBillingClient {
       expiresAt: expires,
       graceExpiresAt: grace,
       revokedAt: null,
+      requiresAcknowledgement: switch (result['acknowledgementState']) {
+        'ACKNOWLEDGEMENT_STATE_PENDING' => true,
+        'ACKNOWLEDGEMENT_STATE_ACKNOWLEDGED' => false,
+        _ => _invalid(),
+      },
     );
   });
+
+  /// Call only after verified persistence. Never consumes a lifetime purchase.
+  Future<void> acknowledge({
+    required String purchaseToken,
+    required String productId,
+  }) async {
+    _lookup(purchaseToken, productId);
+    final kind = config.products[productId];
+    if (kind == null) _invalid();
+    final access = await _accessToken();
+    final uri = Uri(
+      scheme: 'https',
+      host: 'androidpublisher.googleapis.com',
+      pathSegments: [
+        'androidpublisher',
+        'v3',
+        'applications',
+        config.packageName,
+        'purchases',
+        kind == BillingProductKind.subscription ? 'subscriptions' : 'products',
+        productId,
+        'tokens',
+        '$purchaseToken:acknowledge',
+      ],
+    );
+    await _http.send(
+      http.Request('POST', uri)
+        ..headers['authorization'] = 'Bearer $access'
+        ..headers['content-type'] = 'application/json'
+        ..body = '{}',
+      allowEmpty: true,
+    );
+  }
+
+  Future<String> _accessToken() async {
+    final now = clock.now().toUtc();
+    final assertion = JWT(
+      {
+        'iss': config.clientEmail,
+        'scope': 'https://www.googleapis.com/auth/androidpublisher',
+        'aud': 'https://oauth2.googleapis.com/token',
+        'iat': now.millisecondsSinceEpoch ~/ 1000,
+        'exp':
+            now.add(const Duration(minutes: 5)).millisecondsSinceEpoch ~/ 1000,
+      },
+      header: {'kid': config.keyId},
+    ).sign(config._key, algorithm: JWTAlgorithm.RS256, noIssueAt: true);
+    final oauth = await _http.send(
+      http.Request('POST', Uri.https('oauth2.googleapis.com', '/token'))
+        ..bodyFields = {
+          'grant_type': 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+          'assertion': assertion,
+        },
+    );
+    final token = _string(oauth['access_token']);
+    final lifetime = oauth['expires_in'];
+    if (oauth['token_type'] != 'Bearer' ||
+        lifetime is! int ||
+        lifetime <= 0 ||
+        !RegExp(r'^[A-Za-z0-9._~+/-]+=*$').hasMatch(token)) {
+      _invalid();
+    }
+    return token;
+  }
 }

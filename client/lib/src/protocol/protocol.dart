@@ -26,6 +26,12 @@ import 'ads/ad_exception.dart' as _i8mgtt64;
 import 'ads/ad_intent.dart' as _i5ffg0dz;
 import 'auth/login_challenge.dart' as _izhe0wsm;
 import 'auth/login_exception.dart' as _iskwpc4e;
+import 'billing/billing_exception.dart' as _iy7y41or;
+import 'billing/entitlement_view.dart' as _ixe95a4n;
+import 'billing/purchase_configuration.dart' as _iqa89lpa;
+import 'billing/purchase_input.dart' as _i8awtsqn;
+import 'billing/purchase_product.dart' as _iiesu012;
+import 'billing/purchase_view.dart' as _i0fbcnhc;
 import 'greetings/greeting.dart' as _izw8z7ou;
 import 'product/daily_quiz.dart' as _i94q6xjz;
 import 'product/daily_record.dart' as _ie37ihl8;
@@ -51,6 +57,12 @@ export 'ads/ad_exception.dart';
 export 'ads/ad_intent.dart';
 export 'auth/login_challenge.dart';
 export 'auth/login_exception.dart';
+export 'billing/billing_exception.dart';
+export 'billing/entitlement_view.dart';
+export 'billing/purchase_configuration.dart';
+export 'billing/purchase_input.dart';
+export 'billing/purchase_product.dart';
+export 'billing/purchase_view.dart';
 export 'greetings/greeting.dart';
 export 'product/daily_quiz.dart';
 export 'product/daily_record.dart';
@@ -119,6 +131,24 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _iskwpc4e.LoginException) {
       return _iskwpc4e.LoginException.fromJson(data) as T;
+    }
+    if (t == _iy7y41or.BillingException) {
+      return _iy7y41or.BillingException.fromJson(data) as T;
+    }
+    if (t == _ixe95a4n.EntitlementView) {
+      return _ixe95a4n.EntitlementView.fromJson(data) as T;
+    }
+    if (t == _iqa89lpa.PurchaseConfiguration) {
+      return _iqa89lpa.PurchaseConfiguration.fromJson(data) as T;
+    }
+    if (t == _i8awtsqn.PurchaseInput) {
+      return _i8awtsqn.PurchaseInput.fromJson(data) as T;
+    }
+    if (t == _iiesu012.PurchaseProduct) {
+      return _iiesu012.PurchaseProduct.fromJson(data) as T;
+    }
+    if (t == _i0fbcnhc.PurchaseView) {
+      return _i0fbcnhc.PurchaseView.fromJson(data) as T;
     }
     if (t == _izw8z7ou.Greeting) {
       return _izw8z7ou.Greeting.fromJson(data) as T;
@@ -197,6 +227,31 @@ class Protocol extends _isc.SerializationManager {
       return (data != null ? _iskwpc4e.LoginException.fromJson(data) : null)
           as T;
     }
+    if (t == _isc.getType<_iy7y41or.BillingException?>()) {
+      return (data != null ? _iy7y41or.BillingException.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_ixe95a4n.EntitlementView?>()) {
+      return (data != null ? _ixe95a4n.EntitlementView.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_iqa89lpa.PurchaseConfiguration?>()) {
+      return (data != null
+              ? _iqa89lpa.PurchaseConfiguration.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_i8awtsqn.PurchaseInput?>()) {
+      return (data != null ? _i8awtsqn.PurchaseInput.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_iiesu012.PurchaseProduct?>()) {
+      return (data != null ? _iiesu012.PurchaseProduct.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_i0fbcnhc.PurchaseView?>()) {
+      return (data != null ? _i0fbcnhc.PurchaseView.fromJson(data) : null) as T;
+    }
     if (t == _isc.getType<_izw8z7ou.Greeting?>()) {
       return (data != null ? _izw8z7ou.Greeting.fromJson(data) : null) as T;
     }
@@ -266,6 +321,18 @@ class Protocol extends _isc.SerializationManager {
     if (t == _isc.getType<_ir7rvxr1.RoutePoint?>()) {
       return (data != null ? _ir7rvxr1.RoutePoint.fromJson(data) : null) as T;
     }
+    if (t == List<_i0fbcnhc.PurchaseView>) {
+      return (data as List)
+              .map((e) => deserialize<_i0fbcnhc.PurchaseView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_iiesu012.PurchaseProduct>) {
+      return (data as List)
+              .map((e) => deserialize<_iiesu012.PurchaseProduct>(e))
+              .toList()
+          as T;
+    }
     if (t == List<String>) {
       return (data as List).map((e) => deserialize<String>(e)).toList() as T;
     }
@@ -334,6 +401,12 @@ class Protocol extends _isc.SerializationManager {
       _i5ffg0dz.AdIntent => 'AdIntent',
       _izhe0wsm.LoginChallenge => 'LoginChallenge',
       _iskwpc4e.LoginException => 'LoginException',
+      _iy7y41or.BillingException => 'BillingException',
+      _ixe95a4n.EntitlementView => 'EntitlementView',
+      _iqa89lpa.PurchaseConfiguration => 'PurchaseConfiguration',
+      _i8awtsqn.PurchaseInput => 'PurchaseInput',
+      _iiesu012.PurchaseProduct => 'PurchaseProduct',
+      _i0fbcnhc.PurchaseView => 'PurchaseView',
       _izw8z7ou.Greeting => 'Greeting',
       _i94q6xjz.DailyQuiz => 'DailyQuiz',
       _ie37ihl8.DailyRecord => 'DailyRecord',
@@ -377,6 +450,18 @@ class Protocol extends _isc.SerializationManager {
         return 'LoginChallenge';
       case _iskwpc4e.LoginException():
         return 'LoginException';
+      case _iy7y41or.BillingException():
+        return 'BillingException';
+      case _ixe95a4n.EntitlementView():
+        return 'EntitlementView';
+      case _iqa89lpa.PurchaseConfiguration():
+        return 'PurchaseConfiguration';
+      case _i8awtsqn.PurchaseInput():
+        return 'PurchaseInput';
+      case _iiesu012.PurchaseProduct():
+        return 'PurchaseProduct';
+      case _i0fbcnhc.PurchaseView():
+        return 'PurchaseView';
       case _izw8z7ou.Greeting():
         return 'Greeting';
       case _i94q6xjz.DailyQuiz():
@@ -452,6 +537,24 @@ class Protocol extends _isc.SerializationManager {
     }
     if (dataClassName == 'LoginException') {
       return deserialize<_iskwpc4e.LoginException>(data['data']);
+    }
+    if (dataClassName == 'BillingException') {
+      return deserialize<_iy7y41or.BillingException>(data['data']);
+    }
+    if (dataClassName == 'EntitlementView') {
+      return deserialize<_ixe95a4n.EntitlementView>(data['data']);
+    }
+    if (dataClassName == 'PurchaseConfiguration') {
+      return deserialize<_iqa89lpa.PurchaseConfiguration>(data['data']);
+    }
+    if (dataClassName == 'PurchaseInput') {
+      return deserialize<_i8awtsqn.PurchaseInput>(data['data']);
+    }
+    if (dataClassName == 'PurchaseProduct') {
+      return deserialize<_iiesu012.PurchaseProduct>(data['data']);
+    }
+    if (dataClassName == 'PurchaseView') {
+      return deserialize<_i0fbcnhc.PurchaseView>(data['data']);
     }
     if (dataClassName == 'Greeting') {
       return deserialize<_izw8z7ou.Greeting>(data['data']);

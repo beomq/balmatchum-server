@@ -6,6 +6,72 @@ import 'package:test/test.dart';
 import 'billing_fixture.dart';
 
 void main() {
+  test(
+    'Google acknowledgement strictly parses state and never consumes',
+    () async {
+      for (final product in ['monthly', 'lifetime']) {
+        final pending = product == 'monthly'
+            ? subscription()
+            : lifetimePurchase();
+        pending['acknowledgementState'] = 'ACKNOWLEDGEMENT_STATE_PENDING';
+        final verified = Wire()..google(pending);
+        expect(
+          (await verified.verifyGoogle(
+            product: product,
+          )).requiresAcknowledgement,
+          true,
+        );
+        for (final state in [
+          null,
+          'ACKNOWLEDGEMENT_STATE_UNSPECIFIED',
+          'other',
+        ]) {
+          pending['acknowledgementState'] = state;
+          await expectLater(
+            (Wire()..google(pending)).verifyGoogle(product: product),
+            invalid,
+          );
+        }
+        for (final status in [200, 204, 503]) {
+          final wire = Wire()
+            ..json({
+              'access_token': 'server-access-token',
+              'token_type': 'Bearer',
+              'expires_in': 3600,
+            })
+            ..responses.add(http.Response('', status));
+          final result = GoogleBillingClient(
+            config().google!,
+            clock: Clock.fixed(now),
+            clientFactory: wire.client,
+          ).acknowledge(purchaseToken: lookupToken, productId: product);
+          if (status == 503) {
+            await expectLater(result, unavailable);
+          } else {
+            await result;
+          }
+          final request = wire.requests.last;
+          expect(request.url.pathSegments, [
+            'androidpublisher',
+            'v3',
+            'applications',
+            'test.app',
+            'purchases',
+            product == 'monthly' ? 'subscriptions' : 'products',
+            product,
+            'tokens',
+            '$lookupToken:acknowledge',
+          ]);
+          expect(request.method, 'POST');
+          expect(request.body, '{}');
+          expect(request.url.hasQuery, false);
+          expect(request.url.hasFragment, false);
+          expect(request.url.toString(), isNot(contains(':consume')));
+        }
+      }
+    },
+  );
+
   test('absent and each partial group fail closed without leaking values', () {
     expect(config({}).apple, isNull);
     expect(config({}).google, isNull);

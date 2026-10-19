@@ -1,0 +1,11 @@
+class: PurchaseView
+fields:
+  store: String
+  productId: String
+  kind: String
+  state: String
+  active: bool
+  observedAt: DateTime
+  expiresAt: DateTime?
+  graceExpiresAt: DateTime?
+  acknowledgementPending: bool

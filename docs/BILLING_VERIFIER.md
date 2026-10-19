@@ -1,5 +1,10 @@
 # 스토어 직접 조회 검증기 (2026-10-19)
 
+후속 영속화/API 계약은 [BILLING_API.md](BILLING_API.md)에 있다. 아래는 최초 검증기
+증분의 범위 기록이며, 현재 facts는 `requiresAcknowledgement`(bool)도 제공한다.
+Google acknowledgementState 누락/미지원은 거부한다. GoogleBillingClient.acknowledge는
+검증 저장 이후에만 호출하며, Apple facts의 해당 값은 false다.
+
 이 증분은 서버 전용 설정·HTTP 검증·불변 관측값까지만 구현한다. endpoint,
 생성 client, DB 모델/저장, 탈퇴 보존, 선물 정책, 알림 수신기, 구매 승인·소비,
 혜택 지급은 구현하지 않는다. 기존 앱 client pin 89200d0을 바꿀 필요가 없다.

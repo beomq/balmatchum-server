@@ -62,6 +62,7 @@ Map<String, dynamic> renewal() => {
 Map<String, dynamic> subscription({String state = 'ACTIVE'}) => {
   'kind': 'androidpublisher#subscriptionPurchaseV2',
   'subscriptionState': 'SUBSCRIPTION_STATE_$state',
+  'acknowledgementState': 'ACKNOWLEDGEMENT_STATE_ACKNOWLEDGED',
   'testPurchase': <String, dynamic>{},
   'externalAccountIdentifiers': {'obfuscatedExternalAccountId': googleOwner},
   'startTime': purchaseDate.toIso8601String(),
@@ -76,6 +77,7 @@ Map<String, dynamic> subscription({String state = 'ACTIVE'}) => {
 Map<String, dynamic> lifetimePurchase({String state = 'PURCHASED'}) => {
   'kind': 'androidpublisher#productPurchaseV2',
   'purchaseStateContext': {'purchaseState': state},
+  'acknowledgementState': 'ACKNOWLEDGEMENT_STATE_ACKNOWLEDGED',
   'testPurchaseContext': {'fopType': 'TEST'},
   'obfuscatedExternalAccountId': googleOwner,
   'purchaseCompletionTime': purchaseDate.toIso8601String(),

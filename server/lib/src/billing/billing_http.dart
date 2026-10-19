@@ -15,7 +15,10 @@ final class _BillingHttp {
   static const timeout = Duration(seconds: 10);
   static const maxBytes = 1024 * 1024;
 
-  Future<Map<String, dynamic>> send(http.Request request) async {
+  Future<Map<String, dynamic>> send(
+    http.Request request, {
+    bool allowEmpty = false,
+  }) async {
     if (request.url.scheme != 'https' ||
         request.url.port != 443 ||
         request.url.userInfo.isNotEmpty ||
@@ -34,7 +37,8 @@ final class _BillingHttp {
     try {
       return await (() async {
         final response = await client.send(request);
-        if (response.statusCode != 200) {
+        if (response.statusCode != 200 &&
+            !(allowEmpty && response.statusCode == 204)) {
           throw BillingVerificationException(
             response.statusCode == 404 || response.statusCode == 410
                 ? BillingFailure.invalidPurchase
@@ -51,6 +55,7 @@ final class _BillingHttp {
           }
           bytes.addAll(chunk);
         }
+        if (allowEmpty && bytes.isEmpty) return <String, dynamic>{};
         return _object(jsonDecode(utf8.decode(bytes)));
       })().timeout(timeout);
     } on BillingVerificationException {

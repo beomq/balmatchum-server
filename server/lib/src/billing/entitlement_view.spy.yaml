@@ -1,0 +1,4 @@
+class: EntitlementView
+fields:
+  active: bool
+  purchases: List<PurchaseView>

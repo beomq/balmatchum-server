@@ -1,0 +1,5 @@
+class: PurchaseInput
+fields:
+  store: String
+  productId: String
+  purchaseReference: String

@@ -43,6 +43,7 @@ final class BillingFacts {
     required this.expiresAt,
     required this.graceExpiresAt,
     required this.revokedAt,
+    this.requiresAcknowledgement = false,
   });
   final BillingStore store;
   final BillingEnvironment environment;
@@ -61,6 +62,7 @@ final class BillingFacts {
   final DateTime? expiresAt;
   final DateTime? graceExpiresAt;
   final DateTime? revokedAt;
+  final bool requiresAcknowledgement;
 
   /// Exclusive end boundary, without invented billing-retry or cache extensions.
   /// Callers must re-query before consuming benefits, even for lifetime purchases.

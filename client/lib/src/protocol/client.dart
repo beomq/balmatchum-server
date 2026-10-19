@@ -14,6 +14,12 @@ import 'dart:async' as _ida;
 import 'package:balmatchum_client/src/protocol/ads/ad_intent.dart' as _ib30o6kc;
 import 'package:balmatchum_client/src/protocol/auth/login_challenge.dart'
     as _iypdqt9k;
+import 'package:balmatchum_client/src/protocol/billing/entitlement_view.dart'
+    as _i0edzqcw;
+import 'package:balmatchum_client/src/protocol/billing/purchase_configuration.dart'
+    as _ia65pde3;
+import 'package:balmatchum_client/src/protocol/billing/purchase_input.dart'
+    as _i833pumr;
 import 'package:balmatchum_client/src/protocol/greetings/greeting.dart'
     as _ipkbb44w;
 import 'package:balmatchum_client/src/protocol/product/daily_quiz.dart'
@@ -209,6 +215,45 @@ class EndpointKakao extends _isc.EndpointRef {
       'idToken': idToken,
     },
   );
+}
+
+/// {@category Endpoint}
+class EndpointBilling extends _isc.EndpointRef {
+  EndpointBilling(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'billing';
+
+  _ida.Future<_ia65pde3.PurchaseConfiguration> getPurchaseConfiguration(
+    String store,
+  ) => caller.callServerEndpoint<_ia65pde3.PurchaseConfiguration>(
+    'billing',
+    'getPurchaseConfiguration',
+    {'store': store},
+  );
+
+  _ida.Future<_i0edzqcw.EntitlementView> verifyPurchase(
+    _i833pumr.PurchaseInput input,
+  ) => caller.callServerEndpoint<_i0edzqcw.EntitlementView>(
+    'billing',
+    'verifyPurchase',
+    {'input': input},
+  );
+
+  _ida.Future<_i0edzqcw.EntitlementView> restorePurchase(
+    _i833pumr.PurchaseInput input,
+  ) => caller.callServerEndpoint<_i0edzqcw.EntitlementView>(
+    'billing',
+    'restorePurchase',
+    {'input': input},
+  );
+
+  _ida.Future<_i0edzqcw.EntitlementView> getEntitlement() =>
+      caller.callServerEndpoint<_i0edzqcw.EntitlementView>(
+        'billing',
+        'getEntitlement',
+        {},
+      );
 }
 
 /// This is an example endpoint that returns a greeting message through
@@ -576,6 +621,7 @@ class Client extends _isc.ServerpodClientShared {
     appleIdp = EndpointAppleIdp(this);
     googleIdp = EndpointGoogleIdp(this);
     kakao = EndpointKakao(this);
+    billing = EndpointBilling(this);
     greeting = EndpointGreeting(this);
     product = EndpointProduct(this);
     profile = EndpointProfile(this);
@@ -593,6 +639,8 @@ class Client extends _isc.ServerpodClientShared {
   late final EndpointGoogleIdp googleIdp;
 
   late final EndpointKakao kakao;
+
+  late final EndpointBilling billing;
 
   late final EndpointGreeting greeting;
 
@@ -613,6 +661,7 @@ class Client extends _isc.ServerpodClientShared {
     'appleIdp': appleIdp,
     'googleIdp': googleIdp,
     'kakao': kakao,
+    'billing': billing,
     'greeting': greeting,
     'product': product,
     'profile': profile,
