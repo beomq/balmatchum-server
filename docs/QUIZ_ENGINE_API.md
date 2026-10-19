@@ -2,12 +2,12 @@
 
 ## 정책과 현재 공급 상태
 
-KST 날짜별 무료 새 문제 1개와 검증 광고로 여는 추가 새 문제 1개입니다.
+KST 날짜별 무료 새 문제 1개와 검증 광고 또는 활성 유료 권한으로 여는 추가 새 문제 1개입니다.
 무료 문제를 제출해야 추가 광고 자격이 생깁니다. 최초 제출은 정오답과 관계없이
 2P이며 복습·동일 답 재전송은 새 지급이 없습니다. 날짜가 지난 미제출 문제는
 닫힙니다. 지급된 퀴즈 포인트는 운영 지갑에 포함되지만 걸음 보상 계산·상한은
-변경하지 않습니다. 유료 entitlement는 항상 false이며 결제 자료나 우회 권한은
-만들지 않습니다.
+변경하지 않습니다. 유료 조회·발급은 [PAID_BENEFITS_API.md](PAID_BENEFITS_API.md)의
+명시적 API를 사용하며 무료/광고 경로는 유지합니다.
 
 **검토 완료된 실문항은 아직 없습니다. 목표 120개를 충족했다고 표시하지 않습니다.**
 미설정·빈 팩은 `contentUnavailable`, 공급된 모든 문제 ID를 이미 본 사용자는
@@ -77,9 +77,10 @@ client.quiz.review(int assignmentId) -> Future<QuizQuestion>
 | date | String, KST 당일 |
 | status | String: `ready`, `contentUnavailable`, `exhausted` |
 | free, extra | QuizQuestion?, 해당 슬롯의 기존 발급 |
-| extraStatus | String: `freeRequired`, `adRequired`, `issued`, `contentUnavailable`, `exhausted` |
-| extraRevision | int?, `adRequired`일 때 무료 발급 assignmentId |
-| paidEntitlement | bool, 현재 항상 false |
+| extraStatus | String: `freeRequired`, `adRequired`, `premiumAvailable`, `issued`, `contentUnavailable`, `exhausted` |
+| extraRevision | int?, `adRequired` 또는 `premiumAvailable`일 때 무료 발급 assignmentId |
+| paidEntitlement | bool, getToday에서는 미조회 false; getTodayWithPremium은 신선한 판정 |
+| premiumStatus | String: notChecked, active, inactive; 상세는 유료 계약 참조 |
 
 `QuizQuestion`:
 

@@ -4,6 +4,7 @@ import 'package:clock/clock.dart';
 import 'package:serverpod/serverpod.dart';
 
 import '../ads/ad_service.dart';
+import '../billing/billing_service.dart';
 import '../generated/protocol.dart';
 import '../product/product_service.dart';
 import 'quiz_bank.dart';
@@ -83,7 +84,8 @@ class QuizService {
     );
   }
 
-  Future<QuizToday> today() async {
+  Future<QuizToday> today({BillingBenefit? premium}) async {
+    final paid = premium != null && await premium.isActive(s);
     final date = localDate(clock.now());
     var free = await slot(date, 'free');
     if (free == null) {
@@ -97,6 +99,8 @@ class QuizService {
         ? 'freeRequired'
         : await candidate() == null
         ? unavailable
+        : paid
+        ? 'premiumAvailable'
         : 'adRequired';
     return QuizToday(
       date: date,
@@ -105,8 +109,15 @@ class QuizService {
       extra: extra == null ? null : view(extra),
       extraStatus: extraStatus,
       // Immutable assignment ID is the extra-slot eligibility revision.
-      extraRevision: extraStatus == 'adRequired' ? free!.id : null,
-      paidEntitlement: false,
+      extraRevision: {'adRequired', 'premiumAvailable'}.contains(extraStatus)
+          ? free!.id
+          : null,
+      paidEntitlement: paid,
+      premiumStatus: premium == null
+          ? 'notChecked'
+          : paid
+          ? 'active'
+          : 'inactive',
     );
   }
 
@@ -129,26 +140,32 @@ class QuizService {
   Future<QuizQuestion> unlock(
     String date,
     int revision,
-    String intentId,
-    String requestId,
-  ) async {
-    final payload = ['quiz.unlock', date, revision, intentId];
+    String? intentId,
+    String requestId, {
+    BillingBenefit? premium,
+  }) async {
+    final payload = premium != null
+        ? ['quiz.unlockPremium', date, revision]
+        : ['quiz.unlock', date, revision, intentId];
     final replay = await s.replay(requestId, payload);
     if (replay != null) {
       return QuizQuestion.fromJson(jsonDecode(replay) as Map<String, dynamic>);
     }
+    if (premium != null) await premium.requireActive(s);
     final next = await extraTarget(date, revision);
-    final ads = AdService.instances[s.session.server.serverpod];
-    if (ads == null) throw AdException(code: 'configurationMissing');
-    await ads.consume(
-      s.session,
-      s.tx,
-      owner: s.owner,
-      intentId: intentId,
-      purpose: 'extraQuiz',
-      targetDate: date,
-      targetRevision: revision,
-    );
+    if (premium == null) {
+      final ads = AdService.instances[s.session.server.serverpod];
+      if (ads == null) throw AdException(code: 'configurationMissing');
+      await ads.consume(
+        s.session,
+        s.tx,
+        owner: s.owner,
+        intentId: intentId!,
+        purpose: 'extraQuiz',
+        targetDate: date,
+        targetRevision: revision,
+      );
+    }
     final result = view(await issue(date, 'extra', next));
     await s.remember(requestId, payload, result.toJson());
     return result;

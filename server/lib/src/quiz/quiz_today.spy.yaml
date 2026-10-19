@@ -7,3 +7,4 @@ fields:
   extraStatus: String
   extraRevision: int?
   paidEntitlement: bool, default=false
+  premiumStatus: String, default='notChecked'

@@ -383,6 +383,20 @@ class EndpointProduct extends _isc.EndpointRef {
         {'date': date},
       );
 
+  _ida.Future<_itb00fx7.RewardGrant> claimDayWithPremium(
+    String date,
+    String requestId,
+    int expectedRevision,
+  ) => caller.callServerEndpoint<_itb00fx7.RewardGrant>(
+    'product',
+    'claimDayWithPremium',
+    {
+      'date': date,
+      'requestId': requestId,
+      'expectedRevision': expectedRevision,
+    },
+  );
+
   _ida.Future<List<_ig075m1r.DailyQuiz>> listQuizHistory(String beforeDate) =>
       caller.callServerEndpoint<List<_ig075m1r.DailyQuiz>>(
         'product',
@@ -504,6 +518,27 @@ class EndpointQuiz extends _isc.EndpointRef {
         'getToday',
         {},
       );
+
+  _ida.Future<_iihbz53v.QuizToday> getTodayWithPremium() =>
+      caller.callServerEndpoint<_iihbz53v.QuizToday>(
+        'quiz',
+        'getTodayWithPremium',
+        {},
+      );
+
+  _ida.Future<_iuif5p7z.QuizQuestion> unlockExtraWithPremium(
+    String date,
+    int expectedRevision,
+    String requestId,
+  ) => caller.callServerEndpoint<_iuif5p7z.QuizQuestion>(
+    'quiz',
+    'unlockExtraWithPremium',
+    {
+      'date': date,
+      'expectedRevision': expectedRevision,
+      'requestId': requestId,
+    },
+  );
 
   _ida.Future<_iuif5p7z.QuizQuestion> unlockExtra(
     String date,

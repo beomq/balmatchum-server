@@ -1,7 +1,8 @@
 # 결제 영속화와 앱 계약 (2026-10-19)
 
-이 증분은 검증된 구매의 저장·재조회·복원·탈퇴 삭제까지다. 보상, 광고 생략,
-추가 퀴즈, 선물, 자산, 알림 수신기에는 연결하지 않았다. 앱 수정이나 pin 변경은 없다.
+저장·재조회·복원·탈퇴 삭제에 이어 유료 걸음 보상과 추가 퀴즈가 연결되었다.
+정확한 혜택 계약은 [PAID_BENEFITS_API.md](PAID_BENEFITS_API.md)를 따른다.
+선물, 자산, 알림 수신기에는 연결하지 않았다. 앱 수정이나 pin 변경은 없다.
 스토어 자격증명·상품 설정은 [검증기 문서](BILLING_VERIFIER.md)를 따른다.
 
 ## 생성 클라이언트의 정확한 계약
@@ -127,7 +128,8 @@ SERVERPOD_PASSWORD_database=local-disposable-test-only dart test test/integratio
 승인 marker → 스토어 API 권한/환경. 원문 토큰을 로그로 출력하며 조사하지 않는다.
 실제 콘솔 상품/키, sandbox 구매·복원·환불, production 통신, 사용자 직접 확인과
 운영 배포는 별도 미검증이다. 저장 관측은 스토어의 그 순간 상태이며 응답 직후 환불까지
-보장하지 않는다. 향후 혜택 소비는 신선한 재조회 및 실제 보상 트랜잭션과 연결해야 한다.
+보장하지 않는다. 후속 혜택 소비는 신선한 재조회와 실제 보상 트랜잭션에 연결했으며
+구체적인 잠금·재생 보장은 PAID_BENEFITS_API.md에 기록했다.
 
 실행 근거: Dart 3.13.4 / Serverpod CLI 4.0.3, 양 패키지 locked pub get 성공,
 149개 Dart 파일 format 무변경, 양 패키지 analyze --fatal-infos 무진단,

@@ -33,6 +33,7 @@ product:
   - claimDay:
   - claimDayWithAd:
   - getQuiz:
+  - claimDayWithPremium:
   - listQuizHistory:
   - answerQuiz:
   - listThemes:
@@ -45,6 +46,8 @@ profile:
   - updateGoal:
 quiz:
   - getToday:
+  - getTodayWithPremium:
+  - unlockExtraWithPremium:
   - unlockExtra:
   - answer:
   - listHistory:

@@ -2,6 +2,10 @@
 
 ## 2026-10-19 운영 계약 (아래 개발 fixture 이력보다 우선)
 
+유료 혜택 후속 증분: `claimDayWithPremium(date, requestId, expectedRevision)`은
+활성 결제를 새로 검증하고 기존 광고와 같은 미수령 구간에 총 2배를 지급한다.
+기존 무료 claimDay 의미는 유지한다. [정확한 앱 계약](PAID_BENEFITS_API.md)을 참조한다.
+
 정책 버전은 `steps-v1-20261019`이다. 기본분은
 `min(100, confirmedSteps ~/ 100)`이며 목표 설정은 계산에 사용하지 않는다.
 무료 수령은 미수령 기본분만, 검증 광고 수령은 해당 기본분의 **총 2배**다.
@@ -53,8 +57,9 @@
 이는 지급 자격 갱신이 아니며 실제 수령 때 상태와 revision을 다시 검사한다.
 AdService.consume, 원장 삽입, 구간 전진, request 결과 저장은 하나의 DB transaction이다.
 무료 수령 후 이전 광고 수령은 staleProjection이며 이전 증거로 추가 지급하지 않는다.
-extraQuiz 새 인텐트는 purposeUnavailable이다. 구독 entitlement 연동과 퀴즈/테마 운영화는
-이 증분에 없으며 결제 권한을 가짜로 생성하지 않는다. SSV 운용 설정은 ADMOB_SSV_API.md 참조.
+후속 퀴즈 엔진은 extraQuiz 인텐트를 지원하며 QUIZ_ENGINE_API.md를 따른다.
+유료 entitlement 연동은 PAID_BENEFITS_API.md를 따른다. 결제 권한을 가짜로 생성하지
+않는다. SSV 운용 설정은 ADMOB_SSV_API.md 참조.
 
 ### 명시적 fixture 전환 전략
 

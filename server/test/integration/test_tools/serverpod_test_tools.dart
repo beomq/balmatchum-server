@@ -1230,6 +1230,43 @@ class _ProductEndpoint {
     });
   }
 
+  _ida.Future<_iiyssm1r.RewardGrant> claimDayWithPremium(
+    _ist.TestSessionBuilder sessionBuilder,
+    String date,
+    String requestId,
+    int expectedRevision,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'product',
+            method: 'claimDayWithPremium',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'product',
+          methodName: 'claimDayWithPremium',
+          parameters: _ist.testObjectToJson({
+            'date': date,
+            'requestId': requestId,
+            'expectedRevision': expectedRevision,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_iiyssm1r.RewardGrant>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
   _ida.Future<List<_is16fueh.DailyQuiz>> listQuizHistory(
     _ist.TestSessionBuilder sessionBuilder,
     String beforeDate,
@@ -1582,6 +1619,73 @@ class _QuizEndpoint {
                   _localCallContext.arguments,
                 )
                 as _ida.Future<_iag0s3ti.QuizToday>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_iag0s3ti.QuizToday> getTodayWithPremium(
+    _ist.TestSessionBuilder sessionBuilder,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'quiz',
+            method: 'getTodayWithPremium',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'quiz',
+          methodName: 'getTodayWithPremium',
+          parameters: _ist.testObjectToJson({}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_iag0s3ti.QuizToday>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_i5f8suyi.QuizQuestion> unlockExtraWithPremium(
+    _ist.TestSessionBuilder sessionBuilder,
+    String date,
+    int expectedRevision,
+    String requestId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'quiz',
+            method: 'unlockExtraWithPremium',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'quiz',
+          methodName: 'unlockExtraWithPremium',
+          parameters: _ist.testObjectToJson({
+            'date': date,
+            'expectedRevision': expectedRevision,
+            'requestId': requestId,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_i5f8suyi.QuizQuestion>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

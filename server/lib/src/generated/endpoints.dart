@@ -710,6 +710,37 @@ class Endpoints extends _is.EndpointDispatch {
                     params['date'],
                   ),
         ),
+        'claimDayWithPremium': _is.MethodConnector(
+          name: 'claimDayWithPremium',
+          params: {
+            'date': _is.ParameterDescription(
+              name: 'date',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'requestId': _is.ParameterDescription(
+              name: 'requestId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'expectedRevision': _is.ParameterDescription(
+              name: 'expectedRevision',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['product'] as _itexbxyn.ProductEndpoint)
+                  .claimDayWithPremium(
+                    session,
+                    params['date'],
+                    params['requestId'],
+                    params['expectedRevision'],
+                  ),
+        ),
         'listQuizHistory': _is.MethodConnector(
           name: 'listQuizHistory',
           params: {
@@ -939,6 +970,47 @@ class Endpoints extends _is.EndpointDispatch {
               ) async => (endpoints['quiz'] as _iskif4sw.QuizEndpoint).getToday(
                 session,
               ),
+        ),
+        'getTodayWithPremium': _is.MethodConnector(
+          name: 'getTodayWithPremium',
+          params: {},
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['quiz'] as _iskif4sw.QuizEndpoint)
+                  .getTodayWithPremium(session),
+        ),
+        'unlockExtraWithPremium': _is.MethodConnector(
+          name: 'unlockExtraWithPremium',
+          params: {
+            'date': _is.ParameterDescription(
+              name: 'date',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'expectedRevision': _is.ParameterDescription(
+              name: 'expectedRevision',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'requestId': _is.ParameterDescription(
+              name: 'requestId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['quiz'] as _iskif4sw.QuizEndpoint)
+                  .unlockExtraWithPremium(
+                    session,
+                    params['date'],
+                    params['expectedRevision'],
+                    params['requestId'],
+                  ),
         ),
         'unlockExtra': _is.MethodConnector(
           name: 'unlockExtra',

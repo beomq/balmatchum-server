@@ -8,6 +8,7 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
 
 import '../generated/protocol.dart';
 import '../ads/ad_service.dart';
+import '../billing/billing_service.dart';
 import '../quiz/quiz_bank.dart';
 
 /// Legacy quiz/theme fixtures remain isolated from production step balances.
@@ -496,22 +497,27 @@ class ProductService {
     String requestId,
     int expectedRevision, {
     String? intentId,
+    BillingBenefit? premium,
   }) async {
     dayStart(date);
-    final payload = intentId == null
+    final payload = premium != null
+        ? ['claimDayWithPremium', date, expectedRevision]
+        : intentId == null
         ? ['claimDay', date, expectedRevision]
         : ['claimDayWithAd', date, expectedRevision, intentId];
     final previous = await replay(requestId, payload);
     if (previous != null) {
       return RewardGrant.fromJson(jsonDecode(previous) as Map<String, dynamic>);
     }
+    if (premium != null) await premium.requireActive(this);
+    final boosted = intentId != null || premium != null;
     final value = await claimTarget(
       date,
       expectedRevision,
-      withAd: intentId != null,
+      withAd: boosted,
     );
-    final base = claimable(value, withAd: intentId != null);
-    final multiplier = intentId == null ? 1 : 2;
+    final base = claimable(value, withAd: boosted);
+    final multiplier = boosted ? 2 : 1;
     if (intentId != null) {
       final ads = AdService.instances[session.server.serverpod];
       if (ads == null) throw AdException(code: 'configurationMissing');
@@ -528,7 +534,7 @@ class ProductService {
     final amount = base * multiplier;
     final slices = <RewardSlice>[];
     for (final window in value.windows) {
-      if (intentId == null &&
+      if (!boosted &&
           (window.freeUntil == null ||
               !clock.now().toUtc().isBefore(window.freeUntil!))) {
         continue;

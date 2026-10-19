@@ -24,7 +24,9 @@ abstract class QuizToday
     required this.extraStatus,
     this.extraRevision,
     bool? paidEntitlement,
-  }) : paidEntitlement = paidEntitlement ?? false;
+    String? premiumStatus,
+  }) : paidEntitlement = paidEntitlement ?? false,
+       premiumStatus = premiumStatus ?? 'notChecked';
 
   factory QuizToday({
     required String date,
@@ -34,6 +36,7 @@ abstract class QuizToday
     required String extraStatus,
     int? extraRevision,
     bool? paidEntitlement,
+    String? premiumStatus,
   }) = _QuizTodayImpl;
 
   factory QuizToday.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -57,6 +60,7 @@ abstract class QuizToday
           : _isc.BoolJsonExtension.fromJson(
               jsonSerialization['paidEntitlement'],
             ),
+      premiumStatus: jsonSerialization['premiumStatus'] as String?,
     );
   }
 
@@ -74,6 +78,8 @@ abstract class QuizToday
 
   bool paidEntitlement;
 
+  String premiumStatus;
+
   /// Returns a shallow copy of this [QuizToday]
   /// with some or all fields replaced by the given arguments.
   @_isc.useResult
@@ -85,6 +91,7 @@ abstract class QuizToday
     String? extraStatus,
     int? extraRevision,
     bool? paidEntitlement,
+    String? premiumStatus,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -97,6 +104,7 @@ abstract class QuizToday
       'extraStatus': extraStatus,
       if (extraRevision != null) 'extraRevision': extraRevision,
       'paidEntitlement': paidEntitlement,
+      'premiumStatus': premiumStatus,
     };
   }
 
@@ -111,6 +119,7 @@ abstract class QuizToday
       'extraStatus': extraStatus,
       if (extraRevision != null) 'extraRevision': extraRevision,
       'paidEntitlement': paidEntitlement,
+      'premiumStatus': premiumStatus,
     };
   }
 
@@ -131,6 +140,7 @@ class _QuizTodayImpl extends QuizToday {
     required String extraStatus,
     int? extraRevision,
     bool? paidEntitlement,
+    String? premiumStatus,
   }) : super._(
          date: date,
          status: status,
@@ -139,6 +149,7 @@ class _QuizTodayImpl extends QuizToday {
          extraStatus: extraStatus,
          extraRevision: extraRevision,
          paidEntitlement: paidEntitlement,
+         premiumStatus: premiumStatus,
        );
 
   /// Returns a shallow copy of this [QuizToday]
@@ -153,6 +164,7 @@ class _QuizTodayImpl extends QuizToday {
     String? extraStatus,
     Object? extraRevision = _Undefined,
     bool? paidEntitlement,
+    String? premiumStatus,
   }) {
     return QuizToday(
       date: date ?? this.date,
@@ -162,6 +174,7 @@ class _QuizTodayImpl extends QuizToday {
       extraStatus: extraStatus ?? this.extraStatus,
       extraRevision: extraRevision is int? ? extraRevision : this.extraRevision,
       paidEntitlement: paidEntitlement ?? this.paidEntitlement,
+      premiumStatus: premiumStatus ?? this.premiumStatus,
     );
   }
 }

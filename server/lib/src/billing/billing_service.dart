@@ -141,17 +141,28 @@ class BillingService {
       .toString();
 
   Future<EntitlementView> verify(Session s, PurchaseInput input) async {
+    await _verify(s, input);
+    return _view(s);
+  }
+
+  Future<void> _verify(
+    Session s,
+    PurchaseInput input, {
+    ({String binding, int sequence})? reserved,
+  }) async {
     if (!_products(input.store).containsKey(input.productId)) {
       throw BillingException(code: 'invalidPurchase');
     }
     // Reserve before the external lookup, not at completion. A later request
     // invalidates earlier requests even if those finish after a revocation.
-    final reservation = await s.db.transaction((tx) async {
-      final account = await _account(s, tx);
-      account.sequence++;
-      await BillingAccount.db.updateRow(s, account, transaction: tx);
-      return (binding: account.binding, sequence: account.sequence);
-    });
+    final reservation =
+        reserved ??
+        await s.db.transaction<({String binding, int sequence})>((tx) async {
+          final account = await _account(s, tx);
+          account.sequence++;
+          await BillingAccount.db.updateRow(s, account, transaction: tx);
+          return (binding: account.binding, sequence: account.sequence);
+        });
     final facts = input.store == 'apple'
         ? await apple!.verify(
             transactionId: input.purchaseReference,
@@ -270,7 +281,42 @@ class BillingService {
         // clear the marker because a remote acknowledgement outcome is unknown.
       }
     }
-    return _view(s);
+  }
+
+  /// One observation sequence covers the entire fresh lookup. Every store call
+  /// finishes before the caller opens the reward/quiz consumption transaction.
+  Future<BillingBenefit> revalidateBenefit(Session s) async {
+    final snapshot = await s.db.transaction((tx) async {
+      final account = await _account(s, tx);
+      account.sequence++;
+      await BillingAccount.db.updateRow(s, account, transaction: tx);
+      final rows = await StoredPurchase.db.find(
+        s,
+        where: (t) => t.owner.equals(_owner(s)),
+        transaction: tx,
+      );
+      return (binding: account.binding, sequence: account.sequence, rows: rows);
+    });
+    for (final row in snapshot.rows) {
+      if (_environment(row.store).name != row.environment) {
+        throw BillingException(code: 'configurationMissing');
+      }
+      await _verify(
+        s,
+        PurchaseInput(
+          store: row.store,
+          productId: row.productId,
+          purchaseReference: row.purchaseReference,
+        ),
+        reserved: (binding: snapshot.binding, sequence: snapshot.sequence),
+      );
+    }
+    return BillingBenefit._(
+      this,
+      _owner(s),
+      snapshot.binding,
+      snapshot.sequence,
+    );
   }
 
   Future<EntitlementView> entitlement(Session s) async {
@@ -342,6 +388,47 @@ class BillingService {
     return p.state == 'active' &&
         (p.kind == 'lifetime' ||
             (p.expiresAt != null && now.isBefore(p.expiresAt!)));
+  }
+}
+
+/// Server-only proof of a completed fresh lookup, never a client premium flag.
+class BillingBenefit {
+  BillingBenefit._(this._service, this._owner, this._binding, this._sequence);
+  final BillingService _service;
+  final String _owner;
+  final String _binding;
+  final int _sequence;
+
+  /// ProductService already holds AuthUser -> ProductAccount until consumption
+  /// commits. A later reservation (even one that failed) invalidates this proof.
+  Future<bool> isActive(ProductService s) async {
+    final account = await BillingAccount.db.findFirstRow(
+      s.session,
+      where: (t) => t.owner.equals(s.owner),
+      transaction: s.tx,
+    );
+    if (s.owner != _owner ||
+        account == null ||
+        account.binding != _binding ||
+        account.sequence != _sequence) {
+      throw BillingException(code: 'staleObservation');
+    }
+    final rows = await StoredPurchase.db.find(
+      s.session,
+      where: (t) => t.owner.equals(s.owner),
+      transaction: s.tx,
+    );
+    if (rows.any((p) => p.sequence != _sequence)) {
+      throw BillingException(code: 'staleObservation');
+    }
+    final now = _service.clock.now().toUtc();
+    return rows.any((p) => _service._active(p, now));
+  }
+
+  Future<void> requireActive(ProductService s) async {
+    if (!await isActive(s)) {
+      throw BillingException(code: 'entitlementInactive');
+    }
   }
 }
 
