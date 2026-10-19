@@ -6,6 +6,7 @@ import 'package:serverpod/serverpod.dart';
 
 import '../generated/protocol.dart';
 import '../product/product_service.dart';
+import '../quiz/quiz_service.dart';
 import 'ad_config.dart';
 import 'ad_verifier.dart';
 
@@ -44,11 +45,18 @@ class AdService {
     String date,
     int revision,
   ) async {
+    final eligibilityClock = Clock.fixed(clock.now());
     final placement = config.placements[purpose];
     if (placement == null) throw AdException(code: 'purposeUnconfigured');
     dayStart(date);
-    if (revision < 0 || date.compareTo(localDate(clock.now())) > 0) {
+    if (revision < 0 || date.compareTo(localDate(eligibilityClock.now())) > 0) {
       throw AdException(code: 'invalidTarget');
+    }
+    if (purpose == 'extraQuiz') {
+      await withClock(
+        eligibilityClock,
+        () => QuizService(s).extraTarget(date, revision),
+      );
     }
     final previous = await StoredAdIntent.db.findFirstRow(
       s.session,
@@ -61,15 +69,17 @@ class AdService {
     );
     if (previous != null) return view(previous);
     if (purpose == 'dailyReward') {
-      await withClock(clock, () => s.claimTarget(date, revision, withAd: true));
-    } else {
-      // No production extra-quiz entitlement exists in this increment.
+      await withClock(
+        eligibilityClock,
+        () => s.claimTarget(date, revision, withAd: true),
+      );
+    } else if (purpose != 'extraQuiz') {
       throw AdException(code: 'purposeUnavailable');
     }
     // Google timestamps have millisecond precision; do not reject an event in
     // the creation millisecond merely because the server clock has microseconds.
     final now = DateTime.fromMillisecondsSinceEpoch(
-      clock.now().millisecondsSinceEpoch,
+      eligibilityClock.now().millisecondsSinceEpoch,
       isUtc: true,
     );
     final random = Random.secure();

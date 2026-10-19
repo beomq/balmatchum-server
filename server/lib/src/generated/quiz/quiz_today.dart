@@ -1,0 +1,167 @@
+/* AUTOMATICALLY GENERATED CODE DO NOT MODIFY */
+/*   To generate run: "serverpod generate"    */
+
+// ignore_for_file: implementation_imports
+// ignore_for_file: library_private_types_in_public_api
+// ignore_for_file: non_constant_identifier_names
+// ignore_for_file: public_member_api_docs
+// ignore_for_file: type_literal_in_constant_pattern
+// ignore_for_file: use_super_parameters
+// ignore_for_file: invalid_use_of_internal_member
+
+// ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:balmatchum_server/src/generated/protocol.dart' as _iu3f2ih9;
+import 'package:serverpod/serverpod.dart' as _is;
+import '../quiz/quiz_question.dart' as _idjigf1h;
+
+abstract class QuizToday
+    implements _is.SerializableModel, _is.ProtocolSerialization {
+  QuizToday._({
+    required this.date,
+    required this.status,
+    this.free,
+    this.extra,
+    required this.extraStatus,
+    this.extraRevision,
+    bool? paidEntitlement,
+  }) : paidEntitlement = paidEntitlement ?? false;
+
+  factory QuizToday({
+    required String date,
+    required String status,
+    _idjigf1h.QuizQuestion? free,
+    _idjigf1h.QuizQuestion? extra,
+    required String extraStatus,
+    int? extraRevision,
+    bool? paidEntitlement,
+  }) = _QuizTodayImpl;
+
+  factory QuizToday.fromJson(Map<String, dynamic> jsonSerialization) {
+    return QuizToday(
+      date: jsonSerialization['date'] as String,
+      status: jsonSerialization['status'] as String,
+      free: jsonSerialization['free'] == null
+          ? null
+          : _iu3f2ih9.Protocol().deserialize<_idjigf1h.QuizQuestion>(
+              jsonSerialization['free'],
+            ),
+      extra: jsonSerialization['extra'] == null
+          ? null
+          : _iu3f2ih9.Protocol().deserialize<_idjigf1h.QuizQuestion>(
+              jsonSerialization['extra'],
+            ),
+      extraStatus: jsonSerialization['extraStatus'] as String,
+      extraRevision: jsonSerialization['extraRevision'] as int?,
+      paidEntitlement: jsonSerialization['paidEntitlement'] == null
+          ? null
+          : _is.BoolJsonExtension.fromJson(
+              jsonSerialization['paidEntitlement'],
+            ),
+    );
+  }
+
+  String date;
+
+  String status;
+
+  _idjigf1h.QuizQuestion? free;
+
+  _idjigf1h.QuizQuestion? extra;
+
+  String extraStatus;
+
+  int? extraRevision;
+
+  bool paidEntitlement;
+
+  /// Returns a shallow copy of this [QuizToday]
+  /// with some or all fields replaced by the given arguments.
+  @_is.useResult
+  QuizToday copyWith({
+    String? date,
+    String? status,
+    _idjigf1h.QuizQuestion? free,
+    _idjigf1h.QuizQuestion? extra,
+    String? extraStatus,
+    int? extraRevision,
+    bool? paidEntitlement,
+  });
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      '__className__': 'QuizToday',
+      'date': date,
+      'status': status,
+      if (free != null) 'free': free?.toJson(),
+      if (extra != null) 'extra': extra?.toJson(),
+      'extraStatus': extraStatus,
+      if (extraRevision != null) 'extraRevision': extraRevision,
+      'paidEntitlement': paidEntitlement,
+    };
+  }
+
+  @override
+  Map<String, dynamic> toJsonForProtocol() {
+    return {
+      '__className__': 'QuizToday',
+      'date': date,
+      'status': status,
+      if (free != null) 'free': free?.toJsonForProtocol(),
+      if (extra != null) 'extra': extra?.toJsonForProtocol(),
+      'extraStatus': extraStatus,
+      if (extraRevision != null) 'extraRevision': extraRevision,
+      'paidEntitlement': paidEntitlement,
+    };
+  }
+
+  @override
+  String toString() {
+    return _is.SerializationManager.encode(this);
+  }
+}
+
+class _Undefined {}
+
+class _QuizTodayImpl extends QuizToday {
+  _QuizTodayImpl({
+    required String date,
+    required String status,
+    _idjigf1h.QuizQuestion? free,
+    _idjigf1h.QuizQuestion? extra,
+    required String extraStatus,
+    int? extraRevision,
+    bool? paidEntitlement,
+  }) : super._(
+         date: date,
+         status: status,
+         free: free,
+         extra: extra,
+         extraStatus: extraStatus,
+         extraRevision: extraRevision,
+         paidEntitlement: paidEntitlement,
+       );
+
+  /// Returns a shallow copy of this [QuizToday]
+  /// with some or all fields replaced by the given arguments.
+  @_is.useResult
+  @override
+  QuizToday copyWith({
+    String? date,
+    String? status,
+    Object? free = _Undefined,
+    Object? extra = _Undefined,
+    String? extraStatus,
+    Object? extraRevision = _Undefined,
+    bool? paidEntitlement,
+  }) {
+    return QuizToday(
+      date: date ?? this.date,
+      status: status ?? this.status,
+      free: free is _idjigf1h.QuizQuestion? ? free : this.free?.copyWith(),
+      extra: extra is _idjigf1h.QuizQuestion? ? extra : this.extra?.copyWith(),
+      extraStatus: extraStatus ?? this.extraStatus,
+      extraRevision: extraRevision is int? ? extraRevision : this.extraRevision,
+      paidEntitlement: paidEntitlement ?? this.paidEntitlement,
+    );
+  }
+}

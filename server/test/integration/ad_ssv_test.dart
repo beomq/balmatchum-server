@@ -482,10 +482,10 @@ void main() {
     await expectLater(
       a.client.ads.createIntent('extraQuiz', '2026-10-19', 0),
       throwsA(
-        isA<api.AdException>().having(
+        isA<api.ProductException>().having(
           (e) => e.code,
           'code',
-          'purposeUnavailable',
+          'freeRequired',
         ),
       ),
     );

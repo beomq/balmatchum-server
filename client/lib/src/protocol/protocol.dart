@@ -15,6 +15,8 @@ import 'package:balmatchum_client/src/protocol/product/daily_quiz.dart'
     as _ig075m1r;
 import 'package:balmatchum_client/src/protocol/product/daily_record.dart'
     as _i6924b5v;
+import 'package:balmatchum_client/src/protocol/quiz/quiz_question.dart'
+    as _iuif5p7z;
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as _iacc;
 import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
@@ -38,6 +40,8 @@ import 'product/wallet_view.dart' as _izf11uf3;
 import 'profile/profile_exception.dart' as _ie17qpis;
 import 'profile/profile_input.dart' as _ib0yiys4;
 import 'profile/profile_view.dart' as _i7a0m7me;
+import 'quiz/quiz_question.dart' as _id1a33kr;
+import 'quiz/quiz_today.dart' as _iyr4ok9x;
 import 'records/gps_record.dart' as _ixays1el;
 import 'records/gps_record_input.dart' as _ijl0tr6b;
 import 'records/record_exception.dart' as _ihyrwhon;
@@ -61,6 +65,8 @@ export 'product/wallet_view.dart';
 export 'profile/profile_exception.dart';
 export 'profile/profile_input.dart';
 export 'profile/profile_view.dart';
+export 'quiz/quiz_question.dart';
+export 'quiz/quiz_today.dart';
 export 'records/gps_record.dart';
 export 'records/gps_record_input.dart';
 export 'records/record_exception.dart';
@@ -156,6 +162,12 @@ class Protocol extends _isc.SerializationManager {
     if (t == _i7a0m7me.ProfileView) {
       return _i7a0m7me.ProfileView.fromJson(data) as T;
     }
+    if (t == _id1a33kr.QuizQuestion) {
+      return _id1a33kr.QuizQuestion.fromJson(data) as T;
+    }
+    if (t == _iyr4ok9x.QuizToday) {
+      return _iyr4ok9x.QuizToday.fromJson(data) as T;
+    }
     if (t == _ixays1el.GpsRecord) {
       return _ixays1el.GpsRecord.fromJson(data) as T;
     }
@@ -230,6 +242,12 @@ class Protocol extends _isc.SerializationManager {
     if (t == _isc.getType<_i7a0m7me.ProfileView?>()) {
       return (data != null ? _i7a0m7me.ProfileView.fromJson(data) : null) as T;
     }
+    if (t == _isc.getType<_id1a33kr.QuizQuestion?>()) {
+      return (data != null ? _id1a33kr.QuizQuestion.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_iyr4ok9x.QuizToday?>()) {
+      return (data != null ? _iyr4ok9x.QuizToday.fromJson(data) : null) as T;
+    }
     if (t == _isc.getType<_ixays1el.GpsRecord?>()) {
       return (data != null ? _ixays1el.GpsRecord.fromJson(data) : null) as T;
     }
@@ -295,6 +313,12 @@ class Protocol extends _isc.SerializationManager {
               .toList()
           as T;
     }
+    if (t == List<_iuif5p7z.QuizQuestion>) {
+      return (data as List)
+              .map((e) => deserialize<_iuif5p7z.QuizQuestion>(e))
+              .toList()
+          as T;
+    }
     try {
       return _iacc.Protocol().deserialize<T>(data, t);
     } on _isc.DeserializationTypeNotFoundException catch (_) {}
@@ -324,6 +348,8 @@ class Protocol extends _isc.SerializationManager {
       _ie17qpis.ProfileException => 'ProfileException',
       _ib0yiys4.ProfileInput => 'ProfileInput',
       _i7a0m7me.ProfileView => 'ProfileView',
+      _id1a33kr.QuizQuestion => 'QuizQuestion',
+      _iyr4ok9x.QuizToday => 'QuizToday',
       _ixays1el.GpsRecord => 'GpsRecord',
       _ijl0tr6b.GpsRecordInput => 'GpsRecordInput',
       _ihyrwhon.RecordException => 'RecordException',
@@ -379,6 +405,10 @@ class Protocol extends _isc.SerializationManager {
         return 'ProfileInput';
       case _i7a0m7me.ProfileView():
         return 'ProfileView';
+      case _id1a33kr.QuizQuestion():
+        return 'QuizQuestion';
+      case _iyr4ok9x.QuizToday():
+        return 'QuizToday';
       case _ixays1el.GpsRecord():
         return 'GpsRecord';
       case _ijl0tr6b.GpsRecordInput():
@@ -464,6 +494,12 @@ class Protocol extends _isc.SerializationManager {
     }
     if (dataClassName == 'ProfileView') {
       return deserialize<_i7a0m7me.ProfileView>(data['data']);
+    }
+    if (dataClassName == 'QuizQuestion') {
+      return deserialize<_id1a33kr.QuizQuestion>(data['data']);
+    }
+    if (dataClassName == 'QuizToday') {
+      return deserialize<_iyr4ok9x.QuizToday>(data['data']);
     }
     if (dataClassName == 'GpsRecord') {
       return deserialize<_ixays1el.GpsRecord>(data['data']);

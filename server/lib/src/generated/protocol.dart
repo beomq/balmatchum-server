@@ -15,6 +15,8 @@ import 'package:balmatchum_server/src/generated/product/daily_quiz.dart'
     as _is16fueh;
 import 'package:balmatchum_server/src/generated/product/daily_record.dart'
     as _iny5mdqa;
+import 'package:balmatchum_server/src/generated/quiz/quiz_question.dart'
+    as _i5f8suyi;
 import 'package:serverpod/protocol.dart' as _isp;
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
@@ -51,6 +53,10 @@ import 'profile/dog_profile.dart' as _i4zjkzo6;
 import 'profile/profile_exception.dart' as _ie17qpis;
 import 'profile/profile_input.dart' as _ib0yiys4;
 import 'profile/profile_view.dart' as _i7a0m7me;
+import 'quiz/quiz_assignment.dart' as _iu8isq3w;
+import 'quiz/quiz_content_revision.dart' as _ioawd7cw;
+import 'quiz/quiz_question.dart' as _id1a33kr;
+import 'quiz/quiz_today.dart' as _iyr4ok9x;
 import 'records/gps_record.dart' as _ixays1el;
 import 'records/gps_record_input.dart' as _ijl0tr6b;
 import 'records/record_exception.dart' as _ihyrwhon;
@@ -87,6 +93,10 @@ export 'profile/dog_profile.dart';
 export 'profile/profile_exception.dart';
 export 'profile/profile_input.dart';
 export 'profile/profile_view.dart';
+export 'quiz/quiz_assignment.dart';
+export 'quiz/quiz_content_revision.dart';
+export 'quiz/quiz_question.dart';
+export 'quiz/quiz_today.dart';
 export 'records/gps_record.dart';
 export 'records/gps_record_input.dart';
 export 'records/record_exception.dart';
@@ -886,6 +896,205 @@ class Protocol extends _is.DatabaseSerializationManager {
       managed: true,
     ),
     _isp.TableDefinition(
+      name: 'quiz_assignment',
+      dartName: 'QuizAssignment',
+      schema: 'public',
+      module: 'balmatchum',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'owner',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'date',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'slot',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'questionId',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'version',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'snapshot',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'policyVersion',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'issuedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'answerIndex',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'answeredAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'awardedPoints',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'quiz_assignment_slot',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'owner',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'date',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'slot',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'quiz_assignment_seen_version',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'owner',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'questionId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'version',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'quiz_assignment_seen_question',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'owner',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'questionId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'quiz_content_revision',
+      dartName: 'QuizContentRevision',
+      schema: 'public',
+      module: 'balmatchum',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'questionId',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'version',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'snapshot',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'quiz_content_revision_key',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'questionId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'version',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
       name: 'quiz_state',
       dartName: 'QuizState',
       schema: 'public',
@@ -1208,6 +1417,18 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _i7a0m7me.ProfileView) {
       return _i7a0m7me.ProfileView.fromJson(data) as T;
     }
+    if (t == _iu8isq3w.QuizAssignment) {
+      return _iu8isq3w.QuizAssignment.fromJson(data) as T;
+    }
+    if (t == _ioawd7cw.QuizContentRevision) {
+      return _ioawd7cw.QuizContentRevision.fromJson(data) as T;
+    }
+    if (t == _id1a33kr.QuizQuestion) {
+      return _id1a33kr.QuizQuestion.fromJson(data) as T;
+    }
+    if (t == _iyr4ok9x.QuizToday) {
+      return _iyr4ok9x.QuizToday.fromJson(data) as T;
+    }
     if (t == _ixays1el.GpsRecord) {
       return _ixays1el.GpsRecord.fromJson(data) as T;
     }
@@ -1326,6 +1547,22 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _is.getType<_i7a0m7me.ProfileView?>()) {
       return (data != null ? _i7a0m7me.ProfileView.fromJson(data) : null) as T;
     }
+    if (t == _is.getType<_iu8isq3w.QuizAssignment?>()) {
+      return (data != null ? _iu8isq3w.QuizAssignment.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_ioawd7cw.QuizContentRevision?>()) {
+      return (data != null
+              ? _ioawd7cw.QuizContentRevision.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_id1a33kr.QuizQuestion?>()) {
+      return (data != null ? _id1a33kr.QuizQuestion.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_iyr4ok9x.QuizToday?>()) {
+      return (data != null ? _iyr4ok9x.QuizToday.fromJson(data) : null) as T;
+    }
     if (t == _is.getType<_ixays1el.GpsRecord?>()) {
       return (data != null ? _ixays1el.GpsRecord.fromJson(data) : null) as T;
     }
@@ -1401,6 +1638,12 @@ class Protocol extends _is.DatabaseSerializationManager {
               .toList()
           as T;
     }
+    if (t == List<_i5f8suyi.QuizQuestion>) {
+      return (data as List)
+              .map((e) => deserialize<_i5f8suyi.QuizQuestion>(e))
+              .toList()
+          as T;
+    }
     try {
       return _iacs.Protocol().deserialize<T>(data, t);
     } on _is.DeserializationTypeNotFoundException catch (_) {}
@@ -1445,6 +1688,10 @@ class Protocol extends _is.DatabaseSerializationManager {
       _ie17qpis.ProfileException => 'ProfileException',
       _ib0yiys4.ProfileInput => 'ProfileInput',
       _i7a0m7me.ProfileView => 'ProfileView',
+      _iu8isq3w.QuizAssignment => 'QuizAssignment',
+      _ioawd7cw.QuizContentRevision => 'QuizContentRevision',
+      _id1a33kr.QuizQuestion => 'QuizQuestion',
+      _iyr4ok9x.QuizToday => 'QuizToday',
       _ixays1el.GpsRecord => 'GpsRecord',
       _ijl0tr6b.GpsRecordInput => 'GpsRecordInput',
       _ihyrwhon.RecordException => 'RecordException',
@@ -1525,6 +1772,14 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'ProfileInput';
       case _i7a0m7me.ProfileView():
         return 'ProfileView';
+      case _iu8isq3w.QuizAssignment():
+        return 'QuizAssignment';
+      case _ioawd7cw.QuizContentRevision():
+        return 'QuizContentRevision';
+      case _id1a33kr.QuizQuestion():
+        return 'QuizQuestion';
+      case _iyr4ok9x.QuizToday():
+        return 'QuizToday';
       case _ixays1el.GpsRecord():
         return 'GpsRecord';
       case _ijl0tr6b.GpsRecordInput():
@@ -1653,6 +1908,18 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (dataClassName == 'ProfileView') {
       return deserialize<_i7a0m7me.ProfileView>(data['data']);
     }
+    if (dataClassName == 'QuizAssignment') {
+      return deserialize<_iu8isq3w.QuizAssignment>(data['data']);
+    }
+    if (dataClassName == 'QuizContentRevision') {
+      return deserialize<_ioawd7cw.QuizContentRevision>(data['data']);
+    }
+    if (dataClassName == 'QuizQuestion') {
+      return deserialize<_id1a33kr.QuizQuestion>(data['data']);
+    }
+    if (dataClassName == 'QuizToday') {
+      return deserialize<_iyr4ok9x.QuizToday>(data['data']);
+    }
     if (dataClassName == 'GpsRecord') {
       return deserialize<_ixays1el.GpsRecord>(data['data']);
     }
@@ -1734,6 +2001,10 @@ class Protocol extends _is.DatabaseSerializationManager {
         return _ileabnff.ThemeOwnership.t;
       case _i4zjkzo6.DogProfile:
         return _i4zjkzo6.DogProfile.t;
+      case _iu8isq3w.QuizAssignment:
+        return _iu8isq3w.QuizAssignment.t;
+      case _ioawd7cw.QuizContentRevision:
+        return _ioawd7cw.QuizContentRevision.t;
       case _iyylbrve.StoredGpsRecord:
         return _iyylbrve.StoredGpsRecord.t;
     }

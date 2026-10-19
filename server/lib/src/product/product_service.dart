@@ -8,6 +8,7 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
 
 import '../generated/protocol.dart';
 import '../ads/ad_service.dart';
+import '../quiz/quiz_bank.dart';
 
 /// Legacy quiz/theme fixtures remain isolated from production step balances.
 const productFixtureLabel = 'development-fixture-v1-not-production';
@@ -169,10 +170,12 @@ class ProductService {
   Future<int> balance({bool fixture = false}) async {
     final result = await session.db.unsafeQuery(
       'SELECT COALESCE(SUM(amount), 0) FROM point_entry '
-      'WHERE owner = @owner AND "policyVersion" = @policy',
+      'WHERE owner = @owner AND ("policyVersion" = @policy '
+      'OR "policyVersion" = @quizPolicy)',
       parameters: QueryParameters.named({
         'owner': owner,
         'policy': fixture ? productFixtureLabel : stepPolicyVersion,
+        'quizPolicy': fixture ? productFixtureLabel : quizPolicyVersion,
       }),
       transaction: tx,
     );

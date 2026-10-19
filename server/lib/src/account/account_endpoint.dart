@@ -71,6 +71,11 @@ Future<void> deleteAccountData(
     where: (t) => t.owner.equals(owner),
     transaction: tx,
   );
+  await QuizAssignment.db.deleteWhere(
+    session,
+    where: (t) => t.owner.equals(owner),
+    transaction: tx,
+  );
   await ThemeOwnership.db.deleteWhere(
     session,
     where: (t) => t.owner.equals(owner),

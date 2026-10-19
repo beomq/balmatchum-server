@@ -1,0 +1,9 @@
+class: QuizToday
+fields:
+  date: String
+  status: String
+  free: QuizQuestion?
+  extra: QuizQuestion?
+  extraStatus: String
+  extraRevision: int?
+  paidEntitlement: bool, default=false

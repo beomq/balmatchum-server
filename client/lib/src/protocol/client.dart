@@ -32,6 +32,10 @@ import 'package:balmatchum_client/src/protocol/profile/profile_input.dart'
     as _i6wqbm42;
 import 'package:balmatchum_client/src/protocol/profile/profile_view.dart'
     as _i9lgbyro;
+import 'package:balmatchum_client/src/protocol/quiz/quiz_question.dart'
+    as _iuif5p7z;
+import 'package:balmatchum_client/src/protocol/quiz/quiz_today.dart'
+    as _iihbz53v;
 import 'package:balmatchum_client/src/protocol/records/gps_record.dart'
     as _iy4m6z9c;
 import 'package:balmatchum_client/src/protocol/records/gps_record_input.dart'
@@ -443,6 +447,70 @@ class EndpointProfile extends _isc.EndpointRef {
 }
 
 /// {@category Endpoint}
+class EndpointQuiz extends _isc.EndpointRef {
+  EndpointQuiz(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'quiz';
+
+  _ida.Future<_iihbz53v.QuizToday> getToday() =>
+      caller.callServerEndpoint<_iihbz53v.QuizToday>(
+        'quiz',
+        'getToday',
+        {},
+      );
+
+  _ida.Future<_iuif5p7z.QuizQuestion> unlockExtra(
+    String date,
+    int expectedRevision,
+    String intentId,
+    String requestId,
+  ) => caller.callServerEndpoint<_iuif5p7z.QuizQuestion>(
+    'quiz',
+    'unlockExtra',
+    {
+      'date': date,
+      'expectedRevision': expectedRevision,
+      'intentId': intentId,
+      'requestId': requestId,
+    },
+  );
+
+  _ida.Future<_iuif5p7z.QuizQuestion> answer(
+    int assignmentId,
+    String questionId,
+    int version,
+    int answerIndex,
+    String requestId,
+  ) => caller.callServerEndpoint<_iuif5p7z.QuizQuestion>(
+    'quiz',
+    'answer',
+    {
+      'assignmentId': assignmentId,
+      'questionId': questionId,
+      'version': version,
+      'answerIndex': answerIndex,
+      'requestId': requestId,
+    },
+  );
+
+  _ida.Future<List<_iuif5p7z.QuizQuestion>> listHistory(
+    int? beforeAssignmentId,
+  ) => caller.callServerEndpoint<List<_iuif5p7z.QuizQuestion>>(
+    'quiz',
+    'listHistory',
+    {'beforeAssignmentId': beforeAssignmentId},
+  );
+
+  _ida.Future<_iuif5p7z.QuizQuestion> review(int assignmentId) =>
+      caller.callServerEndpoint<_iuif5p7z.QuizQuestion>(
+        'quiz',
+        'review',
+        {'assignmentId': assignmentId},
+      );
+}
+
+/// {@category Endpoint}
 class EndpointRecords extends _isc.EndpointRef {
   EndpointRecords(_isc.EndpointCaller caller) : super(caller);
 
@@ -511,6 +579,7 @@ class Client extends _isc.ServerpodClientShared {
     greeting = EndpointGreeting(this);
     product = EndpointProduct(this);
     profile = EndpointProfile(this);
+    quiz = EndpointQuiz(this);
     records = EndpointRecords(this);
     modules = Modules(this);
   }
@@ -531,6 +600,8 @@ class Client extends _isc.ServerpodClientShared {
 
   late final EndpointProfile profile;
 
+  late final EndpointQuiz quiz;
+
   late final EndpointRecords records;
 
   late final Modules modules;
@@ -545,6 +616,7 @@ class Client extends _isc.ServerpodClientShared {
     'greeting': greeting,
     'product': product,
     'profile': profile,
+    'quiz': quiz,
     'records': records,
   };
 

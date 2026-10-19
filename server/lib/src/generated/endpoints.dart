@@ -29,6 +29,7 @@ import '../auth/kakao_endpoint.dart' as _if7olpvl;
 import '../greetings/greeting_endpoint.dart' as _il624ik7;
 import '../product/product_endpoint.dart' as _itexbxyn;
 import '../profile/profile_endpoint.dart' as _i6ky944g;
+import '../quiz/quiz_endpoint.dart' as _iskif4sw;
 import '../records/records_endpoint.dart' as _imwf5oma;
 
 class Endpoints extends _is.EndpointDispatch {
@@ -81,6 +82,12 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'profile',
+          null,
+        ),
+      'quiz': _iskif4sw.QuizEndpoint()
+        ..initialize(
+          server,
+          'quiz',
           null,
         ),
       'records': _imwf5oma.RecordsEndpoint()
@@ -833,6 +840,139 @@ class Endpoints extends _is.EndpointDispatch {
                     params['requestId'],
                     params['expectedRevision'],
                   ),
+        ),
+      },
+    );
+    connectors['quiz'] = _is.EndpointConnector(
+      name: 'quiz',
+      endpoint: endpoints['quiz']!,
+      methodConnectors: {
+        'getToday': _is.MethodConnector(
+          name: 'getToday',
+          params: {},
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['quiz'] as _iskif4sw.QuizEndpoint).getToday(
+                session,
+              ),
+        ),
+        'unlockExtra': _is.MethodConnector(
+          name: 'unlockExtra',
+          params: {
+            'date': _is.ParameterDescription(
+              name: 'date',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'expectedRevision': _is.ParameterDescription(
+              name: 'expectedRevision',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'intentId': _is.ParameterDescription(
+              name: 'intentId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'requestId': _is.ParameterDescription(
+              name: 'requestId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['quiz'] as _iskif4sw.QuizEndpoint).unlockExtra(
+                    session,
+                    params['date'],
+                    params['expectedRevision'],
+                    params['intentId'],
+                    params['requestId'],
+                  ),
+        ),
+        'answer': _is.MethodConnector(
+          name: 'answer',
+          params: {
+            'assignmentId': _is.ParameterDescription(
+              name: 'assignmentId',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'questionId': _is.ParameterDescription(
+              name: 'questionId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'version': _is.ParameterDescription(
+              name: 'version',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'answerIndex': _is.ParameterDescription(
+              name: 'answerIndex',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'requestId': _is.ParameterDescription(
+              name: 'requestId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['quiz'] as _iskif4sw.QuizEndpoint).answer(
+                session,
+                params['assignmentId'],
+                params['questionId'],
+                params['version'],
+                params['answerIndex'],
+                params['requestId'],
+              ),
+        ),
+        'listHistory': _is.MethodConnector(
+          name: 'listHistory',
+          params: {
+            'beforeAssignmentId': _is.ParameterDescription(
+              name: 'beforeAssignmentId',
+              type: _is.getType<int?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['quiz'] as _iskif4sw.QuizEndpoint).listHistory(
+                    session,
+                    params['beforeAssignmentId'],
+                  ),
+        ),
+        'review': _is.MethodConnector(
+          name: 'review',
+          params: {
+            'assignmentId': _is.ParameterDescription(
+              name: 'assignmentId',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['quiz'] as _iskif4sw.QuizEndpoint).review(
+                session,
+                params['assignmentId'],
+              ),
         ),
       },
     );

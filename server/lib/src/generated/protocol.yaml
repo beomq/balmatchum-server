@@ -38,6 +38,12 @@ profile:
   - createProfile:
   - renameDog:
   - updateGoal:
+quiz:
+  - getToday:
+  - unlockExtra:
+  - answer:
+  - listHistory:
+  - review:
 records:
   - saveConfirmed:
   - getMine:

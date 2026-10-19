@@ -35,6 +35,10 @@ import 'package:balmatchum_server/src/generated/profile/profile_input.dart'
     as _ij17w8zz;
 import 'package:balmatchum_server/src/generated/profile/profile_view.dart'
     as _ijzo8u8n;
+import 'package:balmatchum_server/src/generated/quiz/quiz_question.dart'
+    as _i5f8suyi;
+import 'package:balmatchum_server/src/generated/quiz/quiz_today.dart'
+    as _iag0s3ti;
 import 'package:balmatchum_server/src/generated/records/gps_record.dart'
     as _i3f7m4hi;
 import 'package:balmatchum_server/src/generated/records/gps_record_input.dart'
@@ -194,6 +198,8 @@ class TestEndpoints {
 
   late final _ProfileEndpoint profile;
 
+  late final _QuizEndpoint quiz;
+
   late final _RecordsEndpoint records;
 }
 
@@ -233,6 +239,10 @@ class _InternalTestEndpoints extends TestEndpoints
       serializationManager,
     );
     profile = _ProfileEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    quiz = _QuizEndpoint(
       endpoints,
       serializationManager,
     );
@@ -1385,6 +1395,191 @@ class _ProfileEndpoint {
                   _localCallContext.arguments,
                 )
                 as _ida.Future<_ijzo8u8n.ProfileView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+}
+
+class _QuizEndpoint {
+  _QuizEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_iag0s3ti.QuizToday> getToday(
+    _ist.TestSessionBuilder sessionBuilder,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'quiz',
+            method: 'getToday',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'quiz',
+          methodName: 'getToday',
+          parameters: _ist.testObjectToJson({}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_iag0s3ti.QuizToday>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_i5f8suyi.QuizQuestion> unlockExtra(
+    _ist.TestSessionBuilder sessionBuilder,
+    String date,
+    int expectedRevision,
+    String intentId,
+    String requestId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'quiz',
+            method: 'unlockExtra',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'quiz',
+          methodName: 'unlockExtra',
+          parameters: _ist.testObjectToJson({
+            'date': date,
+            'expectedRevision': expectedRevision,
+            'intentId': intentId,
+            'requestId': requestId,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_i5f8suyi.QuizQuestion>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_i5f8suyi.QuizQuestion> answer(
+    _ist.TestSessionBuilder sessionBuilder,
+    int assignmentId,
+    String questionId,
+    int version,
+    int answerIndex,
+    String requestId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'quiz',
+            method: 'answer',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'quiz',
+          methodName: 'answer',
+          parameters: _ist.testObjectToJson({
+            'assignmentId': assignmentId,
+            'questionId': questionId,
+            'version': version,
+            'answerIndex': answerIndex,
+            'requestId': requestId,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_i5f8suyi.QuizQuestion>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<List<_i5f8suyi.QuizQuestion>> listHistory(
+    _ist.TestSessionBuilder sessionBuilder,
+    int? beforeAssignmentId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'quiz',
+            method: 'listHistory',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'quiz',
+          methodName: 'listHistory',
+          parameters: _ist.testObjectToJson({
+            'beforeAssignmentId': beforeAssignmentId,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<List<_i5f8suyi.QuizQuestion>>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_i5f8suyi.QuizQuestion> review(
+    _ist.TestSessionBuilder sessionBuilder,
+    int assignmentId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'quiz',
+            method: 'review',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'quiz',
+          methodName: 'review',
+          parameters: _ist.testObjectToJson({'assignmentId': assignmentId}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_i5f8suyi.QuizQuestion>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
