@@ -21,6 +21,9 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as _iacs;
 import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
     as _iais;
+import 'ads/ad_exception.dart' as _i8mgtt64;
+import 'ads/ad_intent.dart' as _i5ffg0dz;
+import 'ads/stored_ad_intent.dart' as _ierwdq6g;
 import 'auth/external_identity.dart' as _i8thru7x;
 import 'auth/login_attempt.dart' as _i1apu3f2;
 import 'auth/login_challenge.dart' as _izhe0wsm;
@@ -53,6 +56,9 @@ import 'records/record_exception.dart' as _ihyrwhon;
 import 'records/record_receipt.dart' as _ipyparvp;
 import 'records/route_point.dart' as _ir7rvxr1;
 import 'records/stored_gps_record.dart' as _iyylbrve;
+export 'ads/ad_exception.dart';
+export 'ads/ad_intent.dart';
+export 'ads/stored_ad_intent.dart';
 export 'auth/external_identity.dart';
 export 'auth/login_attempt.dart';
 export 'auth/login_challenge.dart';
@@ -94,6 +100,179 @@ class Protocol extends _is.DatabaseSerializationManager {
   static final Protocol _instance = Protocol._().._registerHostProtocols();
 
   static List<_isp.TableDefinition> get targetTableDefinitions => [
+    _isp.TableDefinition(
+      name: 'ad_intent',
+      dartName: 'StoredAdIntent',
+      schema: 'public',
+      module: 'balmatchum',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'owner',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'nonce',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'purpose',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'targetDate',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'targetRevision',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'adUnit',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'rewardItem',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'rewardAmount',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'status',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+          columnDefault: '\'pending\'',
+        ),
+        _isp.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'eventExpiresAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'acceptUntil',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'transactionId',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'callbackDigest',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'eventAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'verifiedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'consumedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'ad_intent_nonce',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'nonce',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'ad_intent_target',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'owner',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'purpose',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'targetDate',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'targetRevision',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'ad_intent_transaction',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'transactionId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
     _isp.TableDefinition(
       name: 'dog_profile',
       dartName: 'DogProfile',
@@ -931,6 +1110,15 @@ class Protocol extends _is.DatabaseSerializationManager {
       }
     }
 
+    if (t == _i8mgtt64.AdException) {
+      return _i8mgtt64.AdException.fromJson(data) as T;
+    }
+    if (t == _i5ffg0dz.AdIntent) {
+      return _i5ffg0dz.AdIntent.fromJson(data) as T;
+    }
+    if (t == _ierwdq6g.StoredAdIntent) {
+      return _ierwdq6g.StoredAdIntent.fromJson(data) as T;
+    }
     if (t == _i8thru7x.ExternalIdentity) {
       return _i8thru7x.ExternalIdentity.fromJson(data) as T;
     }
@@ -1026,6 +1214,16 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (t == _iyylbrve.StoredGpsRecord) {
       return _iyylbrve.StoredGpsRecord.fromJson(data) as T;
+    }
+    if (t == _is.getType<_i8mgtt64.AdException?>()) {
+      return (data != null ? _i8mgtt64.AdException.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_i5ffg0dz.AdIntent?>()) {
+      return (data != null ? _i5ffg0dz.AdIntent.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_ierwdq6g.StoredAdIntent?>()) {
+      return (data != null ? _ierwdq6g.StoredAdIntent.fromJson(data) : null)
+          as T;
     }
     if (t == _is.getType<_i8thru7x.ExternalIdentity?>()) {
       return (data != null ? _i8thru7x.ExternalIdentity.fromJson(data) : null)
@@ -1189,6 +1387,9 @@ class Protocol extends _is.DatabaseSerializationManager {
 
   static String? getClassNameForType(Type type) {
     return switch (type) {
+      _i8mgtt64.AdException => 'AdException',
+      _i5ffg0dz.AdIntent => 'AdIntent',
+      _ierwdq6g.StoredAdIntent => 'StoredAdIntent',
       _i8thru7x.ExternalIdentity => 'ExternalIdentity',
       _i1apu3f2.LoginAttempt => 'LoginAttempt',
       _izhe0wsm.LoginChallenge => 'LoginChallenge',
@@ -1235,6 +1436,12 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
 
     switch (data) {
+      case _i8mgtt64.AdException():
+        return 'AdException';
+      case _i5ffg0dz.AdIntent():
+        return 'AdIntent';
+      case _ierwdq6g.StoredAdIntent():
+        return 'StoredAdIntent';
       case _i8thru7x.ExternalIdentity():
         return 'ExternalIdentity';
       case _i1apu3f2.LoginAttempt():
@@ -1324,6 +1531,15 @@ class Protocol extends _is.DatabaseSerializationManager {
     var dataClassName = data['className'];
     if (dataClassName is! String) {
       return super.deserializeByClassName(data);
+    }
+    if (dataClassName == 'AdException') {
+      return deserialize<_i8mgtt64.AdException>(data['data']);
+    }
+    if (dataClassName == 'AdIntent') {
+      return deserialize<_i5ffg0dz.AdIntent>(data['data']);
+    }
+    if (dataClassName == 'StoredAdIntent') {
+      return deserialize<_ierwdq6g.StoredAdIntent>(data['data']);
     }
     if (dataClassName == 'ExternalIdentity') {
       return deserialize<_i8thru7x.ExternalIdentity>(data['data']);
@@ -1462,6 +1678,8 @@ class Protocol extends _is.DatabaseSerializationManager {
       }
     }
     switch (t) {
+      case _ierwdq6g.StoredAdIntent:
+        return _ierwdq6g.StoredAdIntent.t;
       case _i8thru7x.ExternalIdentity:
         return _i8thru7x.ExternalIdentity.t;
       case _i1apu3f2.LoginAttempt:

@@ -22,6 +22,7 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
 import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
     as _iais;
 import '../account/account_endpoint.dart' as _it9bm8zx;
+import '../ads/ads_endpoint.dart' as _ir7vocva;
 import '../auth/apple_idp_endpoint.dart' as _ilq63su8;
 import '../auth/google_idp_endpoint.dart' as _i71axiz0;
 import '../auth/kakao_endpoint.dart' as _if7olpvl;
@@ -38,6 +39,12 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'account',
+          null,
+        ),
+      'ads': _ir7vocva.AdsEndpoint()
+        ..initialize(
+          server,
+          'ads',
           null,
         ),
       'appleIdp': _ilq63su8.AppleIdpEndpoint()
@@ -96,6 +103,61 @@ class Endpoints extends _is.EndpointDispatch {
                 Map<String, dynamic> params,
               ) async => (endpoints['account'] as _it9bm8zx.AccountEndpoint)
                   .deleteAccount(session),
+        ),
+      },
+    );
+    connectors['ads'] = _is.EndpointConnector(
+      name: 'ads',
+      endpoint: endpoints['ads']!,
+      methodConnectors: {
+        'createIntent': _is.MethodConnector(
+          name: 'createIntent',
+          params: {
+            'purpose': _is.ParameterDescription(
+              name: 'purpose',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'targetDate': _is.ParameterDescription(
+              name: 'targetDate',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'targetRevision': _is.ParameterDescription(
+              name: 'targetRevision',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['ads'] as _ir7vocva.AdsEndpoint).createIntent(
+                    session,
+                    params['purpose'],
+                    params['targetDate'],
+                    params['targetRevision'],
+                  ),
+        ),
+        'getIntent': _is.MethodConnector(
+          name: 'getIntent',
+          params: {
+            'intentId': _is.ParameterDescription(
+              name: 'intentId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['ads'] as _ir7vocva.AdsEndpoint).getIntent(
+                session,
+                params['intentId'],
+              ),
         ),
       },
     );

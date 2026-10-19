@@ -13,6 +13,8 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _ida;
 import 'dart:io' as _idi;
+import 'package:balmatchum_server/src/generated/ads/ad_intent.dart'
+    as _ilwsi9fk;
 import 'package:balmatchum_server/src/generated/auth/login_challenge.dart'
     as _i7mkon7c;
 import 'package:balmatchum_server/src/generated/greetings/greeting.dart'
@@ -178,6 +180,8 @@ void withServerpod(
 class TestEndpoints {
   late final _AccountEndpoint account;
 
+  late final _AdsEndpoint ads;
+
   late final _AppleIdpEndpoint appleIdp;
 
   late final _GoogleIdpEndpoint googleIdp;
@@ -201,6 +205,10 @@ class _InternalTestEndpoints extends TestEndpoints
     _is.EndpointDispatch endpoints,
   ) {
     account = _AccountEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    ads = _AdsEndpoint(
       endpoints,
       serializationManager,
     );
@@ -268,6 +276,85 @@ class _AccountEndpoint {
                   _localCallContext.arguments,
                 )
                 as _ida.Future<void>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+}
+
+class _AdsEndpoint {
+  _AdsEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_ilwsi9fk.AdIntent> createIntent(
+    _ist.TestSessionBuilder sessionBuilder,
+    String purpose,
+    String targetDate,
+    int targetRevision,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'ads',
+            method: 'createIntent',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'ads',
+          methodName: 'createIntent',
+          parameters: _ist.testObjectToJson({
+            'purpose': purpose,
+            'targetDate': targetDate,
+            'targetRevision': targetRevision,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ilwsi9fk.AdIntent>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ilwsi9fk.AdIntent> getIntent(
+    _ist.TestSessionBuilder sessionBuilder,
+    String intentId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'ads',
+            method: 'getIntent',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'ads',
+          methodName: 'getIntent',
+          parameters: _ist.testObjectToJson({'intentId': intentId}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ilwsi9fk.AdIntent>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

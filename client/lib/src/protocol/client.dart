@@ -11,6 +11,7 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _ida;
+import 'package:balmatchum_client/src/protocol/ads/ad_intent.dart' as _ib30o6kc;
 import 'package:balmatchum_client/src/protocol/auth/login_challenge.dart'
     as _iypdqt9k;
 import 'package:balmatchum_client/src/protocol/greetings/greeting.dart'
@@ -58,6 +59,35 @@ class EndpointAccount extends _isc.EndpointRef {
     'deleteAccount',
     {},
   );
+}
+
+/// {@category Endpoint}
+class EndpointAds extends _isc.EndpointRef {
+  EndpointAds(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'ads';
+
+  _ida.Future<_ib30o6kc.AdIntent> createIntent(
+    String purpose,
+    String targetDate,
+    int targetRevision,
+  ) => caller.callServerEndpoint<_ib30o6kc.AdIntent>(
+    'ads',
+    'createIntent',
+    {
+      'purpose': purpose,
+      'targetDate': targetDate,
+      'targetRevision': targetRevision,
+    },
+  );
+
+  _ida.Future<_ib30o6kc.AdIntent> getIntent(String intentId) =>
+      caller.callServerEndpoint<_ib30o6kc.AdIntent>(
+        'ads',
+        'getIntent',
+        {'intentId': intentId},
+      );
 }
 
 /// {@category Endpoint}
@@ -458,6 +488,7 @@ class Client extends _isc.ServerpodClientShared {
          httpClientOverride: httpClientOverride,
        ) {
     account = EndpointAccount(this);
+    ads = EndpointAds(this);
     appleIdp = EndpointAppleIdp(this);
     googleIdp = EndpointGoogleIdp(this);
     kakao = EndpointKakao(this);
@@ -469,6 +500,8 @@ class Client extends _isc.ServerpodClientShared {
   }
 
   late final EndpointAccount account;
+
+  late final EndpointAds ads;
 
   late final EndpointAppleIdp appleIdp;
 
@@ -489,6 +522,7 @@ class Client extends _isc.ServerpodClientShared {
   @override
   Map<String, _isc.EndpointRef> get endpointRefLookup => {
     'account': account,
+    'ads': ads,
     'appleIdp': appleIdp,
     'googleIdp': googleIdp,
     'kakao': kakao,

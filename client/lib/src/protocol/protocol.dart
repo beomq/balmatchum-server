@@ -20,6 +20,8 @@ import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
 import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
     as _iaic;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+import 'ads/ad_exception.dart' as _i8mgtt64;
+import 'ads/ad_intent.dart' as _i5ffg0dz;
 import 'auth/login_challenge.dart' as _izhe0wsm;
 import 'auth/login_exception.dart' as _iskwpc4e;
 import 'greetings/greeting.dart' as _izw8z7ou;
@@ -40,6 +42,8 @@ import 'records/gps_record_input.dart' as _ijl0tr6b;
 import 'records/record_exception.dart' as _ihyrwhon;
 import 'records/record_receipt.dart' as _ipyparvp;
 import 'records/route_point.dart' as _ir7rvxr1;
+export 'ads/ad_exception.dart';
+export 'ads/ad_intent.dart';
 export 'auth/login_challenge.dart';
 export 'auth/login_exception.dart';
 export 'greetings/greeting.dart';
@@ -96,6 +100,12 @@ class Protocol extends _isc.SerializationManager {
       }
     }
 
+    if (t == _i8mgtt64.AdException) {
+      return _i8mgtt64.AdException.fromJson(data) as T;
+    }
+    if (t == _i5ffg0dz.AdIntent) {
+      return _i5ffg0dz.AdIntent.fromJson(data) as T;
+    }
     if (t == _izhe0wsm.LoginChallenge) {
       return _izhe0wsm.LoginChallenge.fromJson(data) as T;
     }
@@ -155,6 +165,12 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _ir7rvxr1.RoutePoint) {
       return _ir7rvxr1.RoutePoint.fromJson(data) as T;
+    }
+    if (t == _isc.getType<_i8mgtt64.AdException?>()) {
+      return (data != null ? _i8mgtt64.AdException.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_i5ffg0dz.AdIntent?>()) {
+      return (data != null ? _i5ffg0dz.AdIntent.fromJson(data) : null) as T;
     }
     if (t == _isc.getType<_izhe0wsm.LoginChallenge?>()) {
       return (data != null ? _izhe0wsm.LoginChallenge.fromJson(data) : null)
@@ -268,6 +284,8 @@ class Protocol extends _isc.SerializationManager {
 
   static String? getClassNameForType(Type type) {
     return switch (type) {
+      _i8mgtt64.AdException => 'AdException',
+      _i5ffg0dz.AdIntent => 'AdIntent',
       _izhe0wsm.LoginChallenge => 'LoginChallenge',
       _iskwpc4e.LoginException => 'LoginException',
       _izw8z7ou.Greeting => 'Greeting',
@@ -302,6 +320,10 @@ class Protocol extends _isc.SerializationManager {
     }
 
     switch (data) {
+      case _i8mgtt64.AdException():
+        return 'AdException';
+      case _i5ffg0dz.AdIntent():
+        return 'AdIntent';
       case _izhe0wsm.LoginChallenge():
         return 'LoginChallenge';
       case _iskwpc4e.LoginException():
@@ -363,6 +385,12 @@ class Protocol extends _isc.SerializationManager {
     var dataClassName = data['className'];
     if (dataClassName is! String) {
       return super.deserializeByClassName(data);
+    }
+    if (dataClassName == 'AdException') {
+      return deserialize<_i8mgtt64.AdException>(data['data']);
+    }
+    if (dataClassName == 'AdIntent') {
+      return deserialize<_i5ffg0dz.AdIntent>(data['data']);
     }
     if (dataClassName == 'LoginChallenge') {
       return deserialize<_izhe0wsm.LoginChallenge>(data['data']);

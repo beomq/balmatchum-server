@@ -14,6 +14,10 @@ API 개발 포트는 8080, 테스트 API 포트는 0(동적 배정)입니다. Re
 
 ## 카카오 인증 설정
 
+AdMob SSV의 선택 설정, 별도 loopback HTTP 포트와 원본 query 전달 조건은
+[AdMob SSV 인텐트 기반](ADMOB_SSV_API.md)을 확인합니다. 설정 없이는 광고 인텐트
+생성과 수신기를 활성화하지 않으며 이 증분은 포인트를 지급하지 않습니다.
+
 Google/Apple은 별도 선택 설정입니다. 전체 키 묶음, 누락/부분 설정 처리,
 생성 API, Apple 삭제 시 외부 철회와 운영 차단 요인은
 [Google/Apple 인증](SOCIAL_AUTH_API.md)을 확인합니다.

@@ -36,6 +36,11 @@ Future<void> deleteAccountData(
   // Same AuthUser -> ProductAccount order as every product/profile/GPS call.
   await lockProductAccount(session, owner, tx);
   await revokeAppleAccount(session, UuidValue.fromString(owner), tx);
+  await StoredAdIntent.db.deleteWhere(
+    session,
+    where: (t) => t.owner.equals(owner),
+    transaction: tx,
+  );
   await DogProfile.db.deleteWhere(
     session,
     where: (t) => t.owner.equals(owner),

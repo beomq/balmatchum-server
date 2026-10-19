@@ -1,5 +1,8 @@
 account:
   - deleteAccount:
+ads:
+  - createIntent:
+  - getIntent:
 appleIdp:
   - isConfigured:
   - login:

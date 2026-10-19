@@ -16,6 +16,7 @@ dependencies:
   crypto: ^3.0.6
   dart_jsonwebtoken: ^3.1.0
   http: ^1.2.0
+  pointycastle: 4.0.0
 
 dev_dependencies:
   serverpod_auth_idp_client: 4.0.3
