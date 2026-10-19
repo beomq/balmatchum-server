@@ -61,6 +61,95 @@ class EndpointAccount extends _isc.EndpointRef {
 }
 
 /// {@category Endpoint}
+class EndpointAppleIdp extends _iaic.EndpointAppleIdpBase {
+  EndpointAppleIdp(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'appleIdp';
+
+  _ida.Future<bool> isConfigured() => caller.callServerEndpoint<bool>(
+    'appleIdp',
+    'isConfigured',
+    {},
+  );
+
+  @override
+  _ida.Future<_iacc.AuthSuccess> login({
+    required String identityToken,
+    required String authorizationCode,
+    required bool isNativeApplePlatformSignIn,
+    String? firstName,
+    String? lastName,
+  }) => caller.callServerEndpoint<_iacc.AuthSuccess>(
+    'appleIdp',
+    'login',
+    {
+      'identityToken': identityToken,
+      'authorizationCode': authorizationCode,
+      'isNativeApplePlatformSignIn': isNativeApplePlatformSignIn,
+      'firstName': firstName,
+      'lastName': lastName,
+    },
+  );
+
+  @override
+  _ida.Future<bool> hasAccount() => caller.callServerEndpoint<bool>(
+    'appleIdp',
+    'hasAccount',
+    {},
+  );
+}
+
+/// {@category Endpoint}
+class EndpointGoogleIdp extends _iaic.EndpointGoogleIdpBase {
+  EndpointGoogleIdp(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'googleIdp';
+
+  _ida.Future<bool> isConfigured() => caller.callServerEndpoint<bool>(
+    'googleIdp',
+    'isConfigured',
+    {},
+  );
+
+  @override
+  _ida.Future<_iacc.AuthSuccess> login({
+    required String idToken,
+    required String? accessToken,
+  }) => caller.callServerEndpoint<_iacc.AuthSuccess>(
+    'googleIdp',
+    'login',
+    {
+      'idToken': idToken,
+      'accessToken': accessToken,
+    },
+  );
+
+  @override
+  _ida.Future<_iacc.AuthSuccess> loginWithCode({
+    required String code,
+    required String codeVerifier,
+    required String redirectUri,
+  }) => caller.callServerEndpoint<_iacc.AuthSuccess>(
+    'googleIdp',
+    'loginWithCode',
+    {
+      'code': code,
+      'codeVerifier': codeVerifier,
+      'redirectUri': redirectUri,
+    },
+  );
+
+  @override
+  _ida.Future<bool> hasAccount() => caller.callServerEndpoint<bool>(
+    'googleIdp',
+    'hasAccount',
+    {},
+  );
+}
+
+/// {@category Endpoint}
 class EndpointKakao extends _isc.EndpointRef {
   EndpointKakao(_isc.EndpointCaller caller) : super(caller);
 
@@ -369,6 +458,8 @@ class Client extends _isc.ServerpodClientShared {
          httpClientOverride: httpClientOverride,
        ) {
     account = EndpointAccount(this);
+    appleIdp = EndpointAppleIdp(this);
+    googleIdp = EndpointGoogleIdp(this);
     kakao = EndpointKakao(this);
     greeting = EndpointGreeting(this);
     product = EndpointProduct(this);
@@ -378,6 +469,10 @@ class Client extends _isc.ServerpodClientShared {
   }
 
   late final EndpointAccount account;
+
+  late final EndpointAppleIdp appleIdp;
+
+  late final EndpointGoogleIdp googleIdp;
 
   late final EndpointKakao kakao;
 
@@ -394,6 +489,8 @@ class Client extends _isc.ServerpodClientShared {
   @override
   Map<String, _isc.EndpointRef> get endpointRefLookup => {
     'account': account,
+    'appleIdp': appleIdp,
+    'googleIdp': googleIdp,
     'kakao': kakao,
     'greeting': greeting,
     'product': product,

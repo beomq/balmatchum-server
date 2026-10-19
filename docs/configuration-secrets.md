@@ -14,6 +14,10 @@ API 개발 포트는 8080, 테스트 API 포트는 0(동적 배정)입니다. Re
 
 ## 카카오 인증 설정
 
+Google/Apple은 별도 선택 설정입니다. 전체 키 묶음, 누락/부분 설정 처리,
+생성 API, Apple 삭제 시 외부 철회와 운영 차단 요인은
+[Google/Apple 인증](SOCIAL_AUTH_API.md)을 확인합니다.
+
 `SERVERPOD_PASSWORD_serverSideSessionKeyHashPepper`, `SERVERPOD_PASSWORD_kakaoAudience`,
 `SERVERPOD_PASSWORD_kakaoIssuer`를 주입합니다. 같은 이름의 password 키도 지원합니다.
 audience는 카카오 네이티브 앱 키이며 issuer는 `https://kauth.kakao.com`만 허용합니다.

@@ -20,7 +20,11 @@ profile, product, GPS 읽기·쓰기는 모두 이 경계를 통과합니다.
 마지막 SDK 삭제는 `serverpod_auth_core_user`와 FK CASCADE로 연결된 서버 세션,
 SDK 프로필·이미지 메타데이터, refresh token 및 설치된 IDP 계정 행을 같은 트랜잭션에서
 삭제합니다. 애플리케이션 `ExternalIdentity`는 RESTRICT이므로 반드시 먼저 삭제합니다.
-삭제 실패는 전체 롤백됩니다. commit 후에만 `RevokedAuthenticationUser`를 통지합니다.
+로컬 삭제 실패는 전체 롤백됩니다. Apple 계정은 로컬 삭제 전 저장된 refresh token을
+SDK 공개 API로 철회하고 폐기를 확인합니다. 외부 철회는 DB와 함께 롤백할 수 없으며,
+실패 시 로컬 토큰을 보존해 삭제를 재시도합니다. 자세한 실패 의미와 SDK 재연결 제한은
+[Google/Apple 인증 문서](SOCIAL_AUTH_API.md)를 따릅니다.
+commit 후에만 `RevokedAuthenticationUser`를 통지합니다.
 HTTP 토큰 거부는 알림 전달 여부가 아니라 삭제된 서버 세션 행에 의해 보장됩니다.
 
 인증 핸들러가 이미 끝난 요청도 쓰기 시 인증 행 잠금을 다시 획득해야 합니다.

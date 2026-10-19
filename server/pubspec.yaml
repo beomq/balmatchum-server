@@ -10,6 +10,7 @@ dependencies:
   serverpod: 4.0.3
   serverpod_auth_core_server: 4.0.3
   serverpod_auth_idp_server: 4.0.3
+  sign_in_with_apple_server: 1.0.0
   clock: ^1.1.1
   characters: ^1.4.1
   crypto: ^3.0.6
@@ -17,6 +18,7 @@ dependencies:
   http: ^1.2.0
 
 dev_dependencies:
+  serverpod_auth_idp_client: 4.0.3
   balmatchum_client:
     path: ../client
   lints: '>=3.0.0 <7.0.0'

@@ -1,5 +1,14 @@
 account:
   - deleteAccount:
+appleIdp:
+  - isConfigured:
+  - login:
+  - hasAccount:
+googleIdp:
+  - isConfigured:
+  - login:
+  - loginWithCode:
+  - hasAccount:
 kakao:
   - beginLogin:
   - loginKakao:
