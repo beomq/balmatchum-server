@@ -9,6 +9,8 @@ import 'package:serverpod_auth_idp_server/core.dart';
 import 'kakao_provider.dart';
 import 'kakao_token_verifier.dart';
 import 'social_auth.dart';
+import 'naver_client.dart';
+import 'naver_provider.dart';
 
 void configureAuth(
   Serverpod pod, {
@@ -32,6 +34,10 @@ void configureAuth(
     cleanupSessions: cleanupSessions,
   );
   socialAuthSettings[pod] = social;
+  final naver = NaverConfig.fromPasswords(providerPassword ?? pod.getPassword);
+  naverSettings[pod] = sessionPepper != null && sessionPepper.isNotEmpty
+      ? naver
+      : null;
   // Missing deployment settings must not silently generate ephemeral secrets.
   if (sessionPepper == null || sessionPepper.isEmpty) {
     stderr.writeln(
@@ -50,6 +56,12 @@ void configureAuth(
     identityProviderBuilders: [
       if (social.google != null) social.google!,
       if (social.apple != null) social.apple!,
+      if (naver != null)
+        NaverProviderBuilder(
+          config: naver,
+          clock: clock,
+          cleanupSessions: cleanupSessions,
+        ),
       KakaoProviderBuilder(
         audience: audience,
         verifier:

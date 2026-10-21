@@ -28,6 +28,7 @@ import '../ads/ads_endpoint.dart' as _ir7vocva;
 import '../auth/apple_idp_endpoint.dart' as _ilq63su8;
 import '../auth/google_idp_endpoint.dart' as _i71axiz0;
 import '../auth/kakao_endpoint.dart' as _if7olpvl;
+import '../auth/naver_endpoint.dart' as _ijj6xngx;
 import '../billing/billing_endpoint.dart' as _irc9lmoc;
 import '../greetings/greeting_endpoint.dart' as _il624ik7;
 import '../product/product_endpoint.dart' as _itexbxyn;
@@ -67,6 +68,12 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'kakao',
+          null,
+        ),
+      'naver': _ijj6xngx.NaverEndpoint()
+        ..initialize(
+          server,
+          'naver',
           null,
         ),
       'billing': _irc9lmoc.BillingEndpoint()
@@ -375,6 +382,78 @@ class Endpoints extends _is.EndpointDispatch {
                     session,
                     attemptId: params['attemptId'],
                     idToken: params['idToken'],
+                  ),
+        ),
+      },
+    );
+    connectors['naver'] = _is.EndpointConnector(
+      name: 'naver',
+      endpoint: endpoints['naver']!,
+      methodConnectors: {
+        'isConfigured': _is.MethodConnector(
+          name: 'isConfigured',
+          params: {},
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['naver'] as _ijj6xngx.NaverEndpoint)
+                  .isConfigured(session),
+        ),
+        'beginLogin': _is.MethodConnector(
+          name: 'beginLogin',
+          params: {
+            'codeChallenge': _is.ParameterDescription(
+              name: 'codeChallenge',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['naver'] as _ijj6xngx.NaverEndpoint).beginLogin(
+                    session,
+                    codeChallenge: params['codeChallenge'],
+                  ),
+        ),
+        'completeLogin': _is.MethodConnector(
+          name: 'completeLogin',
+          params: {
+            'attemptId': _is.ParameterDescription(
+              name: 'attemptId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'code': _is.ParameterDescription(
+              name: 'code',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'state': _is.ParameterDescription(
+              name: 'state',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'codeVerifier': _is.ParameterDescription(
+              name: 'codeVerifier',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['naver'] as _ijj6xngx.NaverEndpoint).completeLogin(
+                    session,
+                    attemptId: params['attemptId'],
+                    code: params['code'],
+                    state: params['state'],
+                    codeVerifier: params['codeVerifier'],
                   ),
         ),
       },

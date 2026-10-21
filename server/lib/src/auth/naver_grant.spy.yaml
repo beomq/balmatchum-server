@@ -1,0 +1,10 @@
+class: NaverGrant
+serverOnly: true
+table: naver_grant
+fields:
+  authUser: module:serverpod_auth_core:AuthUser?, relation(onDelete=Cascade)
+  clientId: String
+  refreshToken: String
+indexes:
+  naver_grant_owner:
+    fields: authUserId

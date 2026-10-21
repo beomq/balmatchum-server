@@ -15,6 +15,10 @@ googleIdp:
 kakao:
   - beginLogin:
   - loginKakao:
+naver:
+  - isConfigured:
+  - beginLogin:
+  - completeLogin:
 billing:
   - getPurchaseConfiguration:
   - verifyPurchase:

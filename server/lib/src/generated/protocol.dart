@@ -30,6 +30,9 @@ import 'auth/external_identity.dart' as _i8thru7x;
 import 'auth/login_attempt.dart' as _i1apu3f2;
 import 'auth/login_challenge.dart' as _izhe0wsm;
 import 'auth/login_exception.dart' as _iskwpc4e;
+import 'auth/naver_grant.dart' as _ilqn0sb8;
+import 'auth/naver_login_attempt.dart' as _irxk6gqc;
+import 'auth/naver_login_challenge.dart' as _iw8ezytr;
 import 'billing/billing_account.dart' as _ifeydnhg;
 import 'billing/billing_exception.dart' as _iy7y41or;
 import 'billing/entitlement_view.dart' as _ixe95a4n;
@@ -79,6 +82,9 @@ export 'auth/external_identity.dart';
 export 'auth/login_attempt.dart';
 export 'auth/login_challenge.dart';
 export 'auth/login_exception.dart';
+export 'auth/naver_grant.dart';
+export 'auth/naver_login_attempt.dart';
+export 'auth/naver_login_challenge.dart';
 export 'billing/billing_account.dart';
 export 'billing/billing_exception.dart';
 export 'billing/entitlement_view.dart';
@@ -792,6 +798,127 @@ class Protocol extends _is.DatabaseSerializationManager {
         ),
         _isp.ColumnDefinition(
           name: 'nonceHash',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'expiresAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'consumedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'naver_grant',
+      dartName: 'NaverGrant',
+      schema: 'public',
+      module: 'balmatchum',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'authUserId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'clientId',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'refreshToken',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'naver_grant_fk_0',
+          columns: ['authUserId'],
+          referenceTable: 'serverpod_auth_core_user',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'naver_grant_owner',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'authUserId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'naver_login_attempt',
+      dartName: 'NaverLoginAttempt',
+      schema: 'public',
+      module: 'balmatchum',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue?',
+          columnDefault: 'random_v7',
+        ),
+        _isp.ColumnDefinition(
+          name: 'stateHash',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'nonceHash',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'codeChallenge',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'clientId',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'redirectUri',
           columnType: _isp.ColumnType.text,
           isNullable: false,
           dartType: 'String',
@@ -1603,6 +1730,15 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _iskwpc4e.LoginException) {
       return _iskwpc4e.LoginException.fromJson(data) as T;
     }
+    if (t == _ilqn0sb8.NaverGrant) {
+      return _ilqn0sb8.NaverGrant.fromJson(data) as T;
+    }
+    if (t == _irxk6gqc.NaverLoginAttempt) {
+      return _irxk6gqc.NaverLoginAttempt.fromJson(data) as T;
+    }
+    if (t == _iw8ezytr.NaverLoginChallenge) {
+      return _iw8ezytr.NaverLoginChallenge.fromJson(data) as T;
+    }
     if (t == _ifeydnhg.BillingAccount) {
       return _ifeydnhg.BillingAccount.fromJson(data) as T;
     }
@@ -1752,6 +1888,19 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (t == _is.getType<_iskwpc4e.LoginException?>()) {
       return (data != null ? _iskwpc4e.LoginException.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_ilqn0sb8.NaverGrant?>()) {
+      return (data != null ? _ilqn0sb8.NaverGrant.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_irxk6gqc.NaverLoginAttempt?>()) {
+      return (data != null ? _irxk6gqc.NaverLoginAttempt.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_iw8ezytr.NaverLoginChallenge?>()) {
+      return (data != null
+              ? _iw8ezytr.NaverLoginChallenge.fromJson(data)
+              : null)
           as T;
     }
     if (t == _is.getType<_ifeydnhg.BillingAccount?>()) {
@@ -1996,6 +2145,9 @@ class Protocol extends _is.DatabaseSerializationManager {
       _i1apu3f2.LoginAttempt => 'LoginAttempt',
       _izhe0wsm.LoginChallenge => 'LoginChallenge',
       _iskwpc4e.LoginException => 'LoginException',
+      _ilqn0sb8.NaverGrant => 'NaverGrant',
+      _irxk6gqc.NaverLoginAttempt => 'NaverLoginAttempt',
+      _iw8ezytr.NaverLoginChallenge => 'NaverLoginChallenge',
       _ifeydnhg.BillingAccount => 'BillingAccount',
       _iy7y41or.BillingException => 'BillingException',
       _ixe95a4n.EntitlementView => 'EntitlementView',
@@ -2066,6 +2218,12 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'LoginChallenge';
       case _iskwpc4e.LoginException():
         return 'LoginException';
+      case _ilqn0sb8.NaverGrant():
+        return 'NaverGrant';
+      case _irxk6gqc.NaverLoginAttempt():
+        return 'NaverLoginAttempt';
+      case _iw8ezytr.NaverLoginChallenge():
+        return 'NaverLoginChallenge';
       case _ifeydnhg.BillingAccount():
         return 'BillingAccount';
       case _iy7y41or.BillingException():
@@ -2196,6 +2354,15 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (dataClassName == 'LoginException') {
       return deserialize<_iskwpc4e.LoginException>(data['data']);
+    }
+    if (dataClassName == 'NaverGrant') {
+      return deserialize<_ilqn0sb8.NaverGrant>(data['data']);
+    }
+    if (dataClassName == 'NaverLoginAttempt') {
+      return deserialize<_irxk6gqc.NaverLoginAttempt>(data['data']);
+    }
+    if (dataClassName == 'NaverLoginChallenge') {
+      return deserialize<_iw8ezytr.NaverLoginChallenge>(data['data']);
     }
     if (dataClassName == 'BillingAccount') {
       return deserialize<_ifeydnhg.BillingAccount>(data['data']);
@@ -2370,6 +2537,10 @@ class Protocol extends _is.DatabaseSerializationManager {
         return _i8thru7x.ExternalIdentity.t;
       case _i1apu3f2.LoginAttempt:
         return _i1apu3f2.LoginAttempt.t;
+      case _ilqn0sb8.NaverGrant:
+        return _ilqn0sb8.NaverGrant.t;
+      case _irxk6gqc.NaverLoginAttempt:
+        return _irxk6gqc.NaverLoginAttempt.t;
       case _ifeydnhg.BillingAccount:
         return _ifeydnhg.BillingAccount.t;
       case _iwil3tvo.PurchaseTombstone:

@@ -22,6 +22,10 @@ Google/Apple은 별도 선택 설정입니다. 전체 키 묶음, 누락/부분 
 생성 API, Apple 삭제 시 외부 철회와 운영 차단 요인은
 [Google/Apple 인증](SOCIAL_AUTH_API.md)을 확인합니다.
 
+Naver는 서버 secret 기반 OIDC code 교환과 앱 PKCE를 사용합니다. 설정 묶음,
+고정 callback allowlist, 추가 refresh-token 보관과 탈퇴 철회,
+실제 콘솔/기기 검증 제한은 [Naver 인증](NAVER_AUTH_API.md)을 확인합니다.
+
 `SERVERPOD_PASSWORD_serverSideSessionKeyHashPepper`, `SERVERPOD_PASSWORD_kakaoAudience`,
 `SERVERPOD_PASSWORD_kakaoIssuer`를 주입합니다. 같은 이름의 password 키도 지원합니다.
 audience는 카카오 네이티브 앱 키이며 issuer는 `https://kauth.kakao.com`만 허용합니다.

@@ -24,6 +24,9 @@ SDK 프로필·이미지 메타데이터, refresh token 및 설치된 IDP 계정
 SDK 공개 API로 철회하고 폐기를 확인합니다. 외부 철회는 DB와 함께 롤백할 수 없으며,
 실패 시 로컬 토큰을 보존해 삭제를 재시도합니다. 자세한 실패 의미와 SDK 재연결 제한은
 [Google/Apple 인증 문서](SOCIAL_AUTH_API.md)를 따릅니다.
+Naver는 저장된 모든 grant의 refresh token을 로컬 삭제 전에 철회하고 실패 시
+rollback합니다. 성공 시 grant는 AuthUser cascade로 삭제됩니다. 외부 철회와
+DB commit 사이의 비원자성 및 재시도는 [Naver 인증](NAVER_AUTH_API.md)을 따릅니다.
 commit 후에만 `RevokedAuthenticationUser`를 통지합니다.
 HTTP 토큰 거부는 알림 전달 여부가 아니라 삭제된 서버 세션 행에 의해 보장됩니다.
 

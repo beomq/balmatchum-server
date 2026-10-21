@@ -3,6 +3,7 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
 
 import '../generated/protocol.dart';
 import '../auth/apple_revocation.dart';
+import '../auth/naver_revocation.dart';
 import '../billing/billing_service.dart';
 import '../product/product_service.dart';
 
@@ -37,6 +38,7 @@ Future<void> deleteAccountData(
   // Same AuthUser -> ProductAccount order as every product/profile/GPS call.
   await lockProductAccount(session, owner, tx);
   await revokeAppleAccount(session, UuidValue.fromString(owner), tx);
+  await revokeNaverAccount(session, UuidValue.fromString(owner), tx);
   await deleteBillingData(session, owner, tx);
   await StoredAdIntent.db.deleteWhere(
     session,

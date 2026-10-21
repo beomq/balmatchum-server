@@ -1,0 +1,12 @@
+class: NaverLoginAttempt
+serverOnly: true
+table: naver_login_attempt
+fields:
+  id: UuidValue?, defaultPersist=random_v7
+  stateHash: String
+  nonceHash: String
+  codeChallenge: String
+  clientId: String
+  redirectUri: String
+  expiresAt: DateTime
+  consumedAt: DateTime?

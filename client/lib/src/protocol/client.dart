@@ -14,6 +14,8 @@ import 'dart:async' as _ida;
 import 'package:balmatchum_client/src/protocol/ads/ad_intent.dart' as _ib30o6kc;
 import 'package:balmatchum_client/src/protocol/auth/login_challenge.dart'
     as _iypdqt9k;
+import 'package:balmatchum_client/src/protocol/auth/naver_login_challenge.dart'
+    as _io094qf7;
 import 'package:balmatchum_client/src/protocol/billing/entitlement_view.dart'
     as _i0edzqcw;
 import 'package:balmatchum_client/src/protocol/billing/purchase_configuration.dart'
@@ -213,6 +215,44 @@ class EndpointKakao extends _isc.EndpointRef {
     {
       'attemptId': attemptId,
       'idToken': idToken,
+    },
+  );
+}
+
+/// {@category Endpoint}
+class EndpointNaver extends _isc.EndpointRef {
+  EndpointNaver(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'naver';
+
+  _ida.Future<bool> isConfigured() => caller.callServerEndpoint<bool>(
+    'naver',
+    'isConfigured',
+    {},
+  );
+
+  _ida.Future<_io094qf7.NaverLoginChallenge> beginLogin({
+    required String codeChallenge,
+  }) => caller.callServerEndpoint<_io094qf7.NaverLoginChallenge>(
+    'naver',
+    'beginLogin',
+    {'codeChallenge': codeChallenge},
+  );
+
+  _ida.Future<_iacc.AuthSuccess> completeLogin({
+    required _isc.UuidValue attemptId,
+    required String code,
+    required String state,
+    required String codeVerifier,
+  }) => caller.callServerEndpoint<_iacc.AuthSuccess>(
+    'naver',
+    'completeLogin',
+    {
+      'attemptId': attemptId,
+      'code': code,
+      'state': state,
+      'codeVerifier': codeVerifier,
     },
   );
 }
@@ -656,6 +696,7 @@ class Client extends _isc.ServerpodClientShared {
     appleIdp = EndpointAppleIdp(this);
     googleIdp = EndpointGoogleIdp(this);
     kakao = EndpointKakao(this);
+    naver = EndpointNaver(this);
     billing = EndpointBilling(this);
     greeting = EndpointGreeting(this);
     product = EndpointProduct(this);
@@ -674,6 +715,8 @@ class Client extends _isc.ServerpodClientShared {
   late final EndpointGoogleIdp googleIdp;
 
   late final EndpointKakao kakao;
+
+  late final EndpointNaver naver;
 
   late final EndpointBilling billing;
 
@@ -696,6 +739,7 @@ class Client extends _isc.ServerpodClientShared {
     'appleIdp': appleIdp,
     'googleIdp': googleIdp,
     'kakao': kakao,
+    'naver': naver,
     'billing': billing,
     'greeting': greeting,
     'product': product,

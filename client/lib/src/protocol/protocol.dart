@@ -26,6 +26,7 @@ import 'ads/ad_exception.dart' as _i8mgtt64;
 import 'ads/ad_intent.dart' as _i5ffg0dz;
 import 'auth/login_challenge.dart' as _izhe0wsm;
 import 'auth/login_exception.dart' as _iskwpc4e;
+import 'auth/naver_login_challenge.dart' as _iw8ezytr;
 import 'billing/billing_exception.dart' as _iy7y41or;
 import 'billing/entitlement_view.dart' as _ixe95a4n;
 import 'billing/purchase_configuration.dart' as _iqa89lpa;
@@ -57,6 +58,7 @@ export 'ads/ad_exception.dart';
 export 'ads/ad_intent.dart';
 export 'auth/login_challenge.dart';
 export 'auth/login_exception.dart';
+export 'auth/naver_login_challenge.dart';
 export 'billing/billing_exception.dart';
 export 'billing/entitlement_view.dart';
 export 'billing/purchase_configuration.dart';
@@ -131,6 +133,9 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _iskwpc4e.LoginException) {
       return _iskwpc4e.LoginException.fromJson(data) as T;
+    }
+    if (t == _iw8ezytr.NaverLoginChallenge) {
+      return _iw8ezytr.NaverLoginChallenge.fromJson(data) as T;
     }
     if (t == _iy7y41or.BillingException) {
       return _iy7y41or.BillingException.fromJson(data) as T;
@@ -225,6 +230,12 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _isc.getType<_iskwpc4e.LoginException?>()) {
       return (data != null ? _iskwpc4e.LoginException.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_iw8ezytr.NaverLoginChallenge?>()) {
+      return (data != null
+              ? _iw8ezytr.NaverLoginChallenge.fromJson(data)
+              : null)
           as T;
     }
     if (t == _isc.getType<_iy7y41or.BillingException?>()) {
@@ -401,6 +412,7 @@ class Protocol extends _isc.SerializationManager {
       _i5ffg0dz.AdIntent => 'AdIntent',
       _izhe0wsm.LoginChallenge => 'LoginChallenge',
       _iskwpc4e.LoginException => 'LoginException',
+      _iw8ezytr.NaverLoginChallenge => 'NaverLoginChallenge',
       _iy7y41or.BillingException => 'BillingException',
       _ixe95a4n.EntitlementView => 'EntitlementView',
       _iqa89lpa.PurchaseConfiguration => 'PurchaseConfiguration',
@@ -450,6 +462,8 @@ class Protocol extends _isc.SerializationManager {
         return 'LoginChallenge';
       case _iskwpc4e.LoginException():
         return 'LoginException';
+      case _iw8ezytr.NaverLoginChallenge():
+        return 'NaverLoginChallenge';
       case _iy7y41or.BillingException():
         return 'BillingException';
       case _ixe95a4n.EntitlementView():
@@ -537,6 +551,9 @@ class Protocol extends _isc.SerializationManager {
     }
     if (dataClassName == 'LoginException') {
       return deserialize<_iskwpc4e.LoginException>(data['data']);
+    }
+    if (dataClassName == 'NaverLoginChallenge') {
+      return deserialize<_iw8ezytr.NaverLoginChallenge>(data['data']);
     }
     if (dataClassName == 'BillingException') {
       return deserialize<_iy7y41or.BillingException>(data['data']);

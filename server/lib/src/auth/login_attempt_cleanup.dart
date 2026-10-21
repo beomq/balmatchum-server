@@ -15,5 +15,9 @@ Future<int> deleteStaleLoginAttempts(
     session,
     where: (t) => t.expiresAt < cutoff,
   );
-  return deleted.length;
+  final naverDeleted = await NaverLoginAttempt.db.deleteWhere(
+    session,
+    where: (t) => t.expiresAt < cutoff,
+  );
+  return deleted.length + naverDeleted.length;
 }

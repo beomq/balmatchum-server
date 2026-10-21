@@ -17,6 +17,8 @@ import 'package:balmatchum_server/src/generated/ads/ad_intent.dart'
     as _ilwsi9fk;
 import 'package:balmatchum_server/src/generated/auth/login_challenge.dart'
     as _i7mkon7c;
+import 'package:balmatchum_server/src/generated/auth/naver_login_challenge.dart'
+    as _ioxvut34;
 import 'package:balmatchum_server/src/generated/billing/entitlement_view.dart'
     as _i9idfddb;
 import 'package:balmatchum_server/src/generated/billing/purchase_configuration.dart'
@@ -198,6 +200,8 @@ class TestEndpoints {
 
   late final _KakaoEndpoint kakao;
 
+  late final _NaverEndpoint naver;
+
   late final _BillingEndpoint billing;
 
   late final _GreetingEndpoint greeting;
@@ -235,6 +239,10 @@ class _InternalTestEndpoints extends TestEndpoints
       serializationManager,
     );
     kakao = _KakaoEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    naver = _NaverEndpoint(
       endpoints,
       serializationManager,
     );
@@ -692,6 +700,115 @@ class _KakaoEndpoint {
           parameters: _ist.testObjectToJson({
             'attemptId': attemptId,
             'idToken': idToken,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_iacs.AuthSuccess>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+}
+
+class _NaverEndpoint {
+  _NaverEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<bool> isConfigured(_ist.TestSessionBuilder sessionBuilder) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'naver',
+            method: 'isConfigured',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'naver',
+          methodName: 'isConfigured',
+          parameters: _ist.testObjectToJson({}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<bool>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ioxvut34.NaverLoginChallenge> beginLogin(
+    _ist.TestSessionBuilder sessionBuilder, {
+    required String codeChallenge,
+  }) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'naver',
+            method: 'beginLogin',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'naver',
+          methodName: 'beginLogin',
+          parameters: _ist.testObjectToJson({'codeChallenge': codeChallenge}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ioxvut34.NaverLoginChallenge>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_iacs.AuthSuccess> completeLogin(
+    _ist.TestSessionBuilder sessionBuilder, {
+    required _is.UuidValue attemptId,
+    required String code,
+    required String state,
+    required String codeVerifier,
+  }) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'naver',
+            method: 'completeLogin',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'naver',
+          methodName: 'completeLogin',
+          parameters: _ist.testObjectToJson({
+            'attemptId': attemptId,
+            'code': code,
+            'state': state,
+            'codeVerifier': codeVerifier,
           }),
           serializationManager: _serializationManager,
         );
