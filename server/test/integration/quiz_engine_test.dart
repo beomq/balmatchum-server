@@ -126,7 +126,7 @@ void main() {
       ),
     );
     configureAuth(pod, sessionPepper: 'public-quiz-test-only');
-    await pod.start(runInGuardedZone: false);
+    await withClock(Clock(() => now), () => pod.start(runInGuardedZone: false));
     admin = await pod.createSession(enableLogging: false);
     final clock = Clock(() => now);
     ads = AdService(
@@ -175,6 +175,7 @@ void main() {
         );
       }
       final q = (await a.client.quiz.getToday()).free!;
+      expect(q.date, localDate(now));
       final json = q.toJson();
       expect(json['correctIndex'], isNull);
       expect(json['explanation'], isNull);
