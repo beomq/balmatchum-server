@@ -7,6 +7,7 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
 
 import '../generated/protocol.dart';
 import '../product/product_service.dart';
+import 'billing_retention.dart';
 import 'billing_verifier.dart';
 
 /// Only outbound HTTP is replaceable in tests; facts remain verifier-owned.
@@ -194,21 +195,26 @@ class BillingService {
       if (previous != null && previous.owner != owner) {
         return 'purchaseUnavailable';
       }
+      // A store subscription outlives account deletion; a later observation
+      // only extends how long its anonymous hash is kept.
+      final retained = PurchaseTombstone(
+        identityHash: hash,
+        retainUntil: identityRetainUntil(facts.kind.name, [
+          facts.expiresAt,
+          facts.graceExpiresAt,
+        ], facts.observedAt),
+      );
       if (await PurchaseTombstone.db.findFirstRow(
             s,
             where: (t) => t.identityHash.equals(hash),
             transaction: tx,
           ) !=
           null) {
+        await retainPurchaseIdentity(s, retained, tx);
         return 'purchaseUnavailable';
       }
       if (user == null) {
-        await PurchaseTombstone.db.insert(
-          s,
-          [PurchaseTombstone(identityHash: hash)],
-          ignoreConflicts: true,
-          transaction: tx,
-        );
+        await retainPurchaseIdentity(s, retained, tx);
         return 'accountDeleted';
       }
       final account = await BillingAccount.db.findFirstRow(
@@ -231,6 +237,7 @@ class BillingService {
         productId: facts.productId,
         kind: facts.kind.name,
         purchaseReference: facts.purchaseReference,
+        transactionId: facts.transactionId ?? previous?.transactionId,
         state: facts.state.name,
         sequence: reservation.sequence,
         observedAt: facts.observedAt,
@@ -445,7 +452,8 @@ Future<void> lockPurchaseIdentity(
 }
 
 /// Called under the same AuthUser lock as billing writes. No owner, binding,
-/// token, timestamps, product or store survive in the retained tombstone.
+/// token, product or store survive in the retained tombstone; the separate
+/// payment record keeps no owner, binding, hash or Google token.
 Future<void> deleteBillingData(Session s, String owner, Transaction tx) async {
   final db = await s.serverpod.createSession(enableLogging: false);
   try {
@@ -466,13 +474,22 @@ Future<void> _deleteBillingData(Session s, String owner, Transaction tx) async {
   );
   for (final row in rows) {
     await lockPurchaseIdentity(s, row.identityHash, tx);
-    await PurchaseTombstone.db.insert(
+    await retainPurchaseIdentity(
       s,
-      [PurchaseTombstone(identityHash: row.identityHash)],
-      ignoreConflicts: true,
-      transaction: tx,
+      PurchaseTombstone(
+        identityHash: row.identityHash,
+        retainUntil: identityRetainUntil(row.kind, [
+          row.expiresAt,
+          row.graceExpiresAt,
+        ], row.observedAt),
+      ),
+      tx,
     );
   }
+  final recordedAt = clock.now().toUtc();
+  await RetainedPaymentRecord.db.insert(s, [
+    for (final row in rows) paymentRecordOf(row, recordedAt),
+  ], transaction: tx);
   await StoredPurchase.db.deleteWhere(
     s,
     where: (t) => t.owner.equals(owner),

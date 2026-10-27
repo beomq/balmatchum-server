@@ -9,6 +9,7 @@ fields:
   productId: String
   kind: String
   purchaseReference: String
+  transactionId: String?
   state: String
   sequence: int
   observedAt: DateTime

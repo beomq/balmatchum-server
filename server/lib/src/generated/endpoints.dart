@@ -14,6 +14,7 @@ import 'package:balmatchum_server/src/generated/ads/ad_platform.dart'
     as _imu3y5cy;
 import 'package:balmatchum_server/src/generated/billing/purchase_input.dart'
     as _i1q0b6so;
+import 'package:balmatchum_server/src/generated/future_calls.dart' as _icaa5uxu;
 import 'package:balmatchum_server/src/generated/product/daily_step_input.dart'
     as _if016xvg;
 import 'package:balmatchum_server/src/generated/profile/profile_input.dart'
@@ -37,6 +38,7 @@ import '../product/product_endpoint.dart' as _itexbxyn;
 import '../profile/profile_endpoint.dart' as _i6ky944g;
 import '../quiz/quiz_endpoint.dart' as _iskif4sw;
 import '../records/records_endpoint.dart' as _imwf5oma;
+export 'future_calls.dart' show ServerpodFutureCallsGetter;
 
 class Endpoints extends _is.EndpointDispatch {
   @override
@@ -1344,5 +1346,10 @@ class Endpoints extends _is.EndpointDispatch {
       ..initializeEndpoints(server);
     modules['serverpod_auth_idp'] = _iais.Endpoints()
       ..initializeEndpoints(server);
+  }
+
+  @override
+  _is.FutureCallDispatch? get futureCalls {
+    return _icaa5uxu.FutureCalls();
   }
 }

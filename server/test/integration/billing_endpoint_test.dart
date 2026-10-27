@@ -7,6 +7,7 @@ import 'package:balmatchum_server/src/auth/auth_setup.dart';
 import 'package:balmatchum_server/src/ads/ad_config.dart';
 import 'package:balmatchum_server/src/ads/ad_service.dart';
 import 'package:balmatchum_server/src/ads/ad_verifier.dart';
+import 'package:balmatchum_server/src/billing/billing_retention.dart';
 import 'package:balmatchum_server/src/billing/billing_service.dart';
 import 'package:balmatchum_server/src/billing/billing_verifier.dart';
 import 'package:balmatchum_server/src/generated/protocol.dart';
@@ -17,6 +18,7 @@ import 'package:clock/clock.dart';
 import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:serverpod/protocol.dart' show FutureCallEntry;
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
 import 'package:test/test.dart';
@@ -1417,7 +1419,7 @@ void main() {
       final columns = await admin.db.unsafeQuery(
         "SELECT column_name FROM information_schema.columns WHERE table_name = 'billing_purchase_tombstone' ORDER BY ordinal_position",
       );
-      expect(columns.map((r) => r[0]), ['id', 'identityHash']);
+      expect(columns.map((r) => r[0]), ['id', 'identityHash', 'retainUntil']);
       final retained = await admin.db.unsafeQuery(
         'SELECT row_to_json(t)::text FROM billing_purchase_tombstone t',
       );
@@ -1539,6 +1541,224 @@ void main() {
       }
       await a.client.account.deleteAccount();
       await noOwner(a.owner);
+    },
+  );
+
+  Future<String> retainedJson(int id) async =>
+      (await admin.db.unsafeQuery(
+            'SELECT row_to_json(t)::text FROM billing_payment_record t WHERE id = @id',
+            parameters: QueryParameters.named({'id': id}),
+          )).single[0]!
+          as String;
+
+  test(
+    'deletion keeps minimal payment records without user linkage and removes originals',
+    () async {
+      final a = await user();
+      const google = 'retained-lifetime-secret';
+      purchase(google, a.binding);
+      responses[google]!['orderId'] = 'order-retained-lifetime';
+      await a.client.billing.verifyPurchase(input(google));
+      responses['9701'] = fixture.transaction(lifetime: true)
+        ..['transactionId'] = '9701'
+        ..['originalTransactionId'] = '9700'
+        ..['appAccountToken'] = a.binding
+        ..['revocationDate'] = fixture.now.millisecondsSinceEpoch;
+      await a.client.billing.verifyPurchase(input('9701', store: 'apple'));
+      await a.client.account.deleteAccount();
+      await noOwner(a.owner);
+      final columns = await admin.db.unsafeQuery(
+        "SELECT column_name FROM information_schema.columns WHERE table_name = 'billing_payment_record' ORDER BY ordinal_position",
+      );
+      expect(columns.map((r) => r[0]), [
+        'id',
+        'store',
+        'environment',
+        'productId',
+        'kind',
+        'storeTransactionId',
+        'originalTransactionId',
+        'state',
+        'purchasedAt',
+        'expiresAt',
+        'revokedAt',
+        'recordedAt',
+        'purgeAfter',
+      ]);
+      final lifetime = (await RetainedPaymentRecord.db.find(
+        admin,
+        where: (t) => t.storeTransactionId.equals('order-retained-lifetime'),
+      )).single;
+      expect(lifetime.store, 'google');
+      expect(lifetime.environment, 'sandbox');
+      expect(lifetime.productId, 'lifetime');
+      expect(lifetime.kind, 'lifetime');
+      expect(lifetime.originalTransactionId, isNull);
+      expect(lifetime.state, 'active');
+      expect(lifetime.purchasedAt, fixture.purchaseDate);
+      expect(lifetime.revokedAt, isNull);
+      expect(lifetime.purgeAfter, DateTime.utc(2031, 10, 18, 12));
+      final refunded = (await RetainedPaymentRecord.db.find(
+        admin,
+        where: (t) => t.originalTransactionId.equals('9700'),
+      )).single;
+      expect(refunded.store, 'apple');
+      expect(refunded.storeTransactionId, '9701');
+      expect(refunded.state, 'revoked');
+      expect(refunded.revokedAt, fixture.now);
+      expect(refunded.purgeAfter, DateTime.utc(2031, 10, 19, 12));
+      final retained =
+          await retainedJson(lifetime.id!) + await retainedJson(refunded.id!);
+      for (final secret in [
+        google,
+        a.owner,
+        a.binding,
+        hash('google', google),
+        hash('apple', '9700'),
+      ]) {
+        expect(retained, isNot(contains(secret)));
+      }
+      final tomb = await PurchaseTombstone.db.findFirstRow(
+        admin,
+        where: (t) => t.identityHash.equals(hash('google', google)),
+      );
+      expect(tomb!.retainUntil, isNull);
+    },
+  );
+
+  test(
+    'subscription identity hash expires one year after latest observed expiry',
+    () async {
+      final a = await user();
+      const token = 'retained-subscription-secret';
+      responses[token] = fixture.subscription()
+        ..['externalAccountIdentifiers'] = {
+          'obfuscatedExternalAccountId': a.binding,
+        };
+      ((responses[token]!['lineItems'] as List).single
+              as Map<String, dynamic>)['latestSuccessfulOrderId'] =
+          'order-retained-subscription';
+      await a.client.billing.verifyPurchase(input(token, product: 'monthly'));
+      await a.client.account.deleteAccount();
+      final record = (await RetainedPaymentRecord.db.find(
+        admin,
+        where: (t) =>
+            t.storeTransactionId.equals('order-retained-subscription'),
+      )).single;
+      expect(record.kind, 'subscription');
+      expect(record.expiresAt, fixture.expiry);
+      expect(record.purgeAfter, DateTime.utc(2031, 10, 19, 12));
+      Future<DateTime?> retainUntil() async =>
+          (await PurchaseTombstone.db.findFirstRow(
+            admin,
+            where: (t) => t.identityHash.equals(hash('google', token)),
+          ))!.retainUntil;
+      expect(await retainUntil(), DateTime.utc(2027, 10, 20, 12));
+      // The store subscription survives deletion; a later renewal observation
+      // keeps the rejection, only extending how long the hash is kept.
+      final b = await user();
+      final renewed = fixture.expiry.add(const Duration(days: 30));
+      responses[token]!['externalAccountIdentifiers'] = {
+        'obfuscatedExternalAccountId': b.binding,
+      };
+      ((responses[token]!['lineItems'] as List).single
+          as Map<String, dynamic>)['expiryTime'] = renewed
+          .toIso8601String();
+      await expectLater(
+        b.client.billing.verifyPurchase(input(token, product: 'monthly')),
+        failure('purchaseUnavailable'),
+      );
+      expect(await retainUntil(), DateTime.utc(2027, 11, 19, 12));
+    },
+  );
+
+  test(
+    'retention purge deletes only expired records and identity hashes',
+    () async {
+      final instant = fixture.now;
+      RetainedPaymentRecord record(String product, DateTime purgeAfter) =>
+          RetainedPaymentRecord(
+            store: 'google',
+            environment: 'sandbox',
+            productId: product,
+            kind: 'lifetime',
+            state: 'active',
+            recordedAt: instant,
+            purgeAfter: purgeAfter,
+          );
+      final past = instant.subtract(const Duration(seconds: 1));
+      final future = instant.add(const Duration(seconds: 1));
+      await RetainedPaymentRecord.db.insert(admin, [
+        for (var i = 0; i < 3; i++) record('purge-expired-$i', past),
+        record('purge-boundary', instant),
+        record('purge-kept', future),
+      ]);
+      await PurchaseTombstone.db.insert(admin, [
+        for (var i = 0; i < 3; i++)
+          PurchaseTombstone(identityHash: 'purge-old-$i', retainUntil: past),
+        PurchaseTombstone(identityHash: 'purge-future', retainUntil: future),
+        PurchaseTombstone(identityHash: 'purge-lifetime'),
+      ]);
+      final first = await purgeExpiredBillingRetention(
+        admin,
+        clock: Clock.fixed(instant),
+        batchSize: 2,
+      );
+      expect(first.records, greaterThanOrEqualTo(3));
+      expect(first.identities, greaterThanOrEqualTo(3));
+      final products = (await RetainedPaymentRecord.db.find(
+        admin,
+        where: (t) => t.productId.like('purge-%'),
+      )).map((r) => r.productId);
+      expect(products, unorderedEquals(['purge-boundary', 'purge-kept']));
+      final hashes = (await PurchaseTombstone.db.find(
+        admin,
+        where: (t) => t.identityHash.like('purge-%'),
+      )).map((r) => r.identityHash);
+      expect(hashes, unorderedEquals(['purge-future', 'purge-lifetime']));
+      final again = await purgeExpiredBillingRetention(
+        admin,
+        clock: Clock.fixed(instant),
+      );
+      expect(again, (records: 0, identities: 0));
+    },
+  );
+
+  test(
+    'startup purges once and keeps one daily cron call across restarts',
+    () async {
+      final stale = await RetainedPaymentRecord.db.insertRow(
+        admin,
+        RetainedPaymentRecord(
+          store: 'google',
+          environment: 'sandbox',
+          productId: 'startup-expired',
+          kind: 'lifetime',
+          state: 'active',
+          recordedAt: DateTime.utc(2000),
+          purgeAfter: DateTime.utc(2001),
+        ),
+      );
+      await startBillingRetention(pod);
+      expect(await RetainedPaymentRecord.db.findById(admin, stale.id!), isNull);
+      await startBillingRetention(pod);
+      final entries = await FutureCallEntry.db.find(
+        admin,
+        where: (t) => t.identifier.equals(billingRetentionPurgeIdentifier),
+      );
+      expect(entries, hasLength(1));
+      expect(
+        entries.single.scheduling,
+        isA<CronFutureCallScheduling>().having(
+          (s) => s.cron,
+          'cron',
+          billingRetentionPurgeCron,
+        ),
+      );
+      await FutureCallEntry.db.deleteWhere(
+        admin,
+        where: (t) => t.identifier.equals(billingRetentionPurgeIdentifier),
+      );
     },
   );
 }

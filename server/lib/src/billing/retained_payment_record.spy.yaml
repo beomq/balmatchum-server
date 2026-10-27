@@ -1,0 +1,21 @@
+# Kept after account deletion for the statutory e-commerce record period.
+# Never add owner, binding, identity hash, purchase token or device fields.
+class: RetainedPaymentRecord
+serverOnly: true
+table: billing_payment_record
+fields:
+  store: String
+  environment: String
+  productId: String
+  kind: String
+  storeTransactionId: String?
+  originalTransactionId: String?
+  state: String
+  purchasedAt: DateTime?
+  expiresAt: DateTime?
+  revokedAt: DateTime?
+  recordedAt: DateTime
+  purgeAfter: DateTime
+indexes:
+  billing_payment_record_purge:
+    fields: purgeAfter

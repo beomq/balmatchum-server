@@ -206,7 +206,7 @@ FileSystemException → JSON/검토 필드 오류·testFixture 운영 사용이�
 ## 7. 알려진 운영 제약
 
 - **Apple Android/web callback·서버 알림 미구현**: web server route를 mount하지 않았습니다(SOCIAL_AUTH_API.md). iOS 네이티브 로그인만 대상입니다.
-- **Future call**: 현재 코드는 future call을 쓰지 않습니다. Starter 요금제에서는 future call이 비활성입니다.
+- **Future call**: 결제 보관 기간 정리(`billing-retention-purge`, 매일 18:00 UTC)만 사용합니다. Starter 요금제에서는 future call이 비활성이라 서버 시작 때 1회 정리만 실행됩니다. 재시작이 드물면 만료분이 다음 재시작까지 남으므로 공개 출시 전 Growth 전환 후 예약 실행을 확인합니다(BILLING_API.md).
 
 ## 8. 상태 확인과 장애 대응
 

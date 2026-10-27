@@ -42,6 +42,7 @@ import 'billing/purchase_input.dart' as _i8awtsqn;
 import 'billing/purchase_product.dart' as _iiesu012;
 import 'billing/purchase_tombstone.dart' as _iwil3tvo;
 import 'billing/purchase_view.dart' as _i0fbcnhc;
+import 'billing/retained_payment_record.dart' as _i4qy0j97;
 import 'billing/stored_purchase.dart' as _i7xmzgxf;
 import 'greetings/greeting.dart' as _izw8z7ou;
 import 'product/daily_quiz.dart' as _i94q6xjz;
@@ -98,6 +99,7 @@ export 'billing/purchase_input.dart';
 export 'billing/purchase_product.dart';
 export 'billing/purchase_tombstone.dart';
 export 'billing/purchase_view.dart';
+export 'billing/retained_payment_record.dart';
 export 'billing/stored_purchase.dart';
 export 'greetings/greeting.dart';
 export 'product/daily_quiz.dart';
@@ -382,6 +384,110 @@ class Protocol extends _is.DatabaseSerializationManager {
       managed: true,
     ),
     _isp.TableDefinition(
+      name: 'billing_payment_record',
+      dartName: 'RetainedPaymentRecord',
+      schema: 'public',
+      module: 'balmatchum',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'store',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'environment',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'productId',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'kind',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'storeTransactionId',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'originalTransactionId',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'state',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'purchasedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'expiresAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'revokedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'recordedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'purgeAfter',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'billing_payment_record_purge',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'purgeAfter',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
       name: 'billing_purchase',
       dartName: 'StoredPurchase',
       schema: 'public',
@@ -435,6 +541,12 @@ class Protocol extends _is.DatabaseSerializationManager {
           columnType: _isp.ColumnType.text,
           isNullable: false,
           dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'transactionId',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
         ),
         _isp.ColumnDefinition(
           name: 'state',
@@ -535,6 +647,12 @@ class Protocol extends _is.DatabaseSerializationManager {
           isNullable: false,
           dartType: 'String',
         ),
+        _isp.ColumnDefinition(
+          name: 'retainUntil',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
       ],
       foreignKeys: [],
       indexes: [
@@ -549,6 +667,19 @@ class Protocol extends _is.DatabaseSerializationManager {
           ],
           type: 'btree',
           isUnique: true,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'billing_tombstone_retention',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'retainUntil',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
           isPrimary: false,
         ),
       ],
@@ -1834,6 +1965,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _i0fbcnhc.PurchaseView) {
       return _i0fbcnhc.PurchaseView.fromJson(data) as T;
     }
+    if (t == _i4qy0j97.RetainedPaymentRecord) {
+      return _i4qy0j97.RetainedPaymentRecord.fromJson(data) as T;
+    }
     if (t == _i7xmzgxf.StoredPurchase) {
       return _i7xmzgxf.StoredPurchase.fromJson(data) as T;
     }
@@ -2018,6 +2152,12 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (t == _is.getType<_i0fbcnhc.PurchaseView?>()) {
       return (data != null ? _i0fbcnhc.PurchaseView.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_i4qy0j97.RetainedPaymentRecord?>()) {
+      return (data != null
+              ? _i4qy0j97.RetainedPaymentRecord.fromJson(data)
+              : null)
+          as T;
     }
     if (t == _is.getType<_i7xmzgxf.StoredPurchase?>()) {
       return (data != null ? _i7xmzgxf.StoredPurchase.fromJson(data) : null)
@@ -2256,6 +2396,7 @@ class Protocol extends _is.DatabaseSerializationManager {
       _iiesu012.PurchaseProduct => 'PurchaseProduct',
       _iwil3tvo.PurchaseTombstone => 'PurchaseTombstone',
       _i0fbcnhc.PurchaseView => 'PurchaseView',
+      _i4qy0j97.RetainedPaymentRecord => 'RetainedPaymentRecord',
       _i7xmzgxf.StoredPurchase => 'StoredPurchase',
       _izw8z7ou.Greeting => 'Greeting',
       _i94q6xjz.DailyQuiz => 'DailyQuiz',
@@ -2345,6 +2486,8 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'PurchaseTombstone';
       case _i0fbcnhc.PurchaseView():
         return 'PurchaseView';
+      case _i4qy0j97.RetainedPaymentRecord():
+        return 'RetainedPaymentRecord';
       case _i7xmzgxf.StoredPurchase():
         return 'StoredPurchase';
       case _izw8z7ou.Greeting():
@@ -2501,6 +2644,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (dataClassName == 'PurchaseView') {
       return deserialize<_i0fbcnhc.PurchaseView>(data['data']);
+    }
+    if (dataClassName == 'RetainedPaymentRecord') {
+      return deserialize<_i4qy0j97.RetainedPaymentRecord>(data['data']);
     }
     if (dataClassName == 'StoredPurchase') {
       return deserialize<_i7xmzgxf.StoredPurchase>(data['data']);
@@ -2668,6 +2814,8 @@ class Protocol extends _is.DatabaseSerializationManager {
         return _ifeydnhg.BillingAccount.t;
       case _iwil3tvo.PurchaseTombstone:
         return _iwil3tvo.PurchaseTombstone.t;
+      case _i4qy0j97.RetainedPaymentRecord:
+        return _i4qy0j97.RetainedPaymentRecord.t;
       case _i7xmzgxf.StoredPurchase:
         return _i7xmzgxf.StoredPurchase.t;
       case _itwveuom.OutfitOwnership:

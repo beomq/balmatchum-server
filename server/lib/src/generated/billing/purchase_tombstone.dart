@@ -17,17 +17,24 @@ abstract class PurchaseTombstone
   PurchaseTombstone._({
     this.id,
     required this.identityHash,
+    this.retainUntil,
   });
 
   factory PurchaseTombstone({
     int? id,
     required String identityHash,
+    DateTime? retainUntil,
   }) = _PurchaseTombstoneImpl;
 
   factory PurchaseTombstone.fromJson(Map<String, dynamic> jsonSerialization) {
     return PurchaseTombstone(
       id: jsonSerialization['id'] as int?,
       identityHash: jsonSerialization['identityHash'] as String,
+      retainUntil: jsonSerialization['retainUntil'] == null
+          ? null
+          : _is.DateTimeJsonExtension.fromJson(
+              jsonSerialization['retainUntil'],
+            ),
     );
   }
 
@@ -40,6 +47,8 @@ abstract class PurchaseTombstone
 
   String identityHash;
 
+  DateTime? retainUntil;
+
   @override
   _is.Table<int?> get table => t;
 
@@ -49,6 +58,7 @@ abstract class PurchaseTombstone
   PurchaseTombstone copyWith({
     int? id,
     String? identityHash,
+    DateTime? retainUntil,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -56,6 +66,7 @@ abstract class PurchaseTombstone
       '__className__': 'PurchaseTombstone',
       if (id != null) 'id': id,
       'identityHash': identityHash,
+      if (retainUntil != null) 'retainUntil': retainUntil?.toJson(),
     };
   }
 
@@ -98,9 +109,11 @@ class _PurchaseTombstoneImpl extends PurchaseTombstone {
   _PurchaseTombstoneImpl({
     int? id,
     required String identityHash,
+    DateTime? retainUntil,
   }) : super._(
          id: id,
          identityHash: identityHash,
+         retainUntil: retainUntil,
        );
 
   /// Returns a shallow copy of this [PurchaseTombstone]
@@ -110,10 +123,12 @@ class _PurchaseTombstoneImpl extends PurchaseTombstone {
   PurchaseTombstone copyWith({
     Object? id = _Undefined,
     String? identityHash,
+    Object? retainUntil = _Undefined,
   }) {
     return PurchaseTombstone(
       id: id is int? ? id : this.id,
       identityHash: identityHash ?? this.identityHash,
+      retainUntil: retainUntil is DateTime? ? retainUntil : this.retainUntil,
     );
   }
 }
@@ -126,6 +141,12 @@ class PurchaseTombstoneUpdateTable
     table.identityHash,
     value,
   );
+
+  _is.ColumnValue<DateTime, DateTime> retainUntil(DateTime? value) =>
+      _is.ColumnValue(
+        table.retainUntil,
+        value,
+      );
 }
 
 class PurchaseTombstoneTable extends _is.Table<int?> {
@@ -136,16 +157,23 @@ class PurchaseTombstoneTable extends _is.Table<int?> {
       'identityHash',
       this,
     );
+    retainUntil = _is.ColumnDateTime(
+      'retainUntil',
+      this,
+    );
   }
 
   late final PurchaseTombstoneUpdateTable updateTable;
 
   late final _is.ColumnString identityHash;
 
+  late final _is.ColumnDateTime retainUntil;
+
   @override
   List<_is.Column> get columns => [
     id,
     identityHash,
+    retainUntil,
   ];
 }
 

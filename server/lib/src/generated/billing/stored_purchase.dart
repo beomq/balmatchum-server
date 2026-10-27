@@ -23,6 +23,7 @@ abstract class StoredPurchase
     required this.productId,
     required this.kind,
     required this.purchaseReference,
+    this.transactionId,
     required this.state,
     required this.sequence,
     required this.observedAt,
@@ -42,6 +43,7 @@ abstract class StoredPurchase
     required String productId,
     required String kind,
     required String purchaseReference,
+    String? transactionId,
     required String state,
     required int sequence,
     required DateTime observedAt,
@@ -62,6 +64,7 @@ abstract class StoredPurchase
       productId: jsonSerialization['productId'] as String,
       kind: jsonSerialization['kind'] as String,
       purchaseReference: jsonSerialization['purchaseReference'] as String,
+      transactionId: jsonSerialization['transactionId'] as String?,
       state: jsonSerialization['state'] as String,
       sequence: jsonSerialization['sequence'] as int,
       observedAt: _is.DateTimeJsonExtension.fromJson(
@@ -110,6 +113,8 @@ abstract class StoredPurchase
 
   String purchaseReference;
 
+  String? transactionId;
+
   String state;
 
   int sequence;
@@ -141,6 +146,7 @@ abstract class StoredPurchase
     String? productId,
     String? kind,
     String? purchaseReference,
+    String? transactionId,
     String? state,
     int? sequence,
     DateTime? observedAt,
@@ -162,6 +168,7 @@ abstract class StoredPurchase
       'productId': productId,
       'kind': kind,
       'purchaseReference': purchaseReference,
+      if (transactionId != null) 'transactionId': transactionId,
       'state': state,
       'sequence': sequence,
       'observedAt': observedAt.toJson(),
@@ -218,6 +225,7 @@ class _StoredPurchaseImpl extends StoredPurchase {
     required String productId,
     required String kind,
     required String purchaseReference,
+    String? transactionId,
     required String state,
     required int sequence,
     required DateTime observedAt,
@@ -235,6 +243,7 @@ class _StoredPurchaseImpl extends StoredPurchase {
          productId: productId,
          kind: kind,
          purchaseReference: purchaseReference,
+         transactionId: transactionId,
          state: state,
          sequence: sequence,
          observedAt: observedAt,
@@ -258,6 +267,7 @@ class _StoredPurchaseImpl extends StoredPurchase {
     String? productId,
     String? kind,
     String? purchaseReference,
+    Object? transactionId = _Undefined,
     String? state,
     int? sequence,
     DateTime? observedAt,
@@ -276,6 +286,9 @@ class _StoredPurchaseImpl extends StoredPurchase {
       productId: productId ?? this.productId,
       kind: kind ?? this.kind,
       purchaseReference: purchaseReference ?? this.purchaseReference,
+      transactionId: transactionId is String?
+          ? transactionId
+          : this.transactionId,
       state: state ?? this.state,
       sequence: sequence ?? this.sequence,
       observedAt: observedAt ?? this.observedAt,
@@ -327,6 +340,12 @@ class StoredPurchaseUpdateTable extends _is.UpdateTable<StoredPurchaseTable> {
   _is.ColumnValue<String, String> purchaseReference(String value) =>
       _is.ColumnValue(
         table.purchaseReference,
+        value,
+      );
+
+  _is.ColumnValue<String, String> transactionId(String? value) =>
+      _is.ColumnValue(
+        table.transactionId,
         value,
       );
 
@@ -409,6 +428,10 @@ class StoredPurchaseTable extends _is.Table<int?> {
       'purchaseReference',
       this,
     );
+    transactionId = _is.ColumnString(
+      'transactionId',
+      this,
+    );
     state = _is.ColumnString(
       'state',
       this,
@@ -459,6 +482,8 @@ class StoredPurchaseTable extends _is.Table<int?> {
 
   late final _is.ColumnString purchaseReference;
 
+  late final _is.ColumnString transactionId;
+
   late final _is.ColumnString state;
 
   late final _is.ColumnInt sequence;
@@ -485,6 +510,7 @@ class StoredPurchaseTable extends _is.Table<int?> {
     productId,
     kind,
     purchaseReference,
+    transactionId,
     state,
     sequence,
     observedAt,

@@ -2,6 +2,7 @@ import 'src/generated/serverpod.dart';
 import 'src/auth/auth_setup.dart';
 import 'src/ads/ad_setup.dart';
 import 'src/quiz/quiz_bank.dart';
+import 'src/billing/billing_retention.dart';
 import 'src/billing/billing_service.dart';
 
 /// The starting point of the Serverpod server.
@@ -17,6 +18,7 @@ void run(List<String> args) async {
   try {
     await configureQuizBank(pod);
     await configureAdMob(pod);
+    await startBillingRetention(pod);
   } catch (_) {
     await pod.shutdown(exitProcess: false);
     rethrow;
