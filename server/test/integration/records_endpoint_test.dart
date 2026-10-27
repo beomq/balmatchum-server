@@ -15,6 +15,10 @@ GpsRecordInput record() => GpsRecordInput(
   startedAt: DateTime.utc(2026, 10, 9, 10),
   endedAt: DateTime.utc(2026, 10, 9, 10, 1),
   source: 'watch',
+  routePoints: [],
+);
+
+GpsRecordInput locatedRecord() => record().copyWith(
   routePoints: [
     RoutePoint(
       recordedAt: DateTime.utc(2026, 10, 9, 10),
@@ -73,22 +77,25 @@ void main() {
       );
     });
 
-    test('persists exact ordered route and returns stable receipt', () async {
-      final input = record();
-      final first = await endpoints.records.saveConfirmed(owner, input);
-      final again = await endpoints.records.saveConfirmed(owner, input);
-      expect(again.toJson(), first.toJson());
-      final saved = await endpoints.records.getMine(owner, first.recordId);
-      expect(saved.payload.toJson(), input.toJson());
-      expect(saved.receipt.toJson(), first.toJson());
-      expect(first.schemaVersion, 1);
-      expect(first.clientRecordId, input.clientRecordId);
-      expect(first.persistedAt.isUtc, isTrue);
-      expect(await StoredGpsRecord.db.count(owner.build()), 1);
-    });
+    test(
+      'persists location-free metadata and returns stable receipt',
+      () async {
+        final input = record();
+        final first = await endpoints.records.saveConfirmed(owner, input);
+        final again = await endpoints.records.saveConfirmed(owner, input);
+        expect(again.toJson(), first.toJson());
+        final saved = await endpoints.records.getMine(owner, first.recordId);
+        expect(saved.payload.toJson(), input.toJson());
+        expect(saved.receipt.toJson(), first.toJson());
+        expect(first.schemaVersion, 1);
+        expect(first.clientRecordId, input.clientRecordId);
+        expect(first.persistedAt.isUtc, isTrue);
+        expect(await StoredGpsRecord.db.count(owner.build()), 1);
+      },
+    );
 
     test(
-      'Watch fixture maps to persistence and original acknowledgement key',
+      'Watch location fixture is rejected without persistence',
       () async {
         final fixture =
             jsonDecode(
@@ -116,12 +123,11 @@ void main() {
               )
               .toList(),
         );
-        final receipt = await endpoints.records.saveConfirmed(owner, input);
-        final saved = await endpoints.records.getMine(owner, receipt.recordId);
-        expect(saved.payload.toJson(), input.toJson());
-        expect(receipt.clientRecordId.toString(), wire['recordId']);
-        expect(fixture['ack']['recordId'], receipt.clientRecordId.toString());
-        expect(fixture['ack']['contextId'], wire['contextId']);
+        await expectLater(
+          endpoints.records.saveConfirmed(owner, input),
+          failsWith('invalidRoute'),
+        );
+        expect(await StoredGpsRecord.db.count(owner.build()), 0);
       },
     );
 
@@ -180,7 +186,7 @@ void main() {
     });
 
     test('rejects invalid route without partial persistence', () async {
-      final input = record();
+      final input = locatedRecord();
       final point = input.routePoints.last;
       for (final invalid in [
         point.copyWith(latitude: 90.1),
@@ -218,7 +224,7 @@ void main() {
         // Exercise the endpoint boundary directly for these in-process values.
         final endpoint = RecordsEndpoint();
         final session = owner.build();
-        final input = record();
+        final input = locatedRecord();
         await expectLater(
           endpoint.saveConfirmed(
             session,
@@ -246,39 +252,45 @@ void main() {
     );
 
     test(
-      'accepts boundary coordinates, equal timestamps and empty route',
+      'rejects valid and boundary coordinates without storing location',
       () async {
-        final input = record();
-        final receipt = await endpoints.records.saveConfirmed(
-          owner,
-          input.copyWith(
-            routePoints: [
-              input.routePoints.first.copyWith(latitude: -90, longitude: 180),
-              input.routePoints.first.copyWith(latitude: 90, longitude: -180),
-            ],
-          ),
-        );
-        expect(
-          (await endpoints.records.getMine(
-            owner,
-            receipt.recordId,
-          )).payload.routePoints,
-          hasLength(2),
-        );
-        final empty = record().copyWith(routePoints: []);
-        final emptyReceipt = await endpoints.records.saveConfirmed(
-          owner,
-          empty,
-        );
-        expect(
-          (await endpoints.records.getMine(
-            owner,
-            emptyReceipt.recordId,
-          )).payload.routePoints,
-          isEmpty,
-        );
+        // Given: even valid coordinates must never cross the storage boundary.
+        final input = locatedRecord();
+        for (final points in [
+          input.routePoints,
+          [
+            input.routePoints.first.copyWith(latitude: -90, longitude: 180),
+            input.routePoints.first.copyWith(latitude: 90, longitude: -180),
+          ],
+        ]) {
+          // When.
+          await expectLater(
+            endpoints.records.saveConfirmed(
+              owner,
+              input.copyWith(routePoints: points),
+            ),
+            failsWith('invalidRoute'),
+          );
+        }
+        // Then.
+        expect(await StoredGpsRecord.db.count(owner.build()), 0);
       },
     );
+
+    test('accepts an empty route with unchanged receipt protocol', () async {
+      // Given.
+      final empty = record();
+      // When.
+      final receipt = await endpoints.records.saveConfirmed(owner, empty);
+      // Then.
+      expect(
+        (await endpoints.records.getMine(
+          owner,
+          receipt.recordId,
+        )).payload.routePoints,
+        isEmpty,
+      );
+    });
   });
 
   // Real independent transactions are essential for the unique-key race.

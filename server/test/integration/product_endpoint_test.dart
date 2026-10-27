@@ -1234,7 +1234,17 @@ void main() {
             ),
           ],
         );
-        final receipt = await records.saveConfirmed(a, input);
+        // Pre-launch legacy rows may contain coordinates; deletion must still
+        // purge them even though the upload endpoint now refuses location.
+        final legacy = await StoredGpsRecord.db.insertRow(
+          a,
+          StoredGpsRecord(
+            owner: a.authenticated!.userIdentifier,
+            clientRecordId: input.clientRecordId,
+            persistedAt: fixedNow,
+            payload: input,
+          ),
+        );
         expect(
           (await endpoint.getDay(a, '2026-10-13')).routes.single.points,
           hasLength(1),
@@ -1245,18 +1255,24 @@ void main() {
         );
         await endpoint.deleteDay(a, date, 'delete');
         expect((await endpoint.getDay(a, '2026-10-13')).routes, isEmpty);
-        final row = await StoredGpsRecord.db.findById(a, receipt.recordId);
+        final row = await StoredGpsRecord.db.findById(a, legacy.id!);
         expect(row!.payload, isNull);
         expect(row.deleted, isTrue);
         final deleted = throwsA(
           isA<RecordException>().having((e) => e.code, 'code', 'dayDeleted'),
         );
-        await expectLater(records.getMine(a, receipt.recordId), deleted);
-        await expectLater(records.saveConfirmed(a, input), deleted);
+        await expectLater(records.getMine(a, legacy.id!), deleted);
+        await expectLater(
+          records.saveConfirmed(a, input.copyWith(routePoints: [])),
+          deleted,
+        );
         await expectLater(
           records.saveConfirmed(
             a,
-            input.copyWith(clientRecordId: const Uuid().v4obj()),
+            input.copyWith(
+              clientRecordId: const Uuid().v4obj(),
+              routePoints: [],
+            ),
           ),
           deleted,
         );
@@ -1268,7 +1284,10 @@ void main() {
           1,
         );
         final b = await owner();
-        expect(await records.saveConfirmed(b, input), isA<RecordReceipt>());
+        expect(
+          await records.saveConfirmed(b, input.copyWith(routePoints: [])),
+          isA<RecordReceipt>(),
+        );
       },
     );
 

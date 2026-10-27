@@ -273,6 +273,35 @@ void main() {
       },
     );
 
+    test('authenticated HTTP upload rejects location coordinates', () async {
+      // Given.
+      final auth = await login(client(), 'location-rejected');
+      final input = _record();
+      // When.
+      await expectLater(
+        client(auth.token).records.saveConfirmed(
+          input.copyWith(
+            routePoints: [
+              api.RoutePoint(
+                recordedAt: input.startedAt,
+                latitude: 37.5,
+                longitude: 127,
+              ),
+            ],
+          ),
+        ),
+        throwsA(
+          isA<api.RecordException>().having(
+            (e) => e.code,
+            'code',
+            'invalidRoute',
+          ),
+        ),
+      );
+      // Then.
+      expect(await StoredGpsRecord.db.count(session), 0);
+    });
+
     test('valid signed token saves and queries owner records', () async {
       final auth = await login(client(), 'valid');
       final owner = client(auth.token);
