@@ -9,24 +9,14 @@ class AdPlacement {
 }
 
 class AdConfig {
-  AdConfig(this.placements, this.port);
+  AdConfig(this.placements);
   final Map<String, AdPlacement> placements;
-  final int port;
 
   static AdConfig? fromPasswords(String? Function(String) password) {
     final json = password('admobPlacements');
-    final port = password('admobSsvPort');
-    if (json == null && port == null) return null;
-    if (json == null || port == null) {
-      throw StateError('AdMob requires admobPlacements and admobSsvPort');
-    }
+    if (json == null) return null;
     final value = jsonDecode(json);
-    final number = int.tryParse(port);
-    if (value is! Map<String, dynamic> ||
-        value.isEmpty ||
-        number == null ||
-        number < 0 ||
-        number > 65535) {
+    if (value is! Map<String, dynamic> || value.isEmpty) {
       throw StateError('Invalid AdMob configuration');
     }
     final placements = <String, AdPlacement>{};
@@ -48,6 +38,6 @@ class AdConfig {
         v['rewardAmount'] as String,
       );
     }
-    return AdConfig(Map.unmodifiable(placements), number);
+    return AdConfig(Map.unmodifiable(placements));
   }
 }

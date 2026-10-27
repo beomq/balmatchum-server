@@ -30,17 +30,17 @@ nonce는 서버 DB에서 소유자와 모든 대상 필드에 결합되고 Googl
 ## 설정과 실제 HTTP 경로
 
 `lib/server.dart`는 `pod.start()` 후 `configureAdMob(pod)`를 호출합니다.
-둘 다 없으면 listener를 열지 않고 API는 `configurationMissing`입니다. 부분/잘못된 설정은
-기동 오류이며 이미 열린 pod도 닫습니다. `.env` 자동 로딩은 없습니다.
+설정이 없으면 콜백 경로를 처리하지 않고 API는 `configurationMissing`입니다. 잘못된 설정은
+기동 오류이며 이미 열린 pod도 닫습니다. `.env` 자동 로딩은 없습니다. 별도 포트 설정은 없습니다.
 
-- `SERVERPOD_PASSWORD_admobSsvPort`: 전용 loopback HTTP 포트(0은 테스트 동적 포트).
 - `SERVERPOD_PASSWORD_admobPlacements`: JSON 객체, 목적별
   `{"adUnit":"콘솔의 콜백 ad_unit 값","rewardItem":"콘솔 문자열","rewardAmount":"콘솔 숫자 문자열"}`.
   두 목적 중 사용할 것만 등록합니다. 임의 기본값은 없습니다.
 
-정확한 수신 경로는 **`GET http://127.0.0.1:<admobSsvPort>/admob/ssv?<Google query>`** 입니다.
-API 8080 포트의 endpoint가 아닙니다. 운영에서는 승인된 TLS reverse proxy가 해당 loopback
-포트에 원본 request-target을 바이트 그대로 전달해야 합니다. 공개 배포/콘솔 변경은 수행하지
+정확한 수신 경로는 공개 API 서버(로컬 8080)의 **`GET /admob/ssv?<Google query>`** 입니다.
+`pod.server.addMiddleware`로 등록한 미들웨어가 이 경로만 가로채고 나머지는 Serverpod endpoint로
+넘깁니다. Serverpod Cloud는 API 서버만 공개하므로 콘솔에 등록할 운영 URL은
+`https://balmatchum-prod.api.serverpod.space/admob/ssv`입니다. 공개 배포/콘솔 변경은 수행하지
 않았습니다. Google 콘솔의 URL 등록과 실제 기기 검증은 다음 운영 단계입니다.
 
 `rewardAmount`는 콘솔 서명 메타데이터 일치 조건일 뿐 앱 포인트 수량이 아닙니다.
@@ -55,10 +55,12 @@ PointyCastle 4.0.0 ECDSA SHA-256을 적용합니다. DER은 라이브러리 ASN.
 DER과 비교합니다. 기존 dart_jsonwebtoken의 PEM parser를 사용하며 자체 암호 알고리즘은 없습니다.
 서명 후 한 번만 decode하고 중복/알 수 없는 파라미터는 거절합니다.
 
-Dart 3.13.4 `HttpRequest.uri`/Relic `Request.url`은 `%2f`→`%2F`, `%63`→`c`로 바꿀 수 있습니다.
-`RawQueryServer`는 소켓 첫 요청 줄만 제한된 크기로 복사하고, HTTP 처리는 SDK
-`HttpServer.listenOn`에 맡깁니다. 한 연결당 한 요청, 요청 줄 16 KiB, 연결 10초 제한입니다.
-테스트는 raw socket으로 비정규 인코딩을 보내 정상 서명은 통과하고 인코딩만 바꾼 요청은 실패함을 확인합니다.
+Dart 3.13.4 `HttpRequest.uri`/Relic `Request.url`은 `%2f`→`%2F`, `%63`→`c`처럼 percent escape를
+정규화하며 Serverpod API 서버는 원본 request-target을 노출하지 않습니다. 따라서 정규화된
+`Request.url.query`를 검증합니다. Google의 정규 인코딩(대문자 hex, 비예약 문자 미인코딩)은
+정규화로 바뀌지 않습니다. 비정규 인코딩으로 서명된 쿼리는 서명 검증에 실패해 보상 없이
+400입니다(fail closed). 정규화로 같은 서명 문자열이 되는 요청은 같은 이벤트의 재전송으로만 처리됩니다.
+테스트는 공개 API 포트에 raw socket으로 보내 정상 서명은 통과하고 값·서명을 바꾼 요청은 실패함을 확인합니다.
 
 키 출처는 고정된 `https://www.gstatic.com/admob/reward/verifier-keys.json`입니다.
 redirect를 따르지 않으며 callback 제공 키/URL을 사용하지 않습니다. 캐시는 fetch 시작 시각부터
@@ -89,7 +91,7 @@ Google timestamp 단위는 **epoch milliseconds**입니다.
 
 성공/동일 재전송은 200, 서명/구문 오류는 400, 메타데이터/기간/재사용/없는 인텐트는 409,
 삭제된 소유자 잠금 실패는 410, 키/DB/예기치 못한 일시 실패는 503입니다.
-404는 경로 불일치, 405는 GET 이외입니다. 거절된 이벤트는 인텐트를 소모하지 않습니다.
+405는 GET 이외이며, 다른 경로는 Serverpod endpoint 처리 결과를 따릅니다. 거절된 이벤트는 인텐트를 소모하지 않습니다.
 공식 문서의 Google 재시도는 최대 5회, 1초 간격이므로 7일 수신 허용이 실제 재전송을 보장하지 않습니다.
 
 계정 삭제는 같은 AuthUser→ProductAccount 잠금으로 인텐트 전체를 지웁니다. 삭제 전 인증된
@@ -113,7 +115,7 @@ ProductService.claim은 인증된 owner 잠금 아래 실제 ProductDay revision
 이미 consumed면 `intentNotVerified`; 외부 RPC 소비 메서드는 없습니다. 재시도 응답은 업무 통합의
 기존 request idempotency 기록으로 처리합니다. 포인트 수량을 클라이언트나 callback에서 읽지 않습니다.
 
-장애 확인 순서: 설정/포트 → proxy 원본 URI 보존 → gstatic fetch/TTL → signed metadata →
+장애 확인 순서: 설정 → 콘솔 콜백 URL(`/admob/ssv`) → gstatic fetch/TTL → signed metadata →
 시간 경계 → 인텐트/transaction 충돌 → 현재 업무 revision. 직접 검증은 `dart test
 test/unit/ad_verifier_test.dart test/integration/ad_ssv_test.dart --reporter expanded`입니다.
 자동 테스트와 사용자 직접 이해·기기 검증은 별개입니다.

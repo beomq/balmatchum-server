@@ -1,14 +1,17 @@
-import 'dart:io';
 import 'package:clock/clock.dart';
 import 'package:serverpod/serverpod.dart';
 import '../generated/protocol.dart';
 import 'ad_config.dart';
 import 'ad_service.dart';
 import 'ad_verifier.dart';
-import 'raw_query_server.dart';
 
-/// Called after pod.start; absent config means no SSV listener or intent API.
-Future<RawQueryServer?> configureAdMob(
+/// Public API server path that receives Google AdMob SSV callbacks.
+const admobSsvPath = '/admob/ssv';
+
+/// Called after pod.start; absent config means no SSV route or intent API.
+/// The callback is served on the public API server (the only port Serverpod
+/// Cloud exposes besides web/insights), so no extra listener is opened.
+Future<AdService?> configureAdMob(
   Serverpod pod, {
   AdConfig? config,
   AdVerifier? verifier,
@@ -21,31 +24,43 @@ Future<RawQueryServer?> configureAdMob(
     verifier ?? AdVerifier(clock: clock),
     clock: clock,
   );
-  final listener = await RawQueryServer.bind(
-    address: InternetAddress.loopbackIPv4,
-    port: config.port,
-    callback: (query) async {
-      final session = await pod.createSession(enableLogging: false);
-      try {
-        await service.callback(session, query);
-        return 200;
-      } on AdKeysUnavailable {
-        return 503;
-      } on FormatException {
-        return 400;
-      } on AdException {
-        return 409;
-      } on NotAuthorizedException {
-        return 410;
-      } finally {
-        await session.close();
+  AdService.instances[pod] = service;
+  pod.server.addMiddleware(
+    (next) => (request) async {
+      final active = AdService.instances[pod];
+      if (request.url.path != admobSsvPath || active == null) {
+        return next(request);
       }
+      if (request.method != Method.get) return Response(405);
+      return Response(await _callback(pod, active, request.url.query));
     },
   );
-  AdService.instances[pod] = service;
   pod.experimental.shutdownTasks.addTask('admob-ssv', () async {
     AdService.instances[pod] = null;
-    await listener.close();
   });
-  return listener;
+  return service;
+}
+
+/// dart:io parses the request target through Uri, which normalizes percent
+/// escapes; Google's canonical encoding is unchanged by that normalization,
+/// and any other encoding fails signature verification (fail closed).
+Future<int> _callback(Serverpod pod, AdService service, String query) async {
+  final session = await pod.createSession(enableLogging: false);
+  try {
+    await service.callback(session, query);
+    return 200;
+  } on AdKeysUnavailable {
+    return 503;
+  } on FormatException {
+    return 400;
+  } on AdException {
+    return 409;
+  } on NotAuthorizedException {
+    return 410;
+  } on Exception {
+    // Transient DB/unexpected failure: Google retries non-2xx responses.
+    return 503;
+  } finally {
+    await session.close();
+  }
 }
