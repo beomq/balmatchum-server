@@ -1,0 +1,8 @@
+class: OutfitItem
+fields:
+  outfitId: String
+  name: String
+  price: int
+  compatibleBreeds: List<String>
+  compatible: bool
+  owned: bool

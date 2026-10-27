@@ -930,6 +930,85 @@ class Endpoints extends _is.EndpointDispatch {
                     params['requestId'],
                   ),
         ),
+        'listOutfits': _is.MethodConnector(
+          name: 'listOutfits',
+          params: {},
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['product'] as _itexbxyn.ProductEndpoint)
+                  .listOutfits(session),
+        ),
+        'purchaseOutfit': _is.MethodConnector(
+          name: 'purchaseOutfit',
+          params: {
+            'outfitId': _is.ParameterDescription(
+              name: 'outfitId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'requestId': _is.ParameterDescription(
+              name: 'requestId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['product'] as _itexbxyn.ProductEndpoint)
+                  .purchaseOutfit(
+                    session,
+                    params['outfitId'],
+                    params['requestId'],
+                  ),
+        ),
+        'equipOutfit': _is.MethodConnector(
+          name: 'equipOutfit',
+          params: {
+            'outfitId': _is.ParameterDescription(
+              name: 'outfitId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'requestId': _is.ParameterDescription(
+              name: 'requestId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['product'] as _itexbxyn.ProductEndpoint)
+                  .equipOutfit(
+                    session,
+                    params['outfitId'],
+                    params['requestId'],
+                  ),
+        ),
+        'unequipOutfit': _is.MethodConnector(
+          name: 'unequipOutfit',
+          params: {
+            'requestId': _is.ParameterDescription(
+              name: 'requestId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['product'] as _itexbxyn.ProductEndpoint)
+                  .unequipOutfit(
+                    session,
+                    params['requestId'],
+                  ),
+        ),
       },
     );
     connectors['profile'] = _is.EndpointConnector(

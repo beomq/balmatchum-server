@@ -20,6 +20,7 @@ abstract class ProductAccount
     int? streamGeneration,
     int? deletionVersion,
     String? equippedTheme,
+    this.equippedOutfit,
   }) : streamGeneration = streamGeneration ?? 0,
        deletionVersion = deletionVersion ?? 0,
        equippedTheme = equippedTheme ?? 'sunny';
@@ -30,6 +31,7 @@ abstract class ProductAccount
     int? streamGeneration,
     int? deletionVersion,
     String? equippedTheme,
+    String? equippedOutfit,
   }) = _ProductAccountImpl;
 
   factory ProductAccount.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -39,6 +41,7 @@ abstract class ProductAccount
       streamGeneration: jsonSerialization['streamGeneration'] as int?,
       deletionVersion: jsonSerialization['deletionVersion'] as int?,
       equippedTheme: jsonSerialization['equippedTheme'] as String?,
+      equippedOutfit: jsonSerialization['equippedOutfit'] as String?,
     );
   }
 
@@ -57,6 +60,8 @@ abstract class ProductAccount
 
   String equippedTheme;
 
+  String? equippedOutfit;
+
   @override
   _is.Table<int?> get table => t;
 
@@ -69,6 +74,7 @@ abstract class ProductAccount
     int? streamGeneration,
     int? deletionVersion,
     String? equippedTheme,
+    String? equippedOutfit,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -79,6 +85,7 @@ abstract class ProductAccount
       'streamGeneration': streamGeneration,
       'deletionVersion': deletionVersion,
       'equippedTheme': equippedTheme,
+      if (equippedOutfit != null) 'equippedOutfit': equippedOutfit,
     };
   }
 
@@ -124,12 +131,14 @@ class _ProductAccountImpl extends ProductAccount {
     int? streamGeneration,
     int? deletionVersion,
     String? equippedTheme,
+    String? equippedOutfit,
   }) : super._(
          id: id,
          owner: owner,
          streamGeneration: streamGeneration,
          deletionVersion: deletionVersion,
          equippedTheme: equippedTheme,
+         equippedOutfit: equippedOutfit,
        );
 
   /// Returns a shallow copy of this [ProductAccount]
@@ -142,6 +151,7 @@ class _ProductAccountImpl extends ProductAccount {
     int? streamGeneration,
     int? deletionVersion,
     String? equippedTheme,
+    Object? equippedOutfit = _Undefined,
   }) {
     return ProductAccount(
       id: id is int? ? id : this.id,
@@ -149,6 +159,9 @@ class _ProductAccountImpl extends ProductAccount {
       streamGeneration: streamGeneration ?? this.streamGeneration,
       deletionVersion: deletionVersion ?? this.deletionVersion,
       equippedTheme: equippedTheme ?? this.equippedTheme,
+      equippedOutfit: equippedOutfit is String?
+          ? equippedOutfit
+          : this.equippedOutfit,
     );
   }
 }
@@ -176,6 +189,12 @@ class ProductAccountUpdateTable extends _is.UpdateTable<ProductAccountTable> {
         table.equippedTheme,
         value,
       );
+
+  _is.ColumnValue<String, String> equippedOutfit(String? value) =>
+      _is.ColumnValue(
+        table.equippedOutfit,
+        value,
+      );
 }
 
 class ProductAccountTable extends _is.Table<int?> {
@@ -201,6 +220,10 @@ class ProductAccountTable extends _is.Table<int?> {
       this,
       hasDefault: true,
     );
+    equippedOutfit = _is.ColumnString(
+      'equippedOutfit',
+      this,
+    );
   }
 
   late final ProductAccountUpdateTable updateTable;
@@ -213,6 +236,8 @@ class ProductAccountTable extends _is.Table<int?> {
 
   late final _is.ColumnString equippedTheme;
 
+  late final _is.ColumnString equippedOutfit;
+
   @override
   List<_is.Column> get columns => [
     id,
@@ -220,6 +245,7 @@ class ProductAccountTable extends _is.Table<int?> {
     streamGeneration,
     deletionVersion,
     equippedTheme,
+    equippedOutfit,
   ];
 }
 

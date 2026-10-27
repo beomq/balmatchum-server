@@ -30,6 +30,8 @@ import 'package:balmatchum_client/src/protocol/product/daily_record.dart'
     as _i6924b5v;
 import 'package:balmatchum_client/src/protocol/product/daily_step_input.dart'
     as _ijhmyv9t;
+import 'package:balmatchum_client/src/protocol/product/outfit_store.dart'
+    as _idav388q;
 import 'package:balmatchum_client/src/protocol/product/reward_grant.dart'
     as _itb00fx7;
 import 'package:balmatchum_client/src/protocol/product/theme_store.dart'
@@ -488,6 +490,44 @@ class EndpointProduct extends _isc.EndpointRef {
       'requestId': requestId,
     },
   );
+
+  _ida.Future<_idav388q.OutfitStore> listOutfits() =>
+      caller.callServerEndpoint<_idav388q.OutfitStore>(
+        'product',
+        'listOutfits',
+        {},
+      );
+
+  _ida.Future<_idav388q.OutfitStore> purchaseOutfit(
+    String outfitId,
+    String requestId,
+  ) => caller.callServerEndpoint<_idav388q.OutfitStore>(
+    'product',
+    'purchaseOutfit',
+    {
+      'outfitId': outfitId,
+      'requestId': requestId,
+    },
+  );
+
+  _ida.Future<_idav388q.OutfitStore> equipOutfit(
+    String outfitId,
+    String requestId,
+  ) => caller.callServerEndpoint<_idav388q.OutfitStore>(
+    'product',
+    'equipOutfit',
+    {
+      'outfitId': outfitId,
+      'requestId': requestId,
+    },
+  );
+
+  _ida.Future<_idav388q.OutfitStore> unequipOutfit(String requestId) =>
+      caller.callServerEndpoint<_idav388q.OutfitStore>(
+        'product',
+        'unequipOutfit',
+        {'requestId': requestId},
+      );
 }
 
 /// {@category Endpoint}

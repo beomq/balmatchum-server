@@ -43,6 +43,10 @@ product:
   - listThemes:
   - purchaseTheme:
   - equipTheme:
+  - listOutfits:
+  - purchaseOutfit:
+  - equipOutfit:
+  - unequipOutfit:
 profile:
   - getProfile:
   - createProfile:
