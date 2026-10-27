@@ -7,6 +7,7 @@ import 'package:balmatchum_server/src/generated/protocol.dart';
 import 'package:balmatchum_server/src/generated/serverpod.dart' as generated;
 import 'package:balmatchum_server/src/product/product_endpoint.dart';
 import 'package:balmatchum_server/src/product/product_service.dart';
+import 'package:balmatchum_server/src/quiz/quiz_bank.dart';
 import 'package:balmatchum_server/src/records/records_endpoint.dart';
 import 'package:clock/clock.dart';
 import 'package:serverpod/serverpod.dart';
@@ -94,7 +95,7 @@ void main() {
       );
     });
     test(
-      'production steps are enabled but fixture quiz and prices are not',
+      'production steps and theme prices are enabled but fixture quiz is not',
       () async {
         await withClock(fixedClock, () async {
           await endpoints.product.registerStepStream(owner, 'register', 0);
@@ -129,23 +130,399 @@ void main() {
           expect((await endpoints.product.getWallet(owner)).balance, 70);
           expect((await endpoints.product.listThemes(owner)).balance, 70);
           await expectLater(
-            endpoints.product.purchaseTheme(owner, 'cloudy', 'purchase'),
-            productError('policyUnconfigured'),
-          );
-          await expectLater(
             endpoints.product.getQuiz(owner, date),
             productError('policyUnconfigured'),
           );
           expect(
             (await endpoints.product.listThemes(
               owner,
-            )).items.every((t) => t.price == null),
-            isTrue,
+            )).items.map((t) => t.price),
+            [0, 3, 3, 3],
           );
         });
       },
     );
   });
+
+  withServerpod('Production theme purchases', (builder, endpoints) {
+    late TestSessionBuilder owner;
+    late Session session;
+    late String userId;
+
+    setUp(() async {
+      userId = const Uuid().v4();
+      owner = builder.copyWith(
+        authentication: AuthenticationOverride.authenticationInfo(userId, {}),
+      );
+      session = owner.build();
+      expect(productFixturesEnabled(session), isFalse);
+      await AuthUser.db.insertRow(
+        session,
+        AuthUser(id: UuidValue.fromString(userId), scopeNames: {}),
+      );
+    });
+
+    Future<void> fund(int amount, {String policy = stepPolicyVersion}) async {
+      await PointEntry.db.insertRow(
+        session,
+        PointEntry(
+          owner: userId,
+          entryKey: 'fund:$policy',
+          kind: 'test-credit',
+          amount: amount,
+          policyVersion: policy,
+          createdAt: fixedNow,
+        ),
+      );
+    }
+
+    Future<List<PointEntry>> debits() => PointEntry.db.find(
+      session,
+      where: (t) => t.owner.equals(userId) & t.kind.equals('purchase'),
+    );
+
+    Future<int> ownerships() => ThemeOwnership.db.count(
+      session,
+      where: (t) => t.owner.equals(userId),
+    );
+
+    test('sufficient balance buys and equips a three point theme', () async {
+      // Given: both production reward policies, plus excluded fixture credit.
+      await fund(1);
+      await fund(2, policy: quizPolicyVersion);
+      await fund(100, policy: productFixtureLabel);
+      final before = await endpoints.product.getWallet(owner);
+
+      // When.
+      final result = await endpoints.product.purchaseTheme(
+        owner,
+        'cloudy',
+        'purchase',
+      );
+
+      // Then.
+      expect(before.balance, 3);
+      expect(result.items.map((t) => t.price), [0, 3, 3, 3]);
+      expect(result.fixtureLabel, isNull);
+      expect(
+        result.items.firstWhere((t) => t.themeId == 'cloudy').owned,
+        isTrue,
+      );
+      expect(result.balance, before.balance - 3);
+      expect(
+        (await endpoints.product.getWallet(owner)).balance,
+        before.balance - 3,
+      );
+      final debit = (await debits()).single;
+      expect(debit.amount, -3);
+      expect(debit.policyVersion, themePurchasePolicyVersion);
+      expect(await ownerships(), 1);
+      expect(
+        (await endpoints.product.equipTheme(
+          owner,
+          'cloudy',
+          'equip',
+        )).equippedTheme,
+        'cloudy',
+      );
+      expect(
+        (await endpoints.product.listThemes(owner)).equippedTheme,
+        'cloudy',
+      );
+    });
+
+    test('insufficient balance rejects without any purchase writes', () async {
+      // Given.
+      await fund(2);
+      await fund(100, policy: productFixtureLabel);
+      final before = await endpoints.product.getWallet(owner);
+
+      // When.
+      await expectLater(
+        endpoints.product.purchaseTheme(owner, 'rainy', 'purchase'),
+        productError('insufficientPoints'),
+      );
+
+      // Then.
+      expect(
+        (await endpoints.product.getWallet(owner)).balance,
+        before.balance,
+      );
+      expect(await debits(), isEmpty);
+      expect(await ownerships(), 0);
+      expect(
+        await ProductRequest.db.count(
+          session,
+          where: (t) => t.owner.equals(userId),
+        ),
+        0,
+      );
+    });
+
+    test(
+      'same key retries return the original snapshot and one debit',
+      () async {
+        // Given: later purchases make the current store differ from the receipt.
+        await fund(6);
+        final first = await endpoints.product.purchaseTheme(
+          owner,
+          'cloudy',
+          'first',
+        );
+        await endpoints.product.purchaseTheme(owner, 'rainy', 'second');
+
+        // When.
+        final replay = await endpoints.product.purchaseTheme(
+          owner,
+          'cloudy',
+          'first',
+        );
+
+        // Then.
+        expect(replay.toJson(), first.toJson());
+        expect(replay.balance, 3);
+        expect((await endpoints.product.getWallet(owner)).balance, 0);
+        expect(
+          (await debits()).where((e) => e.entryKey == 'theme:cloudy'),
+          hasLength(1),
+        );
+        expect(await ownerships(), 2);
+      },
+    );
+
+    for (final sameKey in [true, false]) {
+      test(
+        'parallel duplicate purchases debit once (same key: $sameKey)',
+        () async {
+          // Given: independent endpoint sessions and real committed transactions.
+          await fund(3);
+
+          // When.
+          final results = await Future.wait([
+            endpoints.product.purchaseTheme(owner, 'cloudy', 'first'),
+            endpoints.product.purchaseTheme(
+              owner,
+              'cloudy',
+              sameKey ? 'first' : 'second',
+            ),
+          ]);
+
+          // Then.
+          expect(results.map((s) => s.balance), [0, 0]);
+          expect(
+            results.every(
+              (s) => s.items.firstWhere((t) => t.themeId == 'cloudy').owned,
+            ),
+            isTrue,
+          );
+          expect(results.first.toJson(), results.last.toJson());
+          expect((await endpoints.product.getWallet(owner)).balance, 0);
+          expect((await debits()).single.amount, -3);
+          expect(await ownerships(), 1);
+        },
+      );
+    }
+
+    test('parallel different themes cannot overspend the wallet', () async {
+      // Given.
+      await fund(3);
+
+      // When.
+      final outcomes = await Future.wait(
+        ['cloudy', 'rainy'].map((theme) async {
+          try {
+            return await endpoints.product.purchaseTheme(owner, theme, theme);
+          } on ProductException catch (error) {
+            return error;
+          }
+        }),
+      );
+
+      // Then.
+      expect(outcomes.whereType<ThemeStore>(), hasLength(1));
+      expect(
+        outcomes.whereType<ProductException>().single.code,
+        'insufficientPoints',
+      );
+      expect((await endpoints.product.getWallet(owner)).balance, 0);
+      expect((await debits()).single.amount, -3);
+      expect(await ownerships(), 1);
+    });
+
+    test(
+      'five parallel purchases across paid themes never overspend six points',
+      () async {
+        for (var round = 0; round < 3; round++) {
+          // Given: a fresh owner per round with exactly two themes of credit.
+          final roundUser = const Uuid().v4();
+          final roundOwner = builder.copyWith(
+            authentication: AuthenticationOverride.authenticationInfo(
+              roundUser,
+              {},
+            ),
+          );
+          final roundSession = roundOwner.build();
+          await AuthUser.db.insertRow(
+            roundSession,
+            AuthUser(id: UuidValue.fromString(roundUser), scopeNames: {}),
+          );
+          await PointEntry.db.insertRow(
+            roundSession,
+            PointEntry(
+              owner: roundUser,
+              entryKey: 'fund:round-$round',
+              kind: 'test-credit',
+              amount: 6,
+              policyVersion: stepPolicyVersion,
+              createdAt: fixedNow,
+            ),
+          );
+
+          // When: distinct keys race over three paid themes.
+          final themes = ['cloudy', 'rainy', 'snowy', 'cloudy', 'rainy'];
+          final outcomes = await Future.wait([
+            for (var i = 0; i < themes.length; i++)
+              () async {
+                try {
+                  return await endpoints.product.purchaseTheme(
+                    roundOwner,
+                    themes[i],
+                    'race-$round-$i',
+                  );
+                } on ProductException catch (error) {
+                  return error;
+                }
+              }(),
+          ]);
+
+          // Then: exactly two paid themes are bought for six points total.
+          final reason = 'round $round: $outcomes';
+          expect(outcomes.whereType<ThemeStore>(), isNotEmpty, reason: reason);
+          expect(
+            outcomes.whereType<ThemeStore>().every((s) => s.balance >= 0),
+            isTrue,
+            reason: reason,
+          );
+          expect(
+            outcomes.whereType<ProductException>().map((e) => e.code).toSet(),
+            anyOf(isEmpty, {'insufficientPoints'}),
+            reason: reason,
+          );
+          final roundDebits = await PointEntry.db.find(
+            roundSession,
+            where: (t) => t.owner.equals(roundUser) & t.kind.equals('purchase'),
+          );
+          expect(roundDebits, hasLength(2), reason: reason);
+          expect(
+            roundDebits.fold<int>(0, (sum, e) => sum + e.amount),
+            -6,
+            reason: reason,
+          );
+          expect(
+            await ThemeOwnership.db.count(
+              roundSession,
+              where: (t) => t.owner.equals(roundUser),
+            ),
+            2,
+            reason: reason,
+          );
+          expect(
+            (await endpoints.product.getWallet(roundOwner)).balance,
+            0,
+            reason: reason,
+          );
+        }
+      },
+    );
+
+    test('default theme is free without a debit or ownership write', () async {
+      // Given: a new account with no credits.
+      final before = await endpoints.product.getWallet(owner);
+
+      // When.
+      final result = await endpoints.product.purchaseTheme(
+        owner,
+        'sunny',
+        'free',
+      );
+
+      // Then.
+      final item = result.items.firstWhere((t) => t.themeId == 'sunny');
+      expect(item.price, 0);
+      expect(item.owned, isTrue);
+      expect(result.balance, before.balance);
+      expect(
+        (await endpoints.product.getWallet(owner)).balance,
+        before.balance,
+      );
+      expect(await debits(), isEmpty);
+      expect(await ownerships(), 0);
+    });
+
+    test('an already owned theme needs no balance or second debit', () async {
+      // Given.
+      await fund(3);
+      await endpoints.product.purchaseTheme(owner, 'snowy', 'first');
+
+      // When.
+      final result = await endpoints.product.purchaseTheme(
+        owner,
+        'snowy',
+        'second',
+      );
+
+      // Then.
+      expect(
+        result.items.firstWhere((t) => t.themeId == 'snowy').owned,
+        isTrue,
+      );
+      expect(result.balance, 0);
+      expect((await debits()).single.amount, -3);
+      expect(await ownerships(), 1);
+    });
+
+    test('reusing a purchase key for a different theme is rejected', () async {
+      // Given.
+      await fund(6);
+      await endpoints.product.purchaseTheme(owner, 'cloudy', 'same');
+
+      // When.
+      await expectLater(
+        endpoints.product.purchaseTheme(owner, 'rainy', 'same'),
+        productError('idempotencyConflict'),
+      );
+
+      // Then.
+      expect((await endpoints.product.getWallet(owner)).balance, 3);
+      expect(await debits(), hasLength(1));
+      expect(await ownerships(), 1);
+    });
+
+    for (final (theme, key, error) in [
+      ('unknown', 'purchase', 'unknownTheme'),
+      ('cloudy', '', 'invalidRequestId'),
+      ('cloudy', 'x' * 129, 'invalidRequestId'),
+    ]) {
+      test(
+        'rejects malformed purchase input: $error (${key.length})',
+        () async {
+          // Given.
+          await fund(3);
+
+          // When.
+          await expectLater(
+            endpoints.product.purchaseTheme(owner, theme, key),
+            productError(error),
+          );
+
+          // Then.
+          expect((await endpoints.product.getWallet(owner)).balance, 3);
+          expect(await debits(), isEmpty);
+          expect(await ownerships(), 0);
+        },
+      );
+    }
+  }, rollbackDatabase: RollbackDatabase.disabled);
 
   group('Product fixtures on disposable development database', () {
     late Directory directory;

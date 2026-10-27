@@ -8,6 +8,8 @@ import 'product_service.dart';
 
 /// Test content only. The production reviewed question bank is not configured.
 const _questionId = 'fixture-walk-water-v1';
+const _defaultThemePrice = 0;
+const _paidThemePrice = 3;
 const _themes = {
   'sunny': ('Sunny', 0xfff5eedc),
   'cloudy': ('Cloudy', 0xffe4e7e9),
@@ -128,7 +130,7 @@ extension QuizThemeService on ProductService {
             themeId: entry.key,
             name: entry.value.$1,
             colorValue: entry.value.$2,
-            price: fixture ? (entry.key == 'sunny' ? 0 : 3) : null,
+            price: entry.key == 'sunny' ? _defaultThemePrice : _paidThemePrice,
             owned:
                 entry.key == 'sunny' ||
                 owned.any((o) => o.themeId == entry.key),
@@ -146,7 +148,6 @@ extension QuizThemeService on ProductService {
     if (previous != null) {
       return ThemeStore.fromJson(jsonDecode(previous) as Map<String, dynamic>);
     }
-    requireProductFixtures(session);
     final store = await themes();
     final matches = store.items.where((item) => item.themeId == themeId);
     if (matches.isEmpty) throw ProductException(code: 'unknownTheme');
@@ -162,7 +163,9 @@ extension QuizThemeService on ProductService {
           entryKey: 'theme:$themeId',
           kind: 'purchase',
           amount: -item.price!,
-          policyVersion: productFixtureLabel,
+          policyVersion: productFixturesEnabled(session)
+              ? productFixtureLabel
+              : themePurchasePolicyVersion,
           createdAt: clock.now().toUtc(),
         ),
         transaction: tx,

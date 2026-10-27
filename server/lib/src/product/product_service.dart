@@ -14,6 +14,7 @@ import '../quiz/quiz_bank.dart';
 /// Legacy quiz/theme fixtures remain isolated from production step balances.
 const productFixtureLabel = 'development-fixture-v1-not-production';
 const stepPolicyVersion = 'steps-v1-20261019';
+const themePurchasePolicyVersion = 'theme-purchase-v1-20261027';
 const stepsPerPoint = 100;
 const dailyBaseCap = 100;
 
@@ -172,11 +173,15 @@ class ProductService {
     final result = await session.db.unsafeQuery(
       'SELECT COALESCE(SUM(amount), 0) FROM point_entry '
       'WHERE owner = @owner AND ("policyVersion" = @policy '
-      'OR "policyVersion" = @quizPolicy)',
+      'OR "policyVersion" = @quizPolicy '
+      'OR "policyVersion" = @themePolicy)',
       parameters: QueryParameters.named({
         'owner': owner,
         'policy': fixture ? productFixtureLabel : stepPolicyVersion,
         'quizPolicy': fixture ? productFixtureLabel : quizPolicyVersion,
+        'themePolicy': fixture
+            ? productFixtureLabel
+            : themePurchasePolicyVersion,
       }),
       transaction: tx,
     );
