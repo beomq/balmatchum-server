@@ -25,8 +25,9 @@ class AppleIdpEndpoint extends AppleIdpBaseEndpoint {
       identityToken: identityToken,
       authorizationCode: authorizationCode,
       isNativeApplePlatformSignIn: isNativeApplePlatformSignIn,
-      firstName: firstName,
-      lastName: lastName,
+      // The SDK copies these into AppleAccount; the app never uses names.
+      firstName: null,
+      lastName: null,
     ),
   );
 

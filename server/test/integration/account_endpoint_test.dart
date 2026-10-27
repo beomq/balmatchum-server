@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:balmatchum_client/balmatchum_client.dart' as api;
@@ -34,6 +35,9 @@ const _ownedTables = [
   'product_account',
 ];
 const _bound = Duration(seconds: 10);
+// A valid 1x1 PNG, stored the way SDK 4.0.3 stored provider photos.
+const _png =
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
 
 void main() {
   group('Atomic self account deletion with real authentication', () {
@@ -330,6 +334,41 @@ void main() {
         await empty(a.id);
       },
     );
+
+    test('deletion removes a previously stored profile image file', () async {
+      final a = await user();
+      await AuthServices.instance.userProfiles.createUserProfile(
+        admin,
+        a.id,
+        UserProfileData(fullName: 'Real Name'),
+        imageSource: UserImageFromBytes(base64Decode(_png)),
+      );
+      final profile = (await UserProfile.db.findFirstRow(
+        admin,
+        where: (t) => t.authUserId.equals(a.id),
+      ))!;
+      final image = (await UserProfileImage.db.findById(
+        admin,
+        profile.imageId!,
+      ))!;
+      expect(
+        await admin.storage.fileExists(
+          storageId: image.storageId,
+          path: image.path,
+        ),
+        isTrue,
+      );
+      await a.client.account.deleteAccount();
+      expect(
+        await admin.storage.fileExists(
+          storageId: image.storageId,
+          path: image.path,
+        ),
+        isFalse,
+      );
+      expect(await UserProfileImage.db.findById(admin, image.id!), isNull);
+      await empty(a.id);
+    });
 
     test('mutation first commits then deletion purges that mutation', () async {
       final a = await user();
