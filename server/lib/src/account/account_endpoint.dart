@@ -107,6 +107,12 @@ Future<void> deleteAccountData(
     where: (t) => t.authUserId.equals(authUserId),
     transaction: tx,
   );
+  // The auth cascade removes profile rows but leaves stored image files public.
+  await AuthServices.instance.userProfiles.deleteProfileForUser(
+    session,
+    authUserId,
+    transaction: tx,
+  );
   await AuthServices.instance.authUsers.delete(
     session,
     authUserId: authUserId,

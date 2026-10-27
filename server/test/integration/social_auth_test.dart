@@ -28,6 +28,10 @@ class _Token implements api.ClientAuthKeyProvider {
 }
 
 const _bound = Duration(seconds: 10);
+const _picture = 'https://example.test/picture.png';
+// A valid 1x1 PNG, so an unblocked SDK import would really store a file.
+const _png =
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
 
 void main() {
   late generated.Serverpod pod;
@@ -45,8 +49,14 @@ void main() {
   var exchanges = 0;
   final revoked = <String>{};
   final seenClientIds = <String>[];
+  var pictureRequests = 0;
 
-  String token(String provider, String subject, {String? audience}) {
+  String token(
+    String provider,
+    String subject, {
+    String? audience,
+    Map<String, Object?> claims = const {},
+  }) {
     final now = DateTime.now().toUtc();
     return KakaoTestKeys.sign({
       'iss': provider == 'google'
@@ -60,6 +70,7 @@ void main() {
       'exp': now.add(const Duration(hours: 1)).millisecondsSinceEpoch ~/ 1000,
       if (provider == 'google') 'email': 'same@example.test',
       if (provider == 'google') 'email_verified': false,
+      ...claims,
     });
   }
 
@@ -68,6 +79,10 @@ void main() {
             'https://www.googleapis.com/oauth2/v3/certs' ||
         request.url.toString() == 'https://appleid.apple.com/auth/keys') {
       return http.Response(jsonEncode(KakaoTestKeys.jwks()), 200);
+    }
+    if (request.url.toString() == _picture) {
+      pictureRequests++;
+      return http.Response.bytes(base64Decode(_png), 200);
     }
     final fields = request.method == 'POST'
         ? request.bodyFields
@@ -325,6 +340,59 @@ void main() {
       expect(await client(first.token).appleIdp.hasAccount(), false);
     });
 
+    test('provider names and pictures are never stored', () async {
+      final claims = {
+        'name': 'Real Name',
+        'given_name': 'Real',
+        'picture': _picture,
+      };
+      final storedFiles = await admin.db.unsafeQuery(
+        'SELECT count(*) FROM serverpod_cloud_storage',
+      );
+      // The second login takes the SDK's returning-user picture path.
+      for (var i = 0; i < 2; i++) {
+        await client().googleIdp.login(
+          idToken: token('google', 'with-profile', claims: claims),
+          accessToken: null,
+        );
+      }
+      final appleResult = await client().appleIdp.login(
+        identityToken: token('apple', 'apple-with-name'),
+        authorizationCode: 'apple-with-name',
+        isNativeApplePlatformSignIn: true,
+        firstName: 'Real',
+        lastName: 'Name',
+      );
+      final appleUser = AuthSuccess.fromJson(appleResult.toJson()).authUserId;
+      final googleUser = (await GoogleAccount.db.findFirstRow(
+        admin,
+        where: (t) => t.userIdentifier.equals('with-profile'),
+      ))!.authUserId;
+      for (final owner in [googleUser, appleUser]) {
+        final profile = await UserProfile.db.findFirstRow(
+          admin,
+          where: (t) => t.authUserId.equals(owner),
+        );
+        expect(profile!.fullName, isNull);
+        expect(profile.userName, isNull);
+        expect(profile.imageId, isNull);
+      }
+      final appleAccount = await AppleAccount.db.findFirstRow(
+        admin,
+        where: (t) => t.authUserId.equals(appleUser),
+      );
+      expect(appleAccount!.firstName, isNull);
+      expect(appleAccount.lastName, isNull);
+      expect(pictureRequests, 0);
+      expect(await UserProfileImage.db.count(admin), 0);
+      expect(
+        (await admin.db.unsafeQuery(
+          'SELECT count(*) FROM serverpod_cloud_storage',
+        )).single.single,
+        storedFiles.single.single,
+      );
+    });
+
     for (final method in ['google', 'googleCode', 'apple']) {
       test(
         '$method cleans every returning login and retains real SDK session policy',
@@ -333,6 +401,7 @@ void main() {
               ? apple(method)
               : google(method, code: method == 'googleCode');
           final before = cleanupCalls;
+          final exchangesBefore = exchanges;
           final first = await login();
           final second = await login();
           expect(cleanupCalls - before, 2);
@@ -347,7 +416,7 @@ void main() {
           expect(rows.single.expireAfterUnusedFor, const Duration(days: 90));
           await valid(first.token, false);
           await valid(second.token, true);
-          if (method == 'apple') expect(exchanges, 1);
+          if (method == 'apple') expect(exchanges - exchangesBefore, 1);
         },
       );
     }

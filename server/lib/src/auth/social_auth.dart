@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_idp_server/core.dart';
 import 'package:serverpod_auth_idp_server/providers/apple.dart';
@@ -116,6 +118,25 @@ void validateGoogleSubject(GoogleAccountDetails details) {
     throw GoogleUserInfoMissingDataException();
   }
 }
+
+/// The app keeps dog profiles only. SDK providers still create a profile row,
+/// with its email copy unchanged, but never store names or provider photos.
+const providerProfileConfig = UserProfileConfig(
+  onBeforeUserProfileCreated: _withoutNames,
+  imageFetchFunc: _refuseProviderImage,
+);
+
+UserProfileData _withoutNames(
+  Session session,
+  UuidValue authUserId,
+  UserProfileData profile, {
+  required Transaction transaction,
+}) => UserProfileData(email: profile.email);
+
+/// SDK 4.0.3 fetches provider pictures only here, before any storage write,
+/// and continues the login with an error log when the fetch fails.
+Uint8List _refuseProviderImage(Uri url) =>
+    throw UnsupportedError('Provider profile images are not stored.');
 
 SocialAuthSettings requireSocialAuth(Session session, {required bool apple}) {
   final settings = socialAuthSettings[session.serverpod];

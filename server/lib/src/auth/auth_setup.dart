@@ -49,6 +49,7 @@ void configureAuth(
     return;
   }
   pod.initializeAuthServices(
+    userProfileConfig: providerProfileConfig,
     tokenManagerBuilders: [
       ServerSideSessionsConfig(
         sessionKeyHashPepper: sessionPepper,
