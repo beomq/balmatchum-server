@@ -44,6 +44,7 @@ class AdService {
     String purpose,
     String date,
     int revision,
+    AdPlatform platform,
   ) async {
     final eligibilityClock = Clock.fixed(clock.now());
     final placement = config.placements[purpose];
@@ -67,7 +68,26 @@ class AdService {
           t.targetRevision.equals(revision),
       transaction: s.tx,
     );
-    if (previous != null) return view(previous);
+    if (previous != null) {
+      // A user may retry the same target from the other platform's app, or the
+      // console unit may have rotated: rebind only before Google accepted an
+      // event, so the app always loads a unit its own AdMob app owns.
+      final unit = placement.unit(platform);
+      if (previous.transactionId != null || previous.adUnit == unit) {
+        return view(previous);
+      }
+      previous
+        ..adUnit = unit
+        ..rewardItem = placement.rewardItem
+        ..rewardAmount = placement.rewardAmount;
+      return view(
+        await StoredAdIntent.db.updateRow(
+          s.session,
+          previous,
+          transaction: s.tx,
+        ),
+      );
+    }
     if (purpose == 'dailyReward') {
       await withClock(
         eligibilityClock,
@@ -94,7 +114,7 @@ class AdService {
         purpose: purpose,
         targetDate: date,
         targetRevision: revision,
-        adUnit: placement.unit,
+        adUnit: placement.unit(platform),
         rewardItem: placement.rewardItem,
         rewardAmount: placement.rewardAmount,
         createdAt: now,
@@ -131,11 +151,15 @@ class AdService {
         transaction: tx,
       );
       if (i == null) throw AdException(code: 'intentNotFound');
+      // The intent snapshots the unit of ITS purpose and platform. Google's
+      // ad_unit is the numeric ID after the slash of the unit the app loaded.
+      final placement = config.placements[i.purpose];
       if (event.owner != i.owner ||
-          event.unit != i.adUnit ||
+          (event.unit != i.adUnit && event.unit != i.adUnit.split('/').last) ||
           event.rewardItem != i.rewardItem ||
           event.rewardAmount != i.rewardAmount ||
-          !config.placements.values.any((p) => p.unit == event.unit)) {
+          placement == null ||
+          !AdPlatform.values.any((p) => placement.unit(p) == i.adUnit)) {
         throw AdException(code: 'metadataMismatch');
       }
       // Check accepted-event identity BEFORE age: an acknowledged event remains

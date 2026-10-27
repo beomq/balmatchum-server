@@ -24,6 +24,7 @@ import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'ads/ad_exception.dart' as _i8mgtt64;
 import 'ads/ad_intent.dart' as _i5ffg0dz;
+import 'ads/ad_platform.dart' as _ijoh8voo;
 import 'auth/login_challenge.dart' as _izhe0wsm;
 import 'auth/login_exception.dart' as _iskwpc4e;
 import 'auth/naver_login_challenge.dart' as _iw8ezytr;
@@ -58,6 +59,7 @@ import 'records/record_receipt.dart' as _ipyparvp;
 import 'records/route_point.dart' as _ir7rvxr1;
 export 'ads/ad_exception.dart';
 export 'ads/ad_intent.dart';
+export 'ads/ad_platform.dart';
 export 'auth/login_challenge.dart';
 export 'auth/login_exception.dart';
 export 'auth/naver_login_challenge.dart';
@@ -131,6 +133,9 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _i5ffg0dz.AdIntent) {
       return _i5ffg0dz.AdIntent.fromJson(data) as T;
+    }
+    if (t == _ijoh8voo.AdPlatform) {
+      return _ijoh8voo.AdPlatform.fromJson(data) as T;
     }
     if (t == _izhe0wsm.LoginChallenge) {
       return _izhe0wsm.LoginChallenge.fromJson(data) as T;
@@ -233,6 +238,9 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _isc.getType<_i5ffg0dz.AdIntent?>()) {
       return (data != null ? _i5ffg0dz.AdIntent.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_ijoh8voo.AdPlatform?>()) {
+      return (data != null ? _ijoh8voo.AdPlatform.fromJson(data) : null) as T;
     }
     if (t == _isc.getType<_izhe0wsm.LoginChallenge?>()) {
       return (data != null ? _izhe0wsm.LoginChallenge.fromJson(data) : null)
@@ -432,6 +440,7 @@ class Protocol extends _isc.SerializationManager {
     return switch (type) {
       _i8mgtt64.AdException => 'AdException',
       _i5ffg0dz.AdIntent => 'AdIntent',
+      _ijoh8voo.AdPlatform => 'AdPlatform',
       _izhe0wsm.LoginChallenge => 'LoginChallenge',
       _iskwpc4e.LoginException => 'LoginException',
       _iw8ezytr.NaverLoginChallenge => 'NaverLoginChallenge',
@@ -482,6 +491,8 @@ class Protocol extends _isc.SerializationManager {
         return 'AdException';
       case _i5ffg0dz.AdIntent():
         return 'AdIntent';
+      case _ijoh8voo.AdPlatform():
+        return 'AdPlatform';
       case _izhe0wsm.LoginChallenge():
         return 'LoginChallenge';
       case _iskwpc4e.LoginException():
@@ -573,6 +584,9 @@ class Protocol extends _isc.SerializationManager {
     }
     if (dataClassName == 'AdIntent') {
       return deserialize<_i5ffg0dz.AdIntent>(data['data']);
+    }
+    if (dataClassName == 'AdPlatform') {
+      return deserialize<_ijoh8voo.AdPlatform>(data['data']);
     }
     if (dataClassName == 'LoginChallenge') {
       return deserialize<_izhe0wsm.LoginChallenge>(data['data']);

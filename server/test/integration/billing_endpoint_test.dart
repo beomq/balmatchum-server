@@ -247,8 +247,22 @@ void main() {
     admin = await pod.createSession(enableLogging: false);
     ads = AdService(
       AdConfig({
-        'dailyReward': const AdPlacement('reward-unit', 'points', '1'),
-        'extraQuiz': const AdPlacement('quiz-unit', 'points', '1'),
+        'dailyReward': const AdPlacement(
+          (
+            ios: 'ca-app-pub-0000000000000001/1000000001',
+            android: 'ca-app-pub-0000000000000001/1000000002',
+          ),
+          'points',
+          '1',
+        ),
+        'extraQuiz': const AdPlacement(
+          (
+            ios: 'ca-app-pub-0000000000000001/2000000001',
+            android: 'ca-app-pub-0000000000000001/2000000002',
+          ),
+          'points',
+          '1',
+        ),
       }),
       AdVerifier(loadKeys: () async => adKeys(), clock: Clock(() => now)),
       clock: Clock(() => now),
@@ -313,7 +327,12 @@ void main() {
     String date,
     int revision,
   ) async {
-    final intent = await c.ads.createIntent(purpose, date, revision);
+    final intent = await c.ads.createIntent(
+      purpose,
+      date,
+      revision,
+      api.AdPlatform.android,
+    );
     await ads.callback(
       admin,
       signAd(

@@ -12,6 +12,8 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _ida;
 import 'package:balmatchum_client/src/protocol/ads/ad_intent.dart' as _ib30o6kc;
+import 'package:balmatchum_client/src/protocol/ads/ad_platform.dart'
+    as _i0sh9yf0;
 import 'package:balmatchum_client/src/protocol/auth/login_challenge.dart'
     as _iypdqt9k;
 import 'package:balmatchum_client/src/protocol/auth/naver_login_challenge.dart'
@@ -86,6 +88,7 @@ class EndpointAds extends _isc.EndpointRef {
     String purpose,
     String targetDate,
     int targetRevision,
+    _i0sh9yf0.AdPlatform platform,
   ) => caller.callServerEndpoint<_ib30o6kc.AdIntent>(
     'ads',
     'createIntent',
@@ -93,6 +96,7 @@ class EndpointAds extends _isc.EndpointRef {
       'purpose': purpose,
       'targetDate': targetDate,
       'targetRevision': targetRevision,
+      'platform': platform,
     },
   );
 

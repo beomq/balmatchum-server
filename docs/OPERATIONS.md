@@ -130,16 +130,37 @@ reward item은 공백과 `~`가 없는 ASCII(예: `daily_reward`, `extra_quiz`)�
 
 ```json
 {
-  "dailyReward": {"adUnit": "CONSOLE_AD_UNIT", "rewardItem": "daily_reward", "rewardAmount": "1"},
-  "extraQuiz": {"adUnit": "CONSOLE_AD_UNIT", "rewardItem": "extra_quiz", "rewardAmount": "1"}
+  "dailyReward": {
+    "adUnits": {
+      "ios": "ca-app-pub-<게시자 16자리>/<iOS dailyReward 단위 10자리>",
+      "android": "ca-app-pub-<게시자 16자리>/<Android dailyReward 단위 10자리>"
+    },
+    "rewardItem": "daily_reward",
+    "rewardAmount": "1"
+  },
+  "extraQuiz": {
+    "adUnits": {
+      "ios": "ca-app-pub-<게시자 16자리>/<iOS extraQuiz 단위 10자리>",
+      "android": "ca-app-pub-<게시자 16자리>/<Android extraQuiz 단위 10자리>"
+    },
+    "rewardItem": "extra_quiz",
+    "rewardAmount": "1"
+  }
 }
 ```
 
 예시 문자열 대신 콘솔 값을 준비합니다. 숫자 수량도 문자열이며 포인트 지급량이 아닙니다.
-로더는 두 목적 중 하나 이상을 허용하지만 첫 출시에는 둘 다 준비합니다.
-현재 **목적당 ad unit 하나**이며 Android/iOS 분기, 배열, 플랫폼별 중첩 객체가 없습니다.
-서버는 이 단위를 인텐트로 앱에 반환합니다. 두 플랫폼 동시 운영은 이 설정만으로
-해결되지 않으며 플랫폼 선택 계약·앱 연동 검증을 별도 완료해야 합니다.
+로더는 두 목적 중 하나 이상을 허용하지만 첫 출시에는 둘 다, 각각 iOS·Android 단위를 준비합니다.
+
+- 목적 키는 `dailyReward`/`extraQuiz`만, 목적당 키는 `adUnits`/`rewardItem`/`rewardAmount`만,
+  `adUnits`에는 `ios`와 `android` 둘 다 있어야 합니다. 예전 `adUnit` 단일 키는 기동 오류입니다.
+- 단위 값은 앱이 그대로 로드하는 **전체 ID** `ca-app-pub-<16자리>/<10자리>`입니다. Google SSV
+  콜백의 `ad_unit`은 `/` 뒤 숫자 ID이므로 서버는 전체 ID와 그 숫자 ID를 같은 단위로 인정합니다.
+  그래서 숫자 ID는 모든 목적·플랫폼에서 서로 달라야 하며 중복은 기동 오류입니다.
+- 같은 목적의 iOS/Android 단위는 콘솔에서 같은 reward item·amount로 설정합니다.
+
+앱은 `createIntent`에 실행 OS를 보내고 서버는 그 플랫폼 단위를 인텐트로 반환합니다.
+이 계약을 쓰는 클라이언트 pin으로 앱을 갱신해야 합니다(ADMOB_SSV_API.md).
 기존 pending 인텐트가 있으므로 단위 교체는 영향 확인 후 수행합니다.
 
 일반 변수(평문, `scloud variable set`):

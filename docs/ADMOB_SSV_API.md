@@ -9,12 +9,18 @@ extra quiz 생성, 결제 entitlement, 클라이언트 `onUserEarnedReward` 완�
 생성 클라이언트 `client.ads`의 인증 필수 API:
 
 ```dart
-Future<AdIntent> createIntent(String purpose, String targetDate, int targetRevision);
+Future<AdIntent> createIntent(
+  String purpose,
+  String targetDate,
+  int targetRevision,
+  AdPlatform platform, // ios | android
+);
 Future<AdIntent> getIntent(String intentId);
 ```
 
 목적은 설정된 `dailyReward` 또는 `extraQuiz`, 날짜는 KST `YYYY-MM-DD`, revision은
-0 이상의 정수입니다. 서버가 인증 소유자를 고정합니다. 같은 소유자·목적·날짜·revision은
+0 이상의 정수, platform은 앱이 실행 중인 OS(`AdPlatform.ios`/`AdPlatform.android`)입니다.
+서버가 인증 소유자를 고정합니다. 같은 소유자·목적·날짜·revision은
 동시 요청에서도 동일 인텐트를 반환합니다. 신규 dailyReward는 실제 날짜/revision/미수령량을
 검사하며 미래일·삭제일·legacy 정책·미확정/수령완료 자료를 거절합니다.
 기존 대상의 재시도는 기존 인텐트를 반환하지만 수령 시 실제 자격을 다시 검사합니다.
@@ -23,7 +29,9 @@ extraQuiz 신규 생성은 purposeUnavailable이며 기존 증거 조회만 유�
 `AdIntent`는 `id`, `purpose`, `targetDate`, `targetRevision`, `adUnit`, `userId`,
 `customData`, `status`, `createdAt`, `eventExpiresAt`, `acceptUntil`, `verifiedAt?`,
 `consumedAt?`를 반환합니다. id/customData는 동일한 256비트 난수 base64url nonce입니다.
-앱은 반환된 `adUnit`으로 광고를 요청하고 SSV options의 userId/customData를 그대로 설정합니다.
+`adUnit`은 요청 platform·목적의 전체 ad unit ID입니다. 같은 대상을 다른 platform에서
+다시 생성하면 아직 Google 이벤트를 받지 않은 인텐트는 같은 id로 그 platform 단위에 다시 결합되고,
+이미 verified/consumed인 인텐트는 그대로 반환됩니다. 앱은 반환된 `adUnit`으로 광고를 요청하고 SSV options의 userId/customData를 그대로 설정합니다.
 nonce는 서버 DB에서 소유자와 모든 대상 필드에 결합되고 Google 서명이 custom_data를 포함합니다.
 사용자가 nonce를 알아도 Google 서명 없이 verified로 바꿀 수 없습니다.
 
@@ -33,9 +41,36 @@ nonce는 서버 DB에서 소유자와 모든 대상 필드에 결합되고 Googl
 설정이 없으면 콜백 경로를 처리하지 않고 API는 `configurationMissing`입니다. 잘못된 설정은
 기동 오류이며 이미 열린 pod도 닫습니다. `.env` 자동 로딩은 없습니다. 별도 포트 설정은 없습니다.
 
-- `SERVERPOD_PASSWORD_admobPlacements`: JSON 객체, 목적별
-  `{"adUnit":"콘솔의 콜백 ad_unit 값","rewardItem":"콘솔 문자열","rewardAmount":"콘솔 숫자 문자열"}`.
-  두 목적 중 사용할 것만 등록합니다. 임의 기본값은 없습니다.
+- `SERVERPOD_PASSWORD_admobPlacements`: 목적별 플랫폼 단위 JSON 객체입니다. 두 목적 중 사용할
+  것만 등록하며 임의 기본값은 없습니다. 형식(값은 자리표시자):
+
+```json
+{
+  "dailyReward": {
+    "adUnits": {
+      "ios": "ca-app-pub-<게시자 16자리>/<iOS dailyReward 단위 10자리>",
+      "android": "ca-app-pub-<게시자 16자리>/<Android dailyReward 단위 10자리>"
+    },
+    "rewardItem": "daily_reward",
+    "rewardAmount": "1"
+  },
+  "extraQuiz": {
+    "adUnits": {
+      "ios": "ca-app-pub-<게시자 16자리>/<iOS extraQuiz 단위 10자리>",
+      "android": "ca-app-pub-<게시자 16자리>/<Android extraQuiz 단위 10자리>"
+    },
+    "rewardItem": "extra_quiz",
+    "rewardAmount": "1"
+  }
+}
+```
+
+- 목적 키는 `dailyReward`/`extraQuiz`만, 목적당 키는 `adUnits`/`rewardItem`/`rewardAmount`만,
+  `adUnits`에는 `ios`와 `android` 둘 다 있어야 합니다. 예전 `adUnit` 단일 키는 기동 오류입니다.
+- 단위 값은 앱이 그대로 로드하는 **전체 ID** `ca-app-pub-<16자리>/<10자리>`입니다. Google SSV
+  콜백의 `ad_unit`은 `/` 뒤 숫자 ID이므로 서버는 전체 ID와 그 숫자 ID를 같은 단위로 인정합니다.
+  그래서 숫자 ID는 모든 목적·플랫폼에서 서로 달라야 하며 중복은 기동 오류입니다.
+- 같은 목적의 iOS/Android 단위는 콘솔에서 같은 reward item·amount로 설정합니다.
 
 정확한 수신 경로는 공개 API 서버(로컬 8080)의 **`GET /admob/ssv?<Google query>`** 입니다.
 `pod.server.addMiddleware`로 등록한 미들웨어가 이 경로만 가로채고 나머지는 Serverpod endpoint로
@@ -44,8 +79,9 @@ nonce는 서버 DB에서 소유자와 모든 대상 필드에 결합되고 Googl
 않았습니다. Google 콘솔의 URL 등록과 실제 기기 검증은 다음 운영 단계입니다.
 
 `rewardAmount`는 콘솔 서명 메타데이터 일치 조건일 뿐 앱 포인트 수량이 아닙니다.
-서버가 인텐트 생성 시 unit/item/amount를 스냅샷하고 콜백에서 전부 비교합니다.
-현재 unit allowlist에서도 제거된 unit은 거절합니다. 설정 변경 전 pending 인텐트를 고려해야 합니다.
+서버가 인텐트 생성 시 그 목적·platform의 unit/item/amount를 스냅샷하고 콜백에서 전부 비교합니다.
+따라서 다른 platform·다른 목적·알 수 없는 unit의 서명 이벤트는 409이며 보상이 없습니다.
+현재 설정의 같은 목적에서 제거된 unit도 거절합니다. 설정 변경 전 pending 인텐트를 고려해야 합니다.
 
 ## 원본 서명과 키
 

@@ -10,6 +10,8 @@
 // ignore_for_file: invalid_use_of_internal_member
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:balmatchum_server/src/generated/ads/ad_platform.dart'
+    as _imu3y5cy;
 import 'package:balmatchum_server/src/generated/billing/purchase_input.dart'
     as _i1q0b6so;
 import 'package:balmatchum_server/src/generated/product/daily_step_input.dart'
@@ -151,6 +153,11 @@ class Endpoints extends _is.EndpointDispatch {
               type: _is.getType<int>(),
               nullable: false,
             ),
+            'platform': _is.ParameterDescription(
+              name: 'platform',
+              type: _is.getType<_imu3y5cy.AdPlatform>(),
+              nullable: false,
+            ),
           },
           call:
               (
@@ -162,6 +169,7 @@ class Endpoints extends _is.EndpointDispatch {
                     params['purpose'],
                     params['targetDate'],
                     params['targetRevision'],
+                    params['platform'],
                   ),
         ),
         'getIntent': _is.MethodConnector(
