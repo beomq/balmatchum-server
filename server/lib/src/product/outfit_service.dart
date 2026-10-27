@@ -7,7 +7,7 @@ import 'product_service.dart';
 
 const vestOutfitPrice = 3;
 const _outfits = {
-  'vest-low-v': ('Vest', vestOutfitPrice, ['shih-tzu', 'dachshund']),
+  'vest-low-v': ('조끼', vestOutfitPrice, ['shih-tzu', 'dachshund']),
 };
 
 extension OutfitService on ProductService {
