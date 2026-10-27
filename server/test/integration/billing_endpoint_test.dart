@@ -55,6 +55,7 @@ void main() {
   var freshSequence = 98000;
   var now = fixture.now;
   var storeUnavailable = false;
+  int? oauthStatus;
   var adSequence = 0;
   late AdService ads;
 
@@ -116,6 +117,9 @@ void main() {
     expect(request.followRedirects, false);
     expect(request.url.scheme, 'https');
     if (request.url.host == 'oauth2.googleapis.com') {
+      if (oauthStatus case final int status) {
+        return http.Response('private-oauth-error', status);
+      }
       return http.Response(
         jsonEncode({
           'access_token': 'test-access',
@@ -424,6 +428,38 @@ void main() {
       expect(view.active, true);
       expect(view.purchases.where((p) => p.active), hasLength(1));
       expect(await storedState(a.owner, 'anomaly-row'), 'active');
+    },
+  );
+
+  test(
+    'token endpoint 404 and 410 stay transient and change no purchase row',
+    () async {
+      for (final status in [404, 410]) {
+        // Given: a verified purchase, then only the OAuth token call fails.
+        final a = await user();
+        final token = 'oauth-$status';
+        purchase(token, a.binding);
+        await a.client.billing.verifyPurchase(input(token));
+        Future<StoredPurchase> row() async => (await StoredPurchase.db.find(
+          admin,
+          where: (t) => t.owner.equals(a.owner),
+        )).single;
+        final before = await row();
+        oauthStatus = status;
+        try {
+          // When / Then: no purchase answered, so nothing is learned about it.
+          await expectLater(
+            a.client.billing.getEntitlement(),
+            failure('temporarilyUnavailable'),
+          );
+        } finally {
+          oauthStatus = null;
+        }
+        final after = await row();
+        expect(after.state, 'active');
+        expect(after.sequence, before.sequence);
+        expect(after.observedAt, before.observedAt);
+      }
     },
   );
 
