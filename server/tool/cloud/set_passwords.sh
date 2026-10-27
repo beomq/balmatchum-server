@@ -77,7 +77,8 @@ if [[ "$mode" == generate-local ]]; then
     file=$directory/$key
     if [[ ! -e "$file" ]]; then
       # noclobber also prevents overwriting a file created after the check.
-      (set -o noclobber; openssl rand -base64 "$bytes" > "$file")
+      # The CLI uploads file contents verbatim: write no trailing newline.
+      (set -o noclobber; openssl rand -base64 "$bytes" | tr -d '\n' > "$file")
       chmod 600 "$file"
     fi
   done

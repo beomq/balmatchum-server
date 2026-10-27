@@ -5,6 +5,7 @@ import 'package:crypto/crypto.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
 
+import '../config_password.dart';
 import '../generated/protocol.dart';
 import '../product/product_service.dart';
 import 'billing_verifier.dart';
@@ -37,8 +38,8 @@ class BillingService {
   static final instances = Expando<BillingService>();
 
   static void configure(Serverpod pod) {
-    final config = BillingConfig.fromPasswords(pod.getPassword);
-    final key = pod.getPassword('billingIdentityHmacKey');
+    final config = BillingConfig.fromPasswords(pod.configPassword);
+    final key = pod.configPassword('billingIdentityHmacKey');
     if (key == null) return;
     try {
       if (base64Decode(key).length < 32) throw const FormatException();

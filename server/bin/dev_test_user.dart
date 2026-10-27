@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:balmatchum_server/src/auth/auth_setup.dart';
 import 'package:balmatchum_server/src/auth/dev_test_user.dart';
+import 'package:balmatchum_server/src/config_password.dart';
 import 'package:balmatchum_server/src/generated/serverpod.dart';
 
 Future<void> main(List<String> args) async {
@@ -19,7 +20,7 @@ Future<void> main(List<String> args) async {
     }
     pod = Serverpod(args);
     requireDevTestDatabase(pod.config);
-    final pepper = pod.getPassword('serverSideSessionKeyHashPepper');
+    final pepper = pod.configPassword('serverSideSessionKeyHashPepper');
     if (pepper == null || pepper.isEmpty) {
       throw StateError('Session pepper required.');
     }
