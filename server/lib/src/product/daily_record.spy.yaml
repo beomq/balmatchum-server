@@ -12,4 +12,10 @@ fields:
   claimablePoints: int?
   grantedPoints: int
   fixtureLabel: String?
+  policyVersion: String?
+  gracePolicyStatus: String
+  basePoints: int?
+  dailyBaseCap: int
+  stepsPerPoint: int
+  adClaimablePoints: int?
   routes: List<DayRoute>

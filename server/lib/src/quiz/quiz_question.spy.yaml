@@ -1,0 +1,20 @@
+class: QuizQuestion
+fields:
+  assignmentId: int
+  date: String
+  slot: String
+  questionId: String
+  version: int
+  question: String
+  choices: List<String>
+  conditions: String
+  reviewedAt: String
+  reviewedBy: String
+  answerIndex: int?
+  correctIndex: int?
+  explanation: String?
+  source: String?
+  answeredAt: DateTime?
+  awardedPoints: int
+  policyVersion: String
+  fixtureLabel: String?

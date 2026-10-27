@@ -1,0 +1,31 @@
+class: StoredAdIntent
+serverOnly: true
+table: ad_intent
+fields:
+  owner: String
+  nonce: String
+  purpose: String
+  targetDate: String
+  targetRevision: int
+  adUnit: String
+  rewardItem: String
+  rewardAmount: String
+  status: String, default='pending'
+  createdAt: DateTime
+  eventExpiresAt: DateTime
+  acceptUntil: DateTime
+  transactionId: String?
+  callbackDigest: String?
+  eventAt: DateTime?
+  verifiedAt: DateTime?
+  consumedAt: DateTime?
+indexes:
+  ad_intent_nonce:
+    fields: nonce
+    unique: true
+  ad_intent_target:
+    fields: owner, purpose, targetDate, targetRevision
+    unique: true
+  ad_intent_transaction:
+    fields: transactionId
+    unique: true

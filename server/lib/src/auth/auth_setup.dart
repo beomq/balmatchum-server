@@ -8,6 +8,9 @@ import 'package:serverpod_auth_idp_server/core.dart';
 
 import 'kakao_provider.dart';
 import 'kakao_token_verifier.dart';
+import 'social_auth.dart';
+import 'naver_client.dart';
+import 'naver_provider.dart';
 
 void configureAuth(
   Serverpod pod, {
@@ -15,6 +18,7 @@ void configureAuth(
   String? issuer,
   String? sessionPepper,
   Future<Map<String, dynamic>> Function()? loadJwks,
+  String? Function(String)? providerPassword,
   Clock clock = const Clock(),
   Future<void> Function(Session, UuidValue) cleanupSessions =
       removeOlderSessions,
@@ -22,6 +26,18 @@ void configureAuth(
   audience ??= pod.getPassword('kakaoAudience');
   issuer ??= pod.getPassword('kakaoIssuer');
   sessionPepper ??= pod.getPassword('serverSideSessionKeyHashPepper');
+  // Parse supplied provider settings even when sessions are disabled: partial
+  // deployment configuration is an error, never a silently disabled provider.
+  final social = SocialAuthSettings.fromPasswords(
+    providerPassword ?? pod.getPassword,
+    sessionsEnabled: sessionPepper != null && sessionPepper.isNotEmpty,
+    cleanupSessions: cleanupSessions,
+  );
+  socialAuthSettings[pod] = social;
+  final naver = NaverConfig.fromPasswords(providerPassword ?? pod.getPassword);
+  naverSettings[pod] = sessionPepper != null && sessionPepper.isNotEmpty
+      ? naver
+      : null;
   // Missing deployment settings must not silently generate ephemeral secrets.
   if (sessionPepper == null || sessionPepper.isEmpty) {
     stderr.writeln(
@@ -38,6 +54,14 @@ void configureAuth(
       ),
     ],
     identityProviderBuilders: [
+      if (social.google != null) social.google!,
+      if (social.apple != null) social.apple!,
+      if (naver != null)
+        NaverProviderBuilder(
+          config: naver,
+          clock: clock,
+          cleanupSessions: cleanupSessions,
+        ),
       KakaoProviderBuilder(
         audience: audience,
         verifier:

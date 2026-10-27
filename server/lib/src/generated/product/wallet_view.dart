@@ -18,12 +18,14 @@ abstract class WalletView
     required this.balance,
     required this.streamGeneration,
     this.fixtureLabel,
+    required this.policyVersion,
   });
 
   factory WalletView({
     required int balance,
     required int streamGeneration,
     String? fixtureLabel,
+    required String policyVersion,
   }) = _WalletViewImpl;
 
   factory WalletView.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -31,6 +33,7 @@ abstract class WalletView
       balance: jsonSerialization['balance'] as int,
       streamGeneration: jsonSerialization['streamGeneration'] as int,
       fixtureLabel: jsonSerialization['fixtureLabel'] as String?,
+      policyVersion: jsonSerialization['policyVersion'] as String,
     );
   }
 
@@ -40,6 +43,8 @@ abstract class WalletView
 
   String? fixtureLabel;
 
+  String policyVersion;
+
   /// Returns a shallow copy of this [WalletView]
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
@@ -47,6 +52,7 @@ abstract class WalletView
     int? balance,
     int? streamGeneration,
     String? fixtureLabel,
+    String? policyVersion,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -55,6 +61,7 @@ abstract class WalletView
       'balance': balance,
       'streamGeneration': streamGeneration,
       if (fixtureLabel != null) 'fixtureLabel': fixtureLabel,
+      'policyVersion': policyVersion,
     };
   }
 
@@ -65,6 +72,7 @@ abstract class WalletView
       'balance': balance,
       'streamGeneration': streamGeneration,
       if (fixtureLabel != null) 'fixtureLabel': fixtureLabel,
+      'policyVersion': policyVersion,
     };
   }
 
@@ -81,10 +89,12 @@ class _WalletViewImpl extends WalletView {
     required int balance,
     required int streamGeneration,
     String? fixtureLabel,
+    required String policyVersion,
   }) : super._(
          balance: balance,
          streamGeneration: streamGeneration,
          fixtureLabel: fixtureLabel,
+         policyVersion: policyVersion,
        );
 
   /// Returns a shallow copy of this [WalletView]
@@ -95,11 +105,13 @@ class _WalletViewImpl extends WalletView {
     int? balance,
     int? streamGeneration,
     Object? fixtureLabel = _Undefined,
+    String? policyVersion,
   }) {
     return WalletView(
       balance: balance ?? this.balance,
       streamGeneration: streamGeneration ?? this.streamGeneration,
       fixtureLabel: fixtureLabel is String? ? fixtureLabel : this.fixtureLabel,
+      policyVersion: policyVersion ?? this.policyVersion,
     );
   }
 }

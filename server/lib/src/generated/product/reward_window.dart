@@ -18,14 +18,16 @@ abstract class RewardWindow
     required this.fromUnits,
     required this.throughUnits,
     required this.confirmedAt,
-    required this.freeUntil,
-  });
+    this.freeUntil,
+    int? grantedThroughUnits,
+  }) : grantedThroughUnits = grantedThroughUnits ?? 0;
 
   factory RewardWindow({
     required int fromUnits,
     required int throughUnits,
     required DateTime confirmedAt,
-    required DateTime freeUntil,
+    DateTime? freeUntil,
+    int? grantedThroughUnits,
   }) = _RewardWindowImpl;
 
   factory RewardWindow.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -35,9 +37,10 @@ abstract class RewardWindow
       confirmedAt: _is.DateTimeJsonExtension.fromJson(
         jsonSerialization['confirmedAt'],
       ),
-      freeUntil: _is.DateTimeJsonExtension.fromJson(
-        jsonSerialization['freeUntil'],
-      ),
+      freeUntil: jsonSerialization['freeUntil'] == null
+          ? null
+          : _is.DateTimeJsonExtension.fromJson(jsonSerialization['freeUntil']),
+      grantedThroughUnits: jsonSerialization['grantedThroughUnits'] as int?,
     );
   }
 
@@ -47,7 +50,9 @@ abstract class RewardWindow
 
   DateTime confirmedAt;
 
-  DateTime freeUntil;
+  DateTime? freeUntil;
+
+  int grantedThroughUnits;
 
   /// Returns a shallow copy of this [RewardWindow]
   /// with some or all fields replaced by the given arguments.
@@ -57,6 +62,7 @@ abstract class RewardWindow
     int? throughUnits,
     DateTime? confirmedAt,
     DateTime? freeUntil,
+    int? grantedThroughUnits,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -65,7 +71,8 @@ abstract class RewardWindow
       'fromUnits': fromUnits,
       'throughUnits': throughUnits,
       'confirmedAt': confirmedAt.toJson(),
-      'freeUntil': freeUntil.toJson(),
+      if (freeUntil != null) 'freeUntil': freeUntil?.toJson(),
+      'grantedThroughUnits': grantedThroughUnits,
     };
   }
 
@@ -80,17 +87,21 @@ abstract class RewardWindow
   }
 }
 
+class _Undefined {}
+
 class _RewardWindowImpl extends RewardWindow {
   _RewardWindowImpl({
     required int fromUnits,
     required int throughUnits,
     required DateTime confirmedAt,
-    required DateTime freeUntil,
+    DateTime? freeUntil,
+    int? grantedThroughUnits,
   }) : super._(
          fromUnits: fromUnits,
          throughUnits: throughUnits,
          confirmedAt: confirmedAt,
          freeUntil: freeUntil,
+         grantedThroughUnits: grantedThroughUnits,
        );
 
   /// Returns a shallow copy of this [RewardWindow]
@@ -101,13 +112,15 @@ class _RewardWindowImpl extends RewardWindow {
     int? fromUnits,
     int? throughUnits,
     DateTime? confirmedAt,
-    DateTime? freeUntil,
+    Object? freeUntil = _Undefined,
+    int? grantedThroughUnits,
   }) {
     return RewardWindow(
       fromUnits: fromUnits ?? this.fromUnits,
       throughUnits: throughUnits ?? this.throughUnits,
       confirmedAt: confirmedAt ?? this.confirmedAt,
-      freeUntil: freeUntil ?? this.freeUntil,
+      freeUntil: freeUntil is DateTime? ? freeUntil : this.freeUntil,
+      grantedThroughUnits: grantedThroughUnits ?? this.grantedThroughUnits,
     );
   }
 }

@@ -4,11 +4,18 @@ import 'dart:math';
 import 'package:clock/clock.dart';
 import 'package:crypto/crypto.dart';
 import 'package:serverpod/serverpod.dart';
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
 
 import '../generated/protocol.dart';
+import '../ads/ad_service.dart';
+import '../billing/billing_service.dart';
+import '../quiz/quiz_bank.dart';
 
-/// No production economics are configured. These values are disposable fixtures.
+/// Legacy quiz/theme fixtures remain isolated from production step balances.
 const productFixtureLabel = 'development-fixture-v1-not-production';
+const stepPolicyVersion = 'steps-v1-20261019';
+const stepsPerPoint = 100;
+const dailyBaseCap = 100;
 
 bool productFixturesEnabled(Session session) {
   final config = session.server.serverpod.config;
@@ -48,13 +55,26 @@ bool touchesDay(GpsRecordInput input, String date) {
   return input.startedAt.isBefore(end) && !input.endedAt.isBefore(start);
 }
 
-/// One owner lock covers money, generations, day deletion, GPS and reads.
-/// This intentionally trades per-owner parallelism for a single lock order.
+/// Lock the existing auth user BEFORE creating or locking product state.
+/// A request authenticated before account deletion must recheck existence here.
+/// FOR UPDATE waits for deletion to commit, then returns no row; conversely a
+/// mutation holding this lock must commit before deletion can purge its writes.
 Future<ProductAccount> lockProductAccount(
   Session session,
   String owner,
   Transaction tx,
 ) async {
+  final user = await AuthUser.db.findFirstRow(
+    session,
+    where: (t) => t.id.equals(UuidValue.fromString(owner)),
+    lockMode: LockMode.forUpdate,
+    transaction: tx,
+  );
+  if (user == null) {
+    throw NotAuthorizedException(
+      reason: AuthenticationFailureReason.unauthenticated,
+    );
+  }
   await ProductAccount.db.insert(
     session,
     [ProductAccount(owner: owner)],
@@ -84,7 +104,12 @@ class ProductService {
     if (owner == null) throw ProductException(code: 'unauthenticated');
     return session.db.transaction((tx) async {
       final account = await lockProductAccount(session, owner, tx);
-      return action(ProductService(session, owner, tx, account));
+      // One eligibility instant after the lock prevents deadline crossings
+      // between the quoted amount, consumed proof and recorded tranche slices.
+      return withClock(
+        Clock.fixed(clock.now()),
+        () => action(ProductService(session, owner, tx, account)),
+      );
     });
   }
 
@@ -95,7 +120,12 @@ class ProductService {
           where: (t) => t.owner.equals(owner) & t.date.equals(date),
           transaction: tx,
         ) ??
-        ProductDay(owner: owner, date: date, windows: []);
+        ProductDay(
+          owner: owner,
+          date: date,
+          windows: [],
+          policyVersion: stepPolicyVersion,
+        );
   }
 
   Future<void> saveDay(ProductDay value) async {
@@ -138,10 +168,16 @@ class ProductService {
     );
   }
 
-  Future<int> balance() async {
+  Future<int> balance({bool fixture = false}) async {
     final result = await session.db.unsafeQuery(
-      'SELECT COALESCE(SUM(amount), 0) FROM point_entry WHERE owner = @owner',
-      parameters: QueryParameters.named({'owner': owner}),
+      'SELECT COALESCE(SUM(amount), 0) FROM point_entry '
+      'WHERE owner = @owner AND ("policyVersion" = @policy '
+      'OR "policyVersion" = @quizPolicy)',
+      parameters: QueryParameters.named({
+        'owner': owner,
+        'policy': fixture ? productFixtureLabel : stepPolicyVersion,
+        'quizPolicy': fixture ? productFixtureLabel : quizPolicyVersion,
+      }),
       transaction: tx,
     );
     return int.parse(result.single[0].toString());
@@ -150,38 +186,82 @@ class ProductService {
   Future<WalletView> wallet() async => WalletView(
     balance: await balance(),
     streamGeneration: account.streamGeneration,
-    fixtureLabel: productFixturesEnabled(session) ? productFixtureLabel : null,
+    policyVersion: stepPolicyVersion,
   );
 
-  int units(ProductDay value) => (value.steps ?? 0) ~/ 1000;
+  int units(ProductDay value) =>
+      min(dailyBaseCap, (value.steps ?? 0) ~/ stepsPerPoint);
 
-  /// The development fixture grants one point per complete 1000 steps.
-  int claimable(ProductDay value) {
+  int claimable(ProductDay value, {bool withAd = false}) {
+    if (value.policyVersion != stepPolicyVersion ||
+        value.deleted ||
+        value.availability != 'confirmed' ||
+        value.date.compareTo(localDate(clock.now())) > 0) {
+      return 0;
+    }
     final current = units(value);
     return value.windows.fold(0, (sum, window) {
-      if (!clock.now().toUtc().isBefore(window.freeUntil)) return sum;
+      if (!withAd &&
+          (window.freeUntil == null ||
+              !clock.now().toUtc().isBefore(window.freeUntil!))) {
+        return sum;
+      }
       return sum +
           max(
             0,
             min(current, window.throughUnits) -
-                max(value.grantedUnits, window.fromUnits),
+                max(window.grantedThroughUnits, window.fromUnits),
           );
     });
   }
 
+  Future<ProductDay> claimTarget(
+    String date,
+    int expectedRevision, {
+    bool withAd = false,
+  }) async {
+    dayStart(date);
+    if (date.compareTo(localDate(clock.now())) > 0) {
+      throw ProductException(code: 'futureDate');
+    }
+    final value = await day(date);
+    if (value.deleted) throw ProductException(code: 'dayDeleted');
+    if (value.revision != expectedRevision) {
+      throw ProductException(code: 'staleProjection');
+    }
+    if (value.policyVersion != stepPolicyVersion) {
+      throw ProductException(code: 'legacyPolicyExcluded');
+    }
+    if (value.availability != 'confirmed') {
+      throw ProductException(code: 'stepsUnavailable');
+    }
+    if (claimable(value, withAd: withAd) == 0) {
+      throw ProductException(
+        code: !withAd && claimable(value, withAd: true) > 0
+            ? 'adRequired'
+            : 'nothingToClaim',
+      );
+    }
+    return value;
+  }
+
   Future<DailyRecord> view(ProductDay value, {bool routes = true}) async {
-    final fixture = productFixturesEnabled(session);
+    final production = value.policyVersion == stepPolicyVersion;
     final entries = await PointEntry.db.find(
       session,
       where: (t) =>
           t.owner.equals(owner) &
           t.date.equals(value.date) &
-          t.kind.equals('steps'),
+          t.kind.equals('steps') &
+          t.policyVersion.equals(stepPolicyVersion),
       transaction: tx,
     );
     final available = value.availability == 'confirmed' && value.steps != null;
-    final amount = fixture && available && !value.deleted
+    final amount = production && available && !value.deleted
         ? claimable(value)
+        : null;
+    final adBase = production && available && !value.deleted
+        ? claimable(value, withAd: true)
         : null;
     final paths = <DayRoute>[];
     if (routes && !value.deleted) {
@@ -215,18 +295,34 @@ class ProductService {
       stepRevision: value.stepRevision,
       rewardStatus: value.deleted
           ? 'canceled'
-          : !fixture
-          ? 'policyUnconfigured'
+          : value.date.compareTo(localDate(clock.now())) > 0
+          ? 'futureDate'
+          : !production
+          ? 'legacyPolicyExcluded'
           : !available
           ? 'pending'
           : amount! > 0
           ? 'eligible'
-          : units(value) > value.grantedUnits
-          ? 'expired'
+          : adBase! > 0
+          ? 'adRequired'
           : 'settled',
       claimablePoints: value.deleted ? 0 : amount,
       grantedPoints: entries.fold(0, (sum, entry) => sum + entry.amount),
-      fixtureLabel: fixture ? productFixtureLabel : null,
+      fixtureLabel: value.policyVersion == productFixtureLabel
+          ? productFixtureLabel
+          : null,
+      policyVersion: value.policyVersion,
+      gracePolicyStatus: 'active',
+      basePoints: production && available && !value.deleted
+          ? units(value)
+          : null,
+      dailyBaseCap: dailyBaseCap,
+      stepsPerPoint: stepsPerPoint,
+      adClaimablePoints: value.deleted
+          ? 0
+          : adBase == null
+          ? null
+          : adBase * 2,
       routes: paths,
     );
   }
@@ -321,13 +417,12 @@ class ProductService {
     value.steps = input.total;
     value.availability = input.availability;
     value.revision++;
-    if (productFixturesEnabled(session) && input.total != null) {
-      value.policyVersion ??= productFixtureLabel;
+    if (value.policyVersion == stepPolicyVersion && input.total != null) {
       final confirmed = units(value);
       if (confirmed > value.confirmedUnits) {
         final now = clock.now().toUtc();
-        final ordinary = start.add(const Duration(days: 7));
-        final delayed = now.add(const Duration(days: 3));
+        final ordinary = start.add(const Duration(days: 8));
+        final delayed = now.add(const Duration(hours: 72));
         value.windows.add(
           RewardWindow(
             fromUnits: value.confirmedUnits,
@@ -400,43 +495,83 @@ class ProductService {
   Future<RewardGrant> claim(
     String date,
     String requestId,
-    int expectedRevision,
-  ) async {
+    int expectedRevision, {
+    String? intentId,
+    BillingBenefit? premium,
+  }) async {
     dayStart(date);
-    final payload = ['claimDay', date, expectedRevision];
+    final payload = premium != null
+        ? ['claimDayWithPremium', date, expectedRevision]
+        : intentId == null
+        ? ['claimDay', date, expectedRevision]
+        : ['claimDayWithAd', date, expectedRevision, intentId];
     final previous = await replay(requestId, payload);
     if (previous != null) {
       return RewardGrant.fromJson(jsonDecode(previous) as Map<String, dynamic>);
     }
-    final value = await day(date);
-    if (value.deleted) throw ProductException(code: 'dayDeleted');
-    requireProductFixtures(session);
-    if (value.revision != expectedRevision) {
-      throw ProductException(code: 'staleProjection');
+    if (premium != null) await premium.requireActive(this);
+    final boosted = intentId != null || premium != null;
+    final value = await claimTarget(
+      date,
+      expectedRevision,
+      withAd: boosted,
+    );
+    final base = claimable(value, withAd: boosted);
+    final multiplier = boosted ? 2 : 1;
+    if (intentId != null) {
+      final ads = AdService.instances[session.server.serverpod];
+      if (ads == null) throw AdException(code: 'configurationMissing');
+      await ads.consume(
+        session,
+        tx,
+        owner: owner,
+        intentId: intentId,
+        purpose: 'dailyReward',
+        targetDate: date,
+        targetRevision: expectedRevision,
+      );
     }
-    if (value.availability != 'confirmed') {
-      throw ProductException(code: 'stepsUnavailable');
+    final amount = base * multiplier;
+    final slices = <RewardSlice>[];
+    for (final window in value.windows) {
+      if (!boosted &&
+          (window.freeUntil == null ||
+              !clock.now().toUtc().isBefore(window.freeUntil!))) {
+        continue;
+      }
+      final from = max(window.fromUnits, window.grantedThroughUnits);
+      final through = min(units(value), window.throughUnits);
+      if (through <= from) continue;
+      slices.add(
+        RewardSlice(
+          fromUnits: from,
+          throughUnits: through,
+          basePoints: through - from,
+          multiplier: multiplier,
+        ),
+      );
+      window.grantedThroughUnits = through;
     }
-    final amount = claimable(value);
-    if (amount == 0) throw ProductException(code: 'nothingToClaim');
-    final from = value.grantedUnits;
-    final through = units(value);
+    final from = slices.first.fromUnits;
+    final through = slices.last.throughUnits;
     final entry = await PointEntry.db.insertRow(
       session,
       PointEntry(
         owner: owner,
-        entryKey: 'steps:$date:$through',
+        entryKey: '$stepPolicyVersion:steps:$date:${value.revision}',
         kind: 'steps',
         date: date,
         amount: amount,
         fromUnits: from,
         throughUnits: through,
-        policyVersion: productFixtureLabel,
+        policyVersion: stepPolicyVersion,
         createdAt: clock.now().toUtc(),
+        slices: slices,
       ),
       transaction: tx,
     );
-    value.grantedUnits = through;
+    value.grantedUnits = max(value.grantedUnits, through);
+    value.revision++;
     await saveDay(value);
     final grant = RewardGrant(
       ledgerId: entry.id!,
@@ -445,7 +580,10 @@ class ProductService {
       fromUnits: from,
       throughUnits: through,
       grantedAt: entry.createdAt,
-      fixtureLabel: productFixtureLabel,
+      policyVersion: stepPolicyVersion,
+      basePoints: base,
+      multiplier: multiplier,
+      slices: slices,
     );
     await remember(requestId, payload, grant.toJson());
     return grant;

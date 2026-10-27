@@ -29,6 +29,12 @@ abstract class DailyRecord
     this.claimablePoints,
     required this.grantedPoints,
     this.fixtureLabel,
+    this.policyVersion,
+    required this.gracePolicyStatus,
+    this.basePoints,
+    required this.dailyBaseCap,
+    required this.stepsPerPoint,
+    this.adClaimablePoints,
     required this.routes,
   });
 
@@ -45,6 +51,12 @@ abstract class DailyRecord
     int? claimablePoints,
     required int grantedPoints,
     String? fixtureLabel,
+    String? policyVersion,
+    required String gracePolicyStatus,
+    int? basePoints,
+    required int dailyBaseCap,
+    required int stepsPerPoint,
+    int? adClaimablePoints,
     required List<_iurwpayh.DayRoute> routes,
   }) = _DailyRecordImpl;
 
@@ -62,6 +74,12 @@ abstract class DailyRecord
       claimablePoints: jsonSerialization['claimablePoints'] as int?,
       grantedPoints: jsonSerialization['grantedPoints'] as int,
       fixtureLabel: jsonSerialization['fixtureLabel'] as String?,
+      policyVersion: jsonSerialization['policyVersion'] as String?,
+      gracePolicyStatus: jsonSerialization['gracePolicyStatus'] as String,
+      basePoints: jsonSerialization['basePoints'] as int?,
+      dailyBaseCap: jsonSerialization['dailyBaseCap'] as int,
+      stepsPerPoint: jsonSerialization['stepsPerPoint'] as int,
+      adClaimablePoints: jsonSerialization['adClaimablePoints'] as int?,
       routes: _iu3f2ih9.Protocol().deserialize<List<_iurwpayh.DayRoute>>(
         jsonSerialization['routes'],
       ),
@@ -92,6 +110,18 @@ abstract class DailyRecord
 
   String? fixtureLabel;
 
+  String? policyVersion;
+
+  String gracePolicyStatus;
+
+  int? basePoints;
+
+  int dailyBaseCap;
+
+  int stepsPerPoint;
+
+  int? adClaimablePoints;
+
   List<_iurwpayh.DayRoute> routes;
 
   /// Returns a shallow copy of this [DailyRecord]
@@ -110,6 +140,12 @@ abstract class DailyRecord
     int? claimablePoints,
     int? grantedPoints,
     String? fixtureLabel,
+    String? policyVersion,
+    String? gracePolicyStatus,
+    int? basePoints,
+    int? dailyBaseCap,
+    int? stepsPerPoint,
+    int? adClaimablePoints,
     List<_iurwpayh.DayRoute>? routes,
   });
   @override
@@ -128,6 +164,12 @@ abstract class DailyRecord
       if (claimablePoints != null) 'claimablePoints': claimablePoints,
       'grantedPoints': grantedPoints,
       if (fixtureLabel != null) 'fixtureLabel': fixtureLabel,
+      if (policyVersion != null) 'policyVersion': policyVersion,
+      'gracePolicyStatus': gracePolicyStatus,
+      if (basePoints != null) 'basePoints': basePoints,
+      'dailyBaseCap': dailyBaseCap,
+      'stepsPerPoint': stepsPerPoint,
+      if (adClaimablePoints != null) 'adClaimablePoints': adClaimablePoints,
       'routes': routes.toJson(valueToJson: (v) => v.toJson()),
     };
   }
@@ -148,6 +190,12 @@ abstract class DailyRecord
       if (claimablePoints != null) 'claimablePoints': claimablePoints,
       'grantedPoints': grantedPoints,
       if (fixtureLabel != null) 'fixtureLabel': fixtureLabel,
+      if (policyVersion != null) 'policyVersion': policyVersion,
+      'gracePolicyStatus': gracePolicyStatus,
+      if (basePoints != null) 'basePoints': basePoints,
+      'dailyBaseCap': dailyBaseCap,
+      'stepsPerPoint': stepsPerPoint,
+      if (adClaimablePoints != null) 'adClaimablePoints': adClaimablePoints,
       'routes': routes.toJson(valueToJson: (v) => v.toJsonForProtocol()),
     };
   }
@@ -174,6 +222,12 @@ class _DailyRecordImpl extends DailyRecord {
     int? claimablePoints,
     required int grantedPoints,
     String? fixtureLabel,
+    String? policyVersion,
+    required String gracePolicyStatus,
+    int? basePoints,
+    required int dailyBaseCap,
+    required int stepsPerPoint,
+    int? adClaimablePoints,
     required List<_iurwpayh.DayRoute> routes,
   }) : super._(
          date: date,
@@ -188,6 +242,12 @@ class _DailyRecordImpl extends DailyRecord {
          claimablePoints: claimablePoints,
          grantedPoints: grantedPoints,
          fixtureLabel: fixtureLabel,
+         policyVersion: policyVersion,
+         gracePolicyStatus: gracePolicyStatus,
+         basePoints: basePoints,
+         dailyBaseCap: dailyBaseCap,
+         stepsPerPoint: stepsPerPoint,
+         adClaimablePoints: adClaimablePoints,
          routes: routes,
        );
 
@@ -208,6 +268,12 @@ class _DailyRecordImpl extends DailyRecord {
     Object? claimablePoints = _Undefined,
     int? grantedPoints,
     Object? fixtureLabel = _Undefined,
+    Object? policyVersion = _Undefined,
+    String? gracePolicyStatus,
+    Object? basePoints = _Undefined,
+    int? dailyBaseCap,
+    int? stepsPerPoint,
+    Object? adClaimablePoints = _Undefined,
     List<_iurwpayh.DayRoute>? routes,
   }) {
     return DailyRecord(
@@ -225,6 +291,16 @@ class _DailyRecordImpl extends DailyRecord {
           : this.claimablePoints,
       grantedPoints: grantedPoints ?? this.grantedPoints,
       fixtureLabel: fixtureLabel is String? ? fixtureLabel : this.fixtureLabel,
+      policyVersion: policyVersion is String?
+          ? policyVersion
+          : this.policyVersion,
+      gracePolicyStatus: gracePolicyStatus ?? this.gracePolicyStatus,
+      basePoints: basePoints is int? ? basePoints : this.basePoints,
+      dailyBaseCap: dailyBaseCap ?? this.dailyBaseCap,
+      stepsPerPoint: stepsPerPoint ?? this.stepsPerPoint,
+      adClaimablePoints: adClaimablePoints is int?
+          ? adClaimablePoints
+          : this.adClaimablePoints,
       routes: routes ?? this.routes.map((e0) => e0.copyWith()).toList(),
     );
   }

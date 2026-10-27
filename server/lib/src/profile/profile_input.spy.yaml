@@ -1,0 +1,6 @@
+class: ProfileInput
+fields:
+  breedId: String
+  name: String
+  sex: String
+  dailyGoal: int

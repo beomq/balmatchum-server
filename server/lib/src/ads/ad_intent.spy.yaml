@@ -1,0 +1,15 @@
+class: AdIntent
+fields:
+  id: String
+  purpose: String
+  targetDate: String
+  targetRevision: int
+  adUnit: String
+  userId: String
+  customData: String
+  status: String
+  createdAt: DateTime
+  eventExpiresAt: DateTime
+  acceptUntil: DateTime
+  verifiedAt: DateTime?
+  consumedAt: DateTime?

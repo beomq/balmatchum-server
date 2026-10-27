@@ -11,8 +11,17 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _ida;
+import 'package:balmatchum_client/src/protocol/ads/ad_intent.dart' as _ib30o6kc;
 import 'package:balmatchum_client/src/protocol/auth/login_challenge.dart'
     as _iypdqt9k;
+import 'package:balmatchum_client/src/protocol/auth/naver_login_challenge.dart'
+    as _io094qf7;
+import 'package:balmatchum_client/src/protocol/billing/entitlement_view.dart'
+    as _i0edzqcw;
+import 'package:balmatchum_client/src/protocol/billing/purchase_configuration.dart'
+    as _ia65pde3;
+import 'package:balmatchum_client/src/protocol/billing/purchase_input.dart'
+    as _i833pumr;
 import 'package:balmatchum_client/src/protocol/greetings/greeting.dart'
     as _ipkbb44w;
 import 'package:balmatchum_client/src/protocol/product/daily_quiz.dart'
@@ -27,6 +36,14 @@ import 'package:balmatchum_client/src/protocol/product/theme_store.dart'
     as _i65j0qt2;
 import 'package:balmatchum_client/src/protocol/product/wallet_view.dart'
     as _iurawp5p;
+import 'package:balmatchum_client/src/protocol/profile/profile_input.dart'
+    as _i6wqbm42;
+import 'package:balmatchum_client/src/protocol/profile/profile_view.dart'
+    as _i9lgbyro;
+import 'package:balmatchum_client/src/protocol/quiz/quiz_question.dart'
+    as _iuif5p7z;
+import 'package:balmatchum_client/src/protocol/quiz/quiz_today.dart'
+    as _iihbz53v;
 import 'package:balmatchum_client/src/protocol/records/gps_record.dart'
     as _iy4m6z9c;
 import 'package:balmatchum_client/src/protocol/records/gps_record_input.dart'
@@ -40,6 +57,139 @@ import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
     as _iaic;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'protocol.dart' as _il2as5qe;
+
+/// {@category Endpoint}
+class EndpointAccount extends _isc.EndpointRef {
+  EndpointAccount(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'account';
+
+  /// Deletes only the authenticated account and its locally stored data.
+  _ida.Future<void> deleteAccount() => caller.callServerEndpoint<void>(
+    'account',
+    'deleteAccount',
+    {},
+  );
+}
+
+/// {@category Endpoint}
+class EndpointAds extends _isc.EndpointRef {
+  EndpointAds(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'ads';
+
+  _ida.Future<_ib30o6kc.AdIntent> createIntent(
+    String purpose,
+    String targetDate,
+    int targetRevision,
+  ) => caller.callServerEndpoint<_ib30o6kc.AdIntent>(
+    'ads',
+    'createIntent',
+    {
+      'purpose': purpose,
+      'targetDate': targetDate,
+      'targetRevision': targetRevision,
+    },
+  );
+
+  _ida.Future<_ib30o6kc.AdIntent> getIntent(String intentId) =>
+      caller.callServerEndpoint<_ib30o6kc.AdIntent>(
+        'ads',
+        'getIntent',
+        {'intentId': intentId},
+      );
+}
+
+/// {@category Endpoint}
+class EndpointAppleIdp extends _iaic.EndpointAppleIdpBase {
+  EndpointAppleIdp(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'appleIdp';
+
+  _ida.Future<bool> isConfigured() => caller.callServerEndpoint<bool>(
+    'appleIdp',
+    'isConfigured',
+    {},
+  );
+
+  @override
+  _ida.Future<_iacc.AuthSuccess> login({
+    required String identityToken,
+    required String authorizationCode,
+    required bool isNativeApplePlatformSignIn,
+    String? firstName,
+    String? lastName,
+  }) => caller.callServerEndpoint<_iacc.AuthSuccess>(
+    'appleIdp',
+    'login',
+    {
+      'identityToken': identityToken,
+      'authorizationCode': authorizationCode,
+      'isNativeApplePlatformSignIn': isNativeApplePlatformSignIn,
+      'firstName': firstName,
+      'lastName': lastName,
+    },
+  );
+
+  @override
+  _ida.Future<bool> hasAccount() => caller.callServerEndpoint<bool>(
+    'appleIdp',
+    'hasAccount',
+    {},
+  );
+}
+
+/// {@category Endpoint}
+class EndpointGoogleIdp extends _iaic.EndpointGoogleIdpBase {
+  EndpointGoogleIdp(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'googleIdp';
+
+  _ida.Future<bool> isConfigured() => caller.callServerEndpoint<bool>(
+    'googleIdp',
+    'isConfigured',
+    {},
+  );
+
+  @override
+  _ida.Future<_iacc.AuthSuccess> login({
+    required String idToken,
+    required String? accessToken,
+  }) => caller.callServerEndpoint<_iacc.AuthSuccess>(
+    'googleIdp',
+    'login',
+    {
+      'idToken': idToken,
+      'accessToken': accessToken,
+    },
+  );
+
+  @override
+  _ida.Future<_iacc.AuthSuccess> loginWithCode({
+    required String code,
+    required String codeVerifier,
+    required String redirectUri,
+  }) => caller.callServerEndpoint<_iacc.AuthSuccess>(
+    'googleIdp',
+    'loginWithCode',
+    {
+      'code': code,
+      'codeVerifier': codeVerifier,
+      'redirectUri': redirectUri,
+    },
+  );
+
+  @override
+  _ida.Future<bool> hasAccount() => caller.callServerEndpoint<bool>(
+    'googleIdp',
+    'hasAccount',
+    {},
+  );
+}
 
 /// {@category Endpoint}
 class EndpointKakao extends _isc.EndpointRef {
@@ -67,6 +217,83 @@ class EndpointKakao extends _isc.EndpointRef {
       'idToken': idToken,
     },
   );
+}
+
+/// {@category Endpoint}
+class EndpointNaver extends _isc.EndpointRef {
+  EndpointNaver(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'naver';
+
+  _ida.Future<bool> isConfigured() => caller.callServerEndpoint<bool>(
+    'naver',
+    'isConfigured',
+    {},
+  );
+
+  _ida.Future<_io094qf7.NaverLoginChallenge> beginLogin({
+    required String codeChallenge,
+  }) => caller.callServerEndpoint<_io094qf7.NaverLoginChallenge>(
+    'naver',
+    'beginLogin',
+    {'codeChallenge': codeChallenge},
+  );
+
+  _ida.Future<_iacc.AuthSuccess> completeLogin({
+    required _isc.UuidValue attemptId,
+    required String code,
+    required String state,
+    required String codeVerifier,
+  }) => caller.callServerEndpoint<_iacc.AuthSuccess>(
+    'naver',
+    'completeLogin',
+    {
+      'attemptId': attemptId,
+      'code': code,
+      'state': state,
+      'codeVerifier': codeVerifier,
+    },
+  );
+}
+
+/// {@category Endpoint}
+class EndpointBilling extends _isc.EndpointRef {
+  EndpointBilling(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'billing';
+
+  _ida.Future<_ia65pde3.PurchaseConfiguration> getPurchaseConfiguration(
+    String store,
+  ) => caller.callServerEndpoint<_ia65pde3.PurchaseConfiguration>(
+    'billing',
+    'getPurchaseConfiguration',
+    {'store': store},
+  );
+
+  _ida.Future<_i0edzqcw.EntitlementView> verifyPurchase(
+    _i833pumr.PurchaseInput input,
+  ) => caller.callServerEndpoint<_i0edzqcw.EntitlementView>(
+    'billing',
+    'verifyPurchase',
+    {'input': input},
+  );
+
+  _ida.Future<_i0edzqcw.EntitlementView> restorePurchase(
+    _i833pumr.PurchaseInput input,
+  ) => caller.callServerEndpoint<_i0edzqcw.EntitlementView>(
+    'billing',
+    'restorePurchase',
+    {'input': input},
+  );
+
+  _ida.Future<_i0edzqcw.EntitlementView> getEntitlement() =>
+      caller.callServerEndpoint<_i0edzqcw.EntitlementView>(
+        'billing',
+        'getEntitlement',
+        {},
+      );
 }
 
 /// This is an example endpoint that returns a greeting message through
@@ -173,12 +400,42 @@ class EndpointProduct extends _isc.EndpointRef {
     },
   );
 
+  _ida.Future<_itb00fx7.RewardGrant> claimDayWithAd(
+    String date,
+    String requestId,
+    int expectedRevision,
+    String intentId,
+  ) => caller.callServerEndpoint<_itb00fx7.RewardGrant>(
+    'product',
+    'claimDayWithAd',
+    {
+      'date': date,
+      'requestId': requestId,
+      'expectedRevision': expectedRevision,
+      'intentId': intentId,
+    },
+  );
+
   _ida.Future<_ig075m1r.DailyQuiz> getQuiz(String date) =>
       caller.callServerEndpoint<_ig075m1r.DailyQuiz>(
         'product',
         'getQuiz',
         {'date': date},
       );
+
+  _ida.Future<_itb00fx7.RewardGrant> claimDayWithPremium(
+    String date,
+    String requestId,
+    int expectedRevision,
+  ) => caller.callServerEndpoint<_itb00fx7.RewardGrant>(
+    'product',
+    'claimDayWithPremium',
+    {
+      'date': date,
+      'requestId': requestId,
+      'expectedRevision': expectedRevision,
+    },
+  );
 
   _ida.Future<List<_ig075m1r.DailyQuiz>> listQuizHistory(String beforeDate) =>
       caller.callServerEndpoint<List<_ig075m1r.DailyQuiz>>(
@@ -231,6 +488,146 @@ class EndpointProduct extends _isc.EndpointRef {
       'requestId': requestId,
     },
   );
+}
+
+/// {@category Endpoint}
+class EndpointProfile extends _isc.EndpointRef {
+  EndpointProfile(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'profile';
+
+  _ida.Future<_i9lgbyro.ProfileView?> getProfile() =>
+      caller.callServerEndpoint<_i9lgbyro.ProfileView?>(
+        'profile',
+        'getProfile',
+        {},
+      );
+
+  _ida.Future<_i9lgbyro.ProfileView> createProfile(
+    _i6wqbm42.ProfileInput input,
+    String requestId,
+  ) => caller.callServerEndpoint<_i9lgbyro.ProfileView>(
+    'profile',
+    'createProfile',
+    {
+      'input': input,
+      'requestId': requestId,
+    },
+  );
+
+  _ida.Future<_i9lgbyro.ProfileView> renameDog(
+    String name,
+    String requestId,
+    int expectedRevision,
+  ) => caller.callServerEndpoint<_i9lgbyro.ProfileView>(
+    'profile',
+    'renameDog',
+    {
+      'name': name,
+      'requestId': requestId,
+      'expectedRevision': expectedRevision,
+    },
+  );
+
+  _ida.Future<_i9lgbyro.ProfileView> updateGoal(
+    int goal,
+    String requestId,
+    int expectedRevision,
+  ) => caller.callServerEndpoint<_i9lgbyro.ProfileView>(
+    'profile',
+    'updateGoal',
+    {
+      'goal': goal,
+      'requestId': requestId,
+      'expectedRevision': expectedRevision,
+    },
+  );
+}
+
+/// {@category Endpoint}
+class EndpointQuiz extends _isc.EndpointRef {
+  EndpointQuiz(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'quiz';
+
+  _ida.Future<_iihbz53v.QuizToday> getToday() =>
+      caller.callServerEndpoint<_iihbz53v.QuizToday>(
+        'quiz',
+        'getToday',
+        {},
+      );
+
+  _ida.Future<_iihbz53v.QuizToday> getTodayWithPremium() =>
+      caller.callServerEndpoint<_iihbz53v.QuizToday>(
+        'quiz',
+        'getTodayWithPremium',
+        {},
+      );
+
+  _ida.Future<_iuif5p7z.QuizQuestion> unlockExtraWithPremium(
+    String date,
+    int expectedRevision,
+    String requestId,
+  ) => caller.callServerEndpoint<_iuif5p7z.QuizQuestion>(
+    'quiz',
+    'unlockExtraWithPremium',
+    {
+      'date': date,
+      'expectedRevision': expectedRevision,
+      'requestId': requestId,
+    },
+  );
+
+  _ida.Future<_iuif5p7z.QuizQuestion> unlockExtra(
+    String date,
+    int expectedRevision,
+    String intentId,
+    String requestId,
+  ) => caller.callServerEndpoint<_iuif5p7z.QuizQuestion>(
+    'quiz',
+    'unlockExtra',
+    {
+      'date': date,
+      'expectedRevision': expectedRevision,
+      'intentId': intentId,
+      'requestId': requestId,
+    },
+  );
+
+  _ida.Future<_iuif5p7z.QuizQuestion> answer(
+    int assignmentId,
+    String questionId,
+    int version,
+    int answerIndex,
+    String requestId,
+  ) => caller.callServerEndpoint<_iuif5p7z.QuizQuestion>(
+    'quiz',
+    'answer',
+    {
+      'assignmentId': assignmentId,
+      'questionId': questionId,
+      'version': version,
+      'answerIndex': answerIndex,
+      'requestId': requestId,
+    },
+  );
+
+  _ida.Future<List<_iuif5p7z.QuizQuestion>> listHistory(
+    int? beforeAssignmentId,
+  ) => caller.callServerEndpoint<List<_iuif5p7z.QuizQuestion>>(
+    'quiz',
+    'listHistory',
+    {'beforeAssignmentId': beforeAssignmentId},
+  );
+
+  _ida.Future<_iuif5p7z.QuizQuestion> review(int assignmentId) =>
+      caller.callServerEndpoint<_iuif5p7z.QuizQuestion>(
+        'quiz',
+        'review',
+        {'assignmentId': assignmentId},
+      );
 }
 
 /// {@category Endpoint}
@@ -294,18 +691,42 @@ class Client extends _isc.ServerpodClientShared {
              disconnectStreamsOnLostInternetConnection,
          httpClientOverride: httpClientOverride,
        ) {
+    account = EndpointAccount(this);
+    ads = EndpointAds(this);
+    appleIdp = EndpointAppleIdp(this);
+    googleIdp = EndpointGoogleIdp(this);
     kakao = EndpointKakao(this);
+    naver = EndpointNaver(this);
+    billing = EndpointBilling(this);
     greeting = EndpointGreeting(this);
     product = EndpointProduct(this);
+    profile = EndpointProfile(this);
+    quiz = EndpointQuiz(this);
     records = EndpointRecords(this);
     modules = Modules(this);
   }
 
+  late final EndpointAccount account;
+
+  late final EndpointAds ads;
+
+  late final EndpointAppleIdp appleIdp;
+
+  late final EndpointGoogleIdp googleIdp;
+
   late final EndpointKakao kakao;
+
+  late final EndpointNaver naver;
+
+  late final EndpointBilling billing;
 
   late final EndpointGreeting greeting;
 
   late final EndpointProduct product;
+
+  late final EndpointProfile profile;
+
+  late final EndpointQuiz quiz;
 
   late final EndpointRecords records;
 
@@ -313,9 +734,17 @@ class Client extends _isc.ServerpodClientShared {
 
   @override
   Map<String, _isc.EndpointRef> get endpointRefLookup => {
+    'account': account,
+    'ads': ads,
+    'appleIdp': appleIdp,
+    'googleIdp': googleIdp,
     'kakao': kakao,
+    'naver': naver,
+    'billing': billing,
     'greeting': greeting,
     'product': product,
+    'profile': profile,
+    'quiz': quiz,
     'records': records,
   };
 

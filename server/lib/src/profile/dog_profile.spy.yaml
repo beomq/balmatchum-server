@@ -1,0 +1,15 @@
+class: DogProfile
+serverOnly: true
+table: dog_profile
+fields:
+  owner: String
+  breedId: String
+  name: String
+  sex: String
+  dailyGoal: int
+  firstMetAt: DateTime
+  revision: int, default=1
+indexes:
+  dog_profile_owner:
+    fields: owner
+    unique: true

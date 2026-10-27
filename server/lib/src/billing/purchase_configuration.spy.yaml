@@ -1,0 +1,6 @@
+class: PurchaseConfiguration
+fields:
+  store: String
+  environment: String
+  accountBinding: String
+  products: List<PurchaseProduct>

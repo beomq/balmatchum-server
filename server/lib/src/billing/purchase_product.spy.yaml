@@ -1,0 +1,4 @@
+class: PurchaseProduct
+fields:
+  productId: String
+  kind: String

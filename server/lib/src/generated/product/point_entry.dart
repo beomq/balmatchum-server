@@ -10,7 +10,9 @@
 // ignore_for_file: invalid_use_of_internal_member
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:balmatchum_server/src/generated/protocol.dart' as _iu3f2ih9;
 import 'package:serverpod/serverpod.dart' as _is;
+import '../product/reward_slice.dart' as _i03s1ada;
 
 abstract class PointEntry
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
@@ -25,6 +27,7 @@ abstract class PointEntry
     this.throughUnits,
     required this.policyVersion,
     required this.createdAt,
+    this.slices,
   });
 
   factory PointEntry({
@@ -38,6 +41,7 @@ abstract class PointEntry
     int? throughUnits,
     required String policyVersion,
     required DateTime createdAt,
+    List<_i03s1ada.RewardSlice>? slices,
   }) = _PointEntryImpl;
 
   factory PointEntry.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -54,6 +58,11 @@ abstract class PointEntry
       createdAt: _is.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
+      slices: jsonSerialization['slices'] == null
+          ? null
+          : _iu3f2ih9.Protocol().deserialize<List<_i03s1ada.RewardSlice>>(
+              jsonSerialization['slices'],
+            ),
     );
   }
 
@@ -82,6 +91,8 @@ abstract class PointEntry
 
   DateTime createdAt;
 
+  List<_i03s1ada.RewardSlice>? slices;
+
   @override
   _is.Table<int?> get table => t;
 
@@ -99,6 +110,7 @@ abstract class PointEntry
     int? throughUnits,
     String? policyVersion,
     DateTime? createdAt,
+    List<_i03s1ada.RewardSlice>? slices,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -114,6 +126,8 @@ abstract class PointEntry
       if (throughUnits != null) 'throughUnits': throughUnits,
       'policyVersion': policyVersion,
       'createdAt': createdAt.toJson(),
+      if (slices != null)
+        'slices': slices?.toJson(valueToJson: (v) => v.toJson()),
     };
   }
 
@@ -164,6 +178,7 @@ class _PointEntryImpl extends PointEntry {
     int? throughUnits,
     required String policyVersion,
     required DateTime createdAt,
+    List<_i03s1ada.RewardSlice>? slices,
   }) : super._(
          id: id,
          owner: owner,
@@ -175,6 +190,7 @@ class _PointEntryImpl extends PointEntry {
          throughUnits: throughUnits,
          policyVersion: policyVersion,
          createdAt: createdAt,
+         slices: slices,
        );
 
   /// Returns a shallow copy of this [PointEntry]
@@ -192,6 +208,7 @@ class _PointEntryImpl extends PointEntry {
     Object? throughUnits = _Undefined,
     String? policyVersion,
     DateTime? createdAt,
+    Object? slices = _Undefined,
   }) {
     return PointEntry(
       id: id is int? ? id : this.id,
@@ -204,6 +221,9 @@ class _PointEntryImpl extends PointEntry {
       throughUnits: throughUnits is int? ? throughUnits : this.throughUnits,
       policyVersion: policyVersion ?? this.policyVersion,
       createdAt: createdAt ?? this.createdAt,
+      slices: slices is List<_i03s1ada.RewardSlice>?
+          ? slices
+          : this.slices?.map((e0) => e0.copyWith()).toList(),
     );
   }
 }
@@ -257,6 +277,12 @@ class PointEntryUpdateTable extends _is.UpdateTable<PointEntryTable> {
         table.createdAt,
         value,
       );
+
+  _is.ColumnValue<List<_i03s1ada.RewardSlice>, List<_i03s1ada.RewardSlice>>
+  slices(List<_i03s1ada.RewardSlice>? value) => _is.ColumnValue(
+    table.slices,
+    value,
+  );
 }
 
 class PointEntryTable extends _is.Table<int?> {
@@ -298,6 +324,10 @@ class PointEntryTable extends _is.Table<int?> {
       'createdAt',
       this,
     );
+    slices = _is.ColumnSerializable<List<_i03s1ada.RewardSlice>>(
+      'slices',
+      this,
+    );
   }
 
   late final PointEntryUpdateTable updateTable;
@@ -320,6 +350,8 @@ class PointEntryTable extends _is.Table<int?> {
 
   late final _is.ColumnDateTime createdAt;
 
+  late final _is.ColumnSerializable<List<_i03s1ada.RewardSlice>> slices;
+
   @override
   List<_is.Column> get columns => [
     id,
@@ -332,6 +364,7 @@ class PointEntryTable extends _is.Table<int?> {
     throughUnits,
     policyVersion,
     createdAt,
+    slices,
   ];
 }
 

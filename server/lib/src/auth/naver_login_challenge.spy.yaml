@@ -1,0 +1,7 @@
+class: NaverLoginChallenge
+fields:
+  attemptId: UuidValue
+  authorizationUrl: String
+  state: String
+  redirectUri: String
+  expiresAt: DateTime

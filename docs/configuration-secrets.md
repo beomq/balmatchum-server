@@ -14,6 +14,18 @@ API 개발 포트는 8080, 테스트 API 포트는 0(동적 배정)입니다. Re
 
 ## 카카오 인증 설정
 
+AdMob SSV의 선택 설정, 별도 loopback HTTP 포트와 원본 query 전달 조건은
+[AdMob SSV 인텐트 기반](ADMOB_SSV_API.md)을 확인합니다. 설정 없이는 광고 인텐트
+생성과 수신기를 활성화하지 않으며 이 증분은 포인트를 지급하지 않습니다.
+
+Google/Apple은 별도 선택 설정입니다. 전체 키 묶음, 누락/부분 설정 처리,
+생성 API, Apple 삭제 시 외부 철회와 운영 차단 요인은
+[Google/Apple 인증](SOCIAL_AUTH_API.md)을 확인합니다.
+
+Naver는 서버 secret 기반 OIDC code 교환과 앱 PKCE를 사용합니다. 설정 묶음,
+고정 callback allowlist, 추가 refresh-token 보관과 탈퇴 철회,
+실제 콘솔/기기 검증 제한은 [Naver 인증](NAVER_AUTH_API.md)을 확인합니다.
+
 `SERVERPOD_PASSWORD_serverSideSessionKeyHashPepper`, `SERVERPOD_PASSWORD_kakaoAudience`,
 `SERVERPOD_PASSWORD_kakaoIssuer`를 주입합니다. 같은 이름의 password 키도 지원합니다.
 audience는 카카오 네이티브 앱 키이며 issuer는 `https://kauth.kakao.com`만 허용합니다.
@@ -38,7 +50,9 @@ ID token 시간 검증은 기본 60초 오차를 허용합니다. JWKS는 프로
 `deleteStaleLoginAttempts`는 만료 후 1일을 초과한 행만 삭제합니다. 이번에는 자동 스케줄을
 등록하지 않았습니다. 운영 시 Serverpod 4.0.3의 생성 FutureCall dispatch `callAtTime`을 이용한
 주기 정리를 검토할 수 있으나 실행 주기·실패 재실행·중복 등록 정책은 배포 설계에서 확정합니다.
-ExternalIdentity의 authUserId는 FK이며 사용자 삭제는 RESTRICT로 막습니다.
+ExternalIdentity의 authUserId는 RESTRICT FK입니다. [계정 삭제 API](ACCOUNT_API.md)는
+같은 트랜잭션에서 이 identity를 먼저 지운 뒤 SDK 사용자와 세션을 삭제합니다.
+Kakao 외부 연결 해제는 수행하지 않습니다.
 실제 카카오 콘솔 등록과 앱 로그인 검증은 별도 단계입니다. 테스트는 공개 테스트 키와
 주입된 JWKS/clock을 사용하며 실제 자격증명을 요구하지 않습니다.
 

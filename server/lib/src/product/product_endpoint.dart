@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:serverpod/serverpod.dart';
 
+import '../billing/billing_service.dart';
 import '../generated/protocol.dart';
 import 'product_service.dart';
 import 'quiz_theme_service.dart';
@@ -51,8 +54,42 @@ class ProductEndpoint extends Endpoint {
     (s) => s.claim(date, requestId, expectedRevision),
   );
 
+  Future<RewardGrant> claimDayWithAd(
+    Session session,
+    String date,
+    String requestId,
+    int expectedRevision,
+    String intentId,
+  ) => ProductService.run(
+    session,
+    (s) => s.claim(date, requestId, expectedRevision, intentId: intentId),
+  );
+
   Future<DailyQuiz> getQuiz(Session session, String date) =>
       ProductService.run(session, (s) => s.quiz(date));
+
+  Future<RewardGrant> claimDayWithPremium(
+    Session session,
+    String date,
+    String requestId,
+    int expectedRevision,
+  ) async {
+    final previous = await ProductService.run(
+      session,
+      (s) =>
+          s.replay(requestId, ['claimDayWithPremium', date, expectedRevision]),
+    );
+    if (previous != null) {
+      return RewardGrant.fromJson(jsonDecode(previous) as Map<String, dynamic>);
+    }
+    return BillingService.run(session, (billing, db) async {
+      final premium = await billing.revalidateBenefit(db);
+      return ProductService.run(
+        db,
+        (s) => s.claim(date, requestId, expectedRevision, premium: premium),
+      );
+    });
+  }
 
   Future<List<DailyQuiz>> listQuizHistory(Session session, String beforeDate) =>
       ProductService.run(session, (s) => s.quizHistory(beforeDate));

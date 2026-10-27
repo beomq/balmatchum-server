@@ -81,7 +81,7 @@ packages:
     source: hosted
     version: "6.5.1"
   characters:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: characters
       sha256: faf38497bda5ead2a8c7615f4f7939df04333478bf32e4173fcb06d428b5716b
@@ -385,7 +385,7 @@ packages:
     source: hosted
     version: "3.2.0"
   pointycastle:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: pointycastle
       sha256: "92aa3841d083cc4b0f4709b5c74fd6409a3e6ba833ffc7dc6a8fee096366acf5"
@@ -513,7 +513,7 @@ packages:
     source: hosted
     version: "4.0.3"
   serverpod_auth_idp_client:
-    dependency: transitive
+    dependency: "direct dev"
     description:
       name: serverpod_auth_idp_client
       sha256: "8d122d71d4a79be3441f0e5ded7dd566cb3cd14b164a23ff56f82f2a640e51a3"
@@ -625,7 +625,7 @@ packages:
     source: hosted
     version: "3.0.0"
   sign_in_with_apple_server:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: sign_in_with_apple_server
       sha256: b431982c88e8649aecb5a17678082cb8045d70eebca8555acb1d1b561d4756b9

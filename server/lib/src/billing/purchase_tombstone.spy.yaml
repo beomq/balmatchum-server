@@ -1,0 +1,9 @@
+class: PurchaseTombstone
+serverOnly: true
+table: billing_purchase_tombstone
+fields:
+  identityHash: String
+indexes:
+  billing_tombstone_identity:
+    fields: identityHash
+    unique: true
