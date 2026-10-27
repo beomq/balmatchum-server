@@ -6,11 +6,13 @@ import 'package:balmatchum_server/src/auth/auth_setup.dart';
 import 'package:balmatchum_server/src/auth/dev_test_user.dart';
 import 'package:balmatchum_server/src/generated/protocol.dart';
 import 'package:balmatchum_server/src/generated/serverpod.dart' as generated;
+import 'package:balmatchum_server/src/product/product_service.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
 import 'package:test/test.dart';
 
 import '../../bin/dev_test_user.dart' as cli;
+import 'test_tools/serverpod_test_tools.dart';
 
 class _Token implements api.ClientAuthKeyProvider {
   _Token(this.token);
@@ -20,6 +22,39 @@ class _Token implements api.ClientAuthKeyProvider {
 }
 
 void main() {
+  withServerpod('Outside the fixture database', (builder, endpoints) {
+    test('bootstrap refuses to create users or credits', () async {
+      // Given a normal test database, not the isolated development fixture.
+      final session = builder.build();
+      configureAuth(
+        session.server.serverpod,
+        sessionPepper: 'public-test-only',
+      );
+      // When bootstrap is attempted outside the fixture gate.
+      await expectLater(
+        bootstrapDevTestUser(session),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'message',
+            'Requires development mode and isolated loopback dev DB.',
+          ),
+        ),
+      );
+      // Then neither an identity nor a point entry is created.
+      expect(await AuthUser.db.count(session), 0);
+      expect(await ExternalIdentity.db.count(session), 0);
+      expect(await PointEntry.db.count(session), 0);
+      expect(
+        await PointEntry.db.count(
+          session,
+          where: (t) => t.entryKey.equals('dev-harness-starter-v1'),
+        ),
+        0,
+      );
+    });
+  });
+
   test('guard refuses every nondevelopment mode and shared/remote DB', () {
     final config = ServerpodConfig(
       runMode: 'development',
@@ -119,8 +154,18 @@ void main() {
     try {
       await pod.start(runInGuardedZone: false);
       session = await pod.createSession(enableLogging: false);
+      // Given a new fixture user.
       final first = await bootstrapDevTestUser(session);
+      final initialCredits = await PointEntry.db.find(session);
+      expect(initialCredits.single.amount, 10);
+      expect(initialCredits.single.policyVersion, productFixtureLabel);
+      expect(initialCredits.single.owner, first.authUserId.toString());
+      // When the same fixture user connects again.
       final second = await bootstrapDevTestUser(session);
+      // Then the starter credit is not granted again or added to the wallet.
+      expect(await PointEntry.db.count(session), 1);
+      expect((await client(second.token).product.listThemes()).balance, 10);
+      expect((await client(second.token).product.getWallet()).balance, 0);
       expect(first.authUserId, second.authUserId);
       expect(await AuthUser.db.count(session), 1);
       expect(await ExternalIdentity.db.count(session), 1);
