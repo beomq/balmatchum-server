@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | development | `server/config/development.yaml`, localhost:8090, `balmatchum` | Compose PostgreSQL 16, 볼륨 유지 |
 | test | `server/config/test.yaml`, `dataPath: .serverpod/test/pgdata` | 내장 PostgreSQL, 테스트 그룹별 임시 DB |
-| staging / production | 아직 없음 | 배포 설계·승인 전. 모드만 바꿔 실행하지 않음 |
+| staging / production | 파일 없음(Serverpod Cloud가 환경변수 주입) | 배포 전 초안: [운영 배포](OPERATIONS.md). 모드만 바꿔 로컬 실행하지 않음 |
 
 API 개발 포트는 8080, 테스트 API 포트는 0(동적 배정)입니다. Redis·웹은 설정하지 않았습니다. 카카오 OIDC와 서버 세션은 아래 환경 설정을 주입했을 때 활성화됩니다. `serviceSecret`이 없어 Insights는 경고와 함께 비활성화되며 API는 정상 실행됩니다.
 

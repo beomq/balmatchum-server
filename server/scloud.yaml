@@ -1,0 +1,17 @@
+# This file configures your Serverpod Cloud project.
+# It is automatically generated and updated by the `scloud` command.
+#
+# Useful commands:
+# - Deploy: `scloud deploy`
+# - Get Help: `scloud help`
+#
+# For full documentation, visit: https://docs.serverpod.dev/cloud
+#
+# `scloud project link balmatchum-prod` keeps dartSdk/scripts on rewrite.
+project:
+  projectId: "balmatchum-prod"
+  dartSdk: "3.13"
+  scripts:
+    pre_deploy:
+      - "dart pub global run serverpod_cli:serverpod_cli --no-interactive --no-analytics generate"
+      - "git diff --exit-code -- lib/src/generated test/integration/test_tools ../client/lib"
