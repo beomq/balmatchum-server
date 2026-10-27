@@ -125,10 +125,31 @@ Google timestamp 단위는 **epoch milliseconds**입니다.
 다른 이벤트로 같은 인텐트를 덮거나 같은 transaction_id를 다른 인텐트에 쓰면 409입니다.
 소유자 잠금 + transaction_id PostgreSQL advisory lock + unique index로 동시 요청을 직렬화합니다.
 
-성공/동일 재전송은 200, 서명/구문 오류는 400, 메타데이터/기간/재사용/없는 인텐트는 409,
+성공/동일 재전송은 200, (custom_data가 있는 요청의) 서명/구문 오류는 400, 메타데이터/기간/재사용/없는 인텐트는 409,
 삭제된 소유자 잠금 실패는 410, 키/DB/예기치 못한 일시 실패는 503입니다.
 405는 GET 이외이며, 다른 경로는 Serverpod endpoint 처리 결과를 따릅니다. 거절된 이벤트는 인텐트를 소모하지 않습니다.
-공식 문서의 Google 재시도는 최대 5회, 1초 간격이므로 7일 수신 허용이 실제 재전송을 보장하지 않습니다.
+
+### 콘솔 "URL 확인"과 custom_data 없는 요청
+
+[AdMob 고객센터](https://support.google.com/admob/answer/9603226)의 설정 순서는 콜백 URL을
+입력하고 **URL 확인**을 통과해야 **확인된 URL 사용**으로 저장됩니다. 이때 user_id/custom_data는
+선택 입력(테스트 전용)이며, [SSV 규격](https://developers.google.com/admob/android/ssv)은 custom_data를
+설정하지 않으면 그 파라미터가 콜백에 없다고 설명합니다. 확인 요청의 정확한 쿼리와 서명 키는 공식 문서에
+없으므로 형태와 무관하게 받습니다.
+
+- custom_data가 **없거나 빈 값**인 요청은 서명·파라미터와 관계없이 200입니다. 서명이 유효하든 틀리든(모르는
+  key_id 포함), 서명이 없든, 파라미터 없는 GET이든 같습니다. 이런 요청은 보상과 연결될 수 없으므로 서명 검사가
+  보안을 더하지 않고, 확인 요청 형태가 문서에 없어 규칙을 엄격하게 하면 콘솔 확인이 다시 실패할 수 있습니다.
+  미들웨어가 Session/DB 생성 전에 200을 결정하며 DB를 전혀 사용하지 않습니다. 프레임워크 전역 로거에
+  `AdMob SSV reward-less request acknowledged: <kind>` info 한 줄과 `kind` 메타데이터만 남깁니다(요청 값 미기록).
+  종류는 signatureValid / signatureInvalid / unsigned / emptyQuery입니다.
+  길이 16000자 초과 또는 ASCII 33~126 밖 문자는 signatureInvalid로 기록하고 키 fetch 없이 200입니다.
+  그 밖에 서명 꼬리가 있으면 종류를 정하려고 gstatic 키를 가져올 수 있습니다. 키 장애도 signatureInvalid로 200입니다.
+- custom_data가 비어 있지 않은 요청은 이전과 같습니다. 서명이 필수이고 400/409/410/503/200 규칙도 그대로입니다.
+  따라서 확인 요청에는 custom_data를 입력하지 않습니다. 입력하면 형식 오류 400 또는 없는 인텐트 409입니다.
+
+앱이 custom_data를 빠뜨린 실제 광고 콜백도 같은 이유로 200이지만 보상은 없습니다(이전에는 400 후 Google
+재시도였고 결과는 같습니다). 위 info 로그가 운영에서 반복되면 앱의 SSV options 설정을 확인합니다.
 
 계정 삭제는 같은 AuthUser→ProductAccount 잠금으로 인텐트 전체를 지웁니다. 삭제 전 인증된
 요청/늦은 콜백도 삭제 뒤 데이터를 재생성하지 못합니다. transaction_id 기록도 함께 삭제되지만
@@ -151,7 +172,7 @@ ProductService.claim은 인증된 owner 잠금 아래 실제 ProductDay revision
 이미 consumed면 `intentNotVerified`; 외부 RPC 소비 메서드는 없습니다. 재시도 응답은 업무 통합의
 기존 request idempotency 기록으로 처리합니다. 포인트 수량을 클라이언트나 callback에서 읽지 않습니다.
 
-장애 확인 순서: 설정 → 콘솔 콜백 URL(`/admob/ssv`) → gstatic fetch/TTL → signed metadata →
+장애 확인 순서: 설정 → 콘솔 콜백 URL(`/admob/ssv`, URL 확인이 200이 아니면 custom_data 입력 여부·배포 버전) → gstatic fetch/TTL → signed metadata →
 시간 경계 → 인텐트/transaction 충돌 → 현재 업무 revision. 직접 검증은 `dart test
 test/unit/ad_verifier_test.dart test/integration/ad_ssv_test.dart --reporter expanded`입니다.
 자동 테스트와 사용자 직접 이해·기기 검증은 별개입니다.

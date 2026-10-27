@@ -1,5 +1,6 @@
 import 'package:clock/clock.dart';
 import 'package:serverpod/serverpod.dart';
+import 'package:serverpod_shared/log.dart' as shared;
 import '../config_password.dart';
 import '../generated/protocol.dart';
 import 'ad_config.dart';
@@ -33,6 +34,15 @@ Future<AdService?> configureAdMob(
         return next(request);
       }
       if (request.method != Method.get) return Response(405);
+      final ping = await active.verifier.ping(request.url.query);
+      if (ping != null) {
+        // Framework logger: no Session, database acquisition or DB log writes.
+        shared.log.info(
+          'AdMob SSV reward-less request acknowledged: ${ping.name}',
+          metadata: {'kind': ping.name},
+        );
+        return Response(200);
+      }
       return Response(await _callback(pod, active, request.url.query));
     },
   );
