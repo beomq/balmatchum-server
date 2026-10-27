@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | development | `server/config/development.yaml`, localhost:8090, `balmatchum` | Compose PostgreSQL 16, 볼륨 유지 |
 | test | `server/config/test.yaml`, `dataPath: .serverpod/test/pgdata` | 내장 PostgreSQL, 테스트 그룹별 임시 DB |
-| staging / production | 아직 없음 | 배포 설계·승인 전. 모드만 바꿔 실행하지 않음 |
+| staging / production | 파일 없음(Serverpod Cloud가 환경변수 주입) | 배포 전 초안: [운영 배포](OPERATIONS.md). 모드만 바꿔 로컬 실행하지 않음 |
 
 API 개발 포트는 8080, 테스트 API 포트는 0(동적 배정)입니다. Redis·웹은 설정하지 않았습니다. 카카오 OIDC와 서버 세션은 아래 환경 설정을 주입했을 때 활성화됩니다. `serviceSecret`이 없어 Insights는 경고와 함께 비활성화되며 API는 정상 실행됩니다.
 
@@ -17,6 +17,26 @@ API 개발 포트는 8080, 테스트 API 포트는 0(동적 배정)입니다. Re
 AdMob SSV의 선택 설정과 공개 API 서버의 `/admob/ssv` 콜백 경로는
 [AdMob SSV 인텐트 기반](ADMOB_SSV_API.md)을 확인합니다. 설정 없이는 광고 인텐트
 생성과 수신기를 활성화하지 않으며 이 증분은 포인트를 지급하지 않습니다.
+
+첫 출시에는 보상형 광고와 인앱 결제가 포함되므로 Cloud 운영에서
+`admobPlacements`, 결제 공통 키와 Apple/Google 결제 묶음은 필수입니다.
+`admobPlacements`의 정확한 구조는 목적별 단일 객체입니다:
+
+```json
+{
+  "dailyReward": {"adUnit": "CONSOLE_AD_UNIT", "rewardItem": "daily_reward", "rewardAmount": "1"},
+  "extraQuiz": {"adUnit": "CONSOLE_AD_UNIT", "rewardItem": "extra_quiz", "rewardAmount": "1"}
+}
+```
+
+이 JSON은 형식 예시이며 실제 콘솔 값을 비밀 파일에 준비합니다. 수량도 문자열입니다.
+`ad_config.dart`에는 Android/iOS 구분 키나 배열 지원이 없으며 목적당 ad unit 하나입니다.
+콘솔에서는 플랫폼별 보상형 단위를 준비하되 이 설정에 플랫폼별 객체를 임의로 넣지 않습니다.
+두 플랫폼 동시 운영에는 별도 계약 변경·검증이 필요합니다.
+SSV URL은 `https://balmatchum-prod.api.serverpod.space/admob/ssv`입니다.
+reward item은 공백과 `~`가 없는 ASCII로 정합니다. 비정규 인코딩은 400으로
+fail closed됩니다(todo 17). 파일 기반 입력 도우미와 운영 점검은
+[운영 배포](OPERATIONS.md)의 6절을 따릅니다.
 
 Google/Apple은 별도 선택 설정입니다. 전체 키 묶음, 누락/부분 설정 처리,
 생성 API, Apple 삭제 시 외부 철회와 운영 차단 요인은
@@ -100,6 +120,10 @@ Compose는 이 YAML을 읽지 않습니다. 파일 대안을 쓰더라도 개발
 
 CI의 `ci-disposable-postgres-only`는 격리된 일회성 테스트 DB 전용 공개 값입니다. 실제 개발/운영 비밀번호가 아니며 운영으로 복사하지 않습니다. 테스트의 `local-disposable-test-only`도 같은 원칙입니다.
 
-향후 staging/production은 별도 계정·DB·비밀값과 배포 시스템의 secret 주입을 설계해야 합니다. 저장소 YAML·워크플로에 실제 비밀값을 넣지 않고, 환경별 값·접근 권한·회전 책임을 합의합니다. 현재 배포 환경이나 cloud secret은 만들지 않았습니다. 공개 GitHub 저장소라는 점을 전제로 리뷰합니다.
+production은 Serverpod Cloud `balmatchum-prod`의 password 주입을 사용합니다.
+이 저장소 작업에서는 Cloud 비밀값 입력·배포를 실행하지 않았습니다.
+저장소 YAML·워크플로에 실제 비밀값을 넣지 않고 접근 권한·회전 책임은 소유자가 관리합니다.
+테스트는 Starter, 공개 출시 전에는 Growth 전환과 일일 백업·복원 연습 1회를
+todo 15의 출시 조건으로 확인합니다. 공개 GitHub 저장소라는 점을 전제로 리뷰합니다.
 
 근거와 실제 검증 범위는 [출처·검증 기록](sources-and-verification.md)에 있습니다.

@@ -1,0 +1,33 @@
+# .scloudignore
+#
+# Base: the template written by serverpod_cloud_cli 1.2.0 (`scloud project link`).
+# Serverpod Cloud also respects .gitignore; hidden files are ignored by default.
+#
+# Passwords are never uploaded. Set them with `scloud password set`.
+config/passwords.yaml
+config/google_client_secret.json
+config/firebase_service_account_key.json
+
+# Config files are managed by Serverpod Cloud (runtime environment variables).
+config/production.yaml
+config/staging.yaml
+config/development.yaml
+config/test.yaml
+
+# Local-only development and test material.
+docker-compose.yaml
+test/
+
+# Opting out of ignoring generated files.
+!lib/src/generated/**
+
+# Opting out of ignoring web files.
+!web/**
+
+# Opting out of ignoring the .scloud directory.
+!.scloud/**
+
+# Reviewed quiz packs are runtime assets; approval is tracked in launch todo 20.
+!assets/
+!assets/quiz/
+!assets/quiz/*.json
