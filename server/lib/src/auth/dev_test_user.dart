@@ -2,6 +2,7 @@ import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
 
 import '../generated/protocol.dart';
+import '../product/product_service.dart';
 
 /// Only this disposable database may contain the local virtual identity.
 const devTestDatabaseName = 'balmatchum_dev_test';
@@ -55,6 +56,23 @@ Future<AuthSuccess> bootstrapDevTestUser(Session session) async {
         transaction: transaction,
       );
     }
+    // The owner/key unique index and identity lock keep reconnects idempotent.
+    // This credit belongs only to the fixture store, never the step wallet.
+    await PointEntry.db.insert(
+      session,
+      [
+        PointEntry(
+          owner: identity.authUserId.toString(),
+          entryKey: 'dev-harness-starter-v1',
+          kind: 'fixture-starter',
+          amount: 10,
+          policyVersion: productFixtureLabel,
+          createdAt: DateTime.now().toUtc(),
+        ),
+      ],
+      ignoreConflicts: true,
+      transaction: transaction,
+    );
     await services.tokenManager.revokeAllTokens(
       session,
       authUserId: identity.authUserId,
