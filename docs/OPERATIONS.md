@@ -61,7 +61,7 @@ scloud db schedule set --frequency daily --hour 18 --retention 35d   # 매일 03
 scloud db schedule show
 scloud db backup create --name pre-release --expire-in 7d            # 수동 스냅샷
 scloud db backup list
-scloud db backup create --name before-restore                        # 복원 전 현재 상태 보존
+scloud db backup create --name before-restore --expire-in 35d     # 복원 전 현재 상태 보존 (처리방침의 백업 보관 기간에 맞춰 최대 35일 후 자동 삭제)
 scloud db backup restore <snapshot-id>                               # 확인 프롬프트, 되돌릴 수 없음
 ```
 
