@@ -11,10 +11,10 @@ const _questionId = 'fixture-walk-water-v1';
 const _defaultThemePrice = 0;
 const _paidThemePrice = 3;
 const _themes = {
-  'sunny': ('Sunny', 0xfff5eedc),
-  'cloudy': ('Cloudy', 0xffe4e7e9),
-  'rainy': ('Rainy', 0xffdce8ef),
-  'snowy': ('Snowy', 0xffeef3f6),
+  'sunny': ('맑음', 0xfff5eedc),
+  'cloudy': ('흐림', 0xffe4e7e9),
+  'rainy': ('비', 0xffdce8ef),
+  'snowy': ('눈', 0xffeef3f6),
 };
 
 extension QuizThemeService on ProductService {
