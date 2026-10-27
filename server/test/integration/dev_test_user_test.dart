@@ -26,11 +26,32 @@ void main() {
     test('bootstrap refuses to create users or credits', () async {
       // Given a normal test database, not the isolated development fixture.
       final session = builder.build();
+      configureAuth(
+        session.server.serverpod,
+        sessionPepper: 'public-test-only',
+      );
       // When bootstrap is attempted outside the fixture gate.
-      await expectLater(bootstrapDevTestUser(session), throwsStateError);
+      await expectLater(
+        bootstrapDevTestUser(session),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'message',
+            'Requires development mode and isolated loopback dev DB.',
+          ),
+        ),
+      );
       // Then neither an identity nor a point entry is created.
+      expect(await AuthUser.db.count(session), 0);
       expect(await ExternalIdentity.db.count(session), 0);
       expect(await PointEntry.db.count(session), 0);
+      expect(
+        await PointEntry.db.count(
+          session,
+          where: (t) => t.entryKey.equals('dev-harness-starter-v1'),
+        ),
+        0,
+      );
     });
   });
 
