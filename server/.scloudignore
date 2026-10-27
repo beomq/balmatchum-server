@@ -26,3 +26,8 @@ test/
 
 # Opting out of ignoring the .scloud directory.
 !.scloud/**
+
+# Reviewed quiz packs are runtime assets; approval is tracked in launch todo 20.
+!assets/
+!assets/quiz/
+!assets/quiz/*.json

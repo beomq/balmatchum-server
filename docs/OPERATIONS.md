@@ -1,6 +1,6 @@
 # 운영 배포 (Serverpod Cloud)
 
-> 상태: **배포 전 초안**입니다. 실제 Cloud 프로젝트 생성·비밀값 설정·배포는 아직 하지 않았습니다.
+> 상태: 저장소 배포 설정입니다. 소유자는 프로젝트 생성을 확인했으며 이 작업에서는 비밀값 입력·배포를 하지 않았습니다.
 > 근거 문서는 2026-10-27에 읽은 https://docs.serverpod.dev/cloud 와 serverpod_cloud_cli 1.2.0 소스입니다.
 > 명령은 `scloud <명령>` 또는 `serverpod cloud <명령>` 중 하나로 실행하며 두 형식은 같습니다.
 
@@ -14,8 +14,9 @@
 | DB | Cloud 관리형 PostgreSQL 17, TLS 필수. 접속값과 `database` 비밀번호는 플랫폼이 주입 |
 | Cloud 프로젝트 ID | `balmatchum-prod` (생성 완료) |
 | 기본 주소 | API `https://balmatchum-prod.api.serverpod.space/`, Web `https://balmatchum-prod.serverpod.space/`, Insights `https://balmatchum-prod.insights.serverpod.space/` |
-| 앱 `SERVER_URL` | 사용자 지정 도메인 연결 전에는 `https://balmatchum-prod.api.serverpod.space/` |
-| 사용자 지정 도메인 | Growth 요금제 이상(1개 포함). 예: `api.<도메인>` → `--target api` |
+| 앱 `SERVER_URL` | 확정 기본 도메인 `https://balmatchum-prod.api.serverpod.space/` |
+| 요금제 | 테스트 중 Starter, 공개 출시 전 Growth 전환 |
+| 첫 출시 | 보상형 광고와 Apple/Google 인앱 결제 포함 |
 
 `client/`는 서버의 dev_dependency이지만 scloud가 업로드할 때 `dev_dependencies`를 제거하고 `pubspec.lock`을 정리하므로 업로드하지 않아도 빌드됩니다. 첫 배포 전에는 `scloud deploy --wet-run --show-files`로 업로드 목록을 확인합니다.
 
@@ -52,6 +53,9 @@ Cloud는 배포할 때마다 `migrations/`의 미적용 migration을 자동으�
 
 ## 5. 백업·복원 (Growth 요금제 기능)
 
+공개 출시 전 **Growth 전환 + 일일 백업 + 복원 연습 1회**가 todo 15의 go 조건입니다.
+Starter 테스트에는 백업이 없으므로 복구 검증 완료로 간주하지 않습니다.
+
 ```sh
 scloud db schedule set --frequency daily --hour 18 --retention 35d   # 매일 03:00 KST(=18:00 UTC)
 scloud db schedule show
@@ -80,22 +84,106 @@ scloud db backup restore <snapshot-id>                               # 확인 �
 | 구글 | `googleClientSecret` | client secret JSON(`web.client_id`, `web.client_secret`, `web.redirect_uris`) |
 | 애플 로그인 | `appleServiceIdentifier`, `appleBundleIdentifier`, `appleRedirectUri`, `appleTeamId`, `appleKeyId`, `appleKey` (선택 `appleAndroidPackageIdentifier`, `appleWebRedirectUri`) | `appleKey`는 Sign in with Apple P-256 키 |
 | 결제 공통 | `billingIdentityHmacKey` | base64, 디코딩 32바이트 이상 |
-| 결제 Apple | `billingAppleBundleId`, `billingAppleIssuerId`, `billingAppleKeyId`, `billingApplePrivateKey`, `billingAppleEnvironment`, `billingAppleProducts` | 6개 모두 넣거나 모두 비움 |
-| 결제 Google | `billingGooglePackageName`, `billingGoogleClientEmail`, `billingGoogleKeyId`, `billingGooglePrivateKey`, `billingGoogleEnvironment`, `billingGoogleProducts` | 6개 모두 넣거나 모두 비움 |
-| AdMob SSV | `admobPlacements`, `admobSsvPort` | **Cloud에서는 설정하지 않음**(7절) |
+| 결제 Apple | `billingAppleBundleId`, `billingAppleIssuerId`, `billingAppleKeyId`, `billingApplePrivateKey`, `billingAppleEnvironment`, `billingAppleProducts` | 첫 출시 필수, 6개 완전 묶음 |
+| 결제 Google | `billingGooglePackageName`, `billingGoogleClientEmail`, `billingGoogleKeyId`, `billingGooglePrivateKey`, `billingGoogleEnvironment`, `billingGoogleProducts` | 첫 출시 필수, 6개 완전 묶음 |
+| AdMob SSV | `admobPlacements` | 첫 출시 필수, 아래 JSON과 콘솔 값 일치 |
+
+### 비밀 파일 도우미
+
+서버 패키지에서 실행합니다. 기존 Git work tree 밖의 디렉터리에 **키 이름과 정확히 같은
+이름의 파일**을 하나씩 준비합니다. 파일 내용은 채팅·명령 인자·Git·로그로 전달하지 않습니다.
+디렉터리 권한은 700, 파일 권한은 600으로 관리하고 생성 후 비밀번호 관리자에 보관합니다.
+
+```sh
+bash tool/cloud/set_passwords.sh --generate-local /absolute/private/passwords
+bash tool/cloud/set_passwords.sh --dry-run /absolute/private/passwords
+# 소유자 CLI 브라우저 로그인 후, 별도 입력 승인 시에만:
+bash tool/cloud/set_passwords.sh /absolute/private/passwords
+```
+
+`--generate-local`은 세션 pepper(48바이트)와 billing HMAC 키(32바이트)만 생성하고
+종료합니다. 기존 파일을 덮어쓰지 않습니다. `--dry-run`은 키별 SET/MISSING만 출력하고
+네트워크를 사용하지 않습니다. SET은 로컬 파일의 존재·비어 있지 않음을 뜻하며 Cloud 상태가 아닙니다.
+Naver 3개, Apple 로그인 6개, billingApple 6개, billingGoogle 6개의 부분 묶음은
+dry-run에서도 실패합니다. AdMob은 단일 키 묶음입니다. 실제 업로드는 선택 Apple
+Android/web 2키 외의 전체 키가 있어야 시작합니다. 형식·JSON·PEM·콘솔 일치는 서버와
+별도 실기기 검증 책임이며 도우미가 검증하지 않습니다.
+
+도우미는 `scloud password set --project balmatchum-prod --name <키> --from-file <경로>`를
+사용하며 scloud가 없으면 `serverpod cloud`로 전달합니다. 공식 플래그:
+https://docs.serverpod.dev/cloud/reference/cli/commands/password (`set`).
+CLI 원문 출력은 버려 값 노출을 막고 실패한 키 이름만 알립니다. 업로드는 여러 개의 개별
+쓰기이므로 중간 실패 시 앞선 키는 반영될 수 있습니다. 동일 파일로 다시 실행하고 상태는
+`scloud password list --project balmatchum-prod`에서 확인합니다.
+이미 사용 중인 pepper/HMAC을 재생성하면 로그인·결제 식별에 영향이 있으므로 회전은 별도 작업입니다.
+
+### AdMob 콘솔과 서버 설정
+
+SSV는 공개 API의 `GET /admob/ssv`로 수신하므로 Cloud 배포가 가능합니다.
+모든 보상형 ad unit에 `https://balmatchum-prod.api.serverpod.space/admob/ssv`를 등록합니다.
+소유자는 AdMob 브라우저 로그인으로 Android 앱 ID(없으면 생성), iOS 앱 등록 상태,
+`dailyReward`와 `extraQuiz` 각각의 Android/iOS 보상형 ad unit을 준비합니다.
+reward item은 공백과 `~`가 없는 ASCII(예: `daily_reward`, `extra_quiz`)로 지정합니다.
+비정규 인코딩으로 서명된 요청은 보상 없이 400(fail closed)입니다(todo 17 검증).
+
+`admobPlacements` 파일의 JSON 구조(`server/lib/src/ads/ad_config.dart`):
+
+```json
+{
+  "dailyReward": {"adUnit": "CONSOLE_AD_UNIT", "rewardItem": "daily_reward", "rewardAmount": "1"},
+  "extraQuiz": {"adUnit": "CONSOLE_AD_UNIT", "rewardItem": "extra_quiz", "rewardAmount": "1"}
+}
+```
+
+예시 문자열 대신 콘솔 값을 준비합니다. 숫자 수량도 문자열이며 포인트 지급량이 아닙니다.
+로더는 두 목적 중 하나 이상을 허용하지만 첫 출시에는 둘 다 준비합니다.
+현재 **목적당 ad unit 하나**이며 Android/iOS 분기, 배열, 플랫폼별 중첩 객체가 없습니다.
+서버는 이 단위를 인텐트로 앱에 반환합니다. 두 플랫폼 동시 운영은 이 설정만으로
+해결되지 않으며 플랫폼 선택 계약·앱 연동 검증을 별도 완료해야 합니다.
+기존 pending 인텐트가 있으므로 단위 교체는 영향 확인 후 수행합니다.
 
 일반 변수(평문, `scloud variable set`):
 
 | 이름 | 값 |
 | --- | --- |
-| `BALMATCHUM_QUIZ_BANK_PATH` | `./assets/quiz/<승인된 팩>.json`. 파일은 `server/assets/quiz/`에 포함해 함께 배포 |
+| `BALMATCHUM_QUIZ_BANK_PATH` | `./assets/quiz/reviewed-v1.json` (이 이름으로 승인 팩을 공급한 뒤 설정) |
 | `SERVERPOD_SESSION_LOG_CLEANUP_INTERVAL` / `_RETENTION_PERIOD` / `_RETENTION_COUNT` | 예: `24h` / `90d` / `100000`. 세 값을 모두 설정해야 로그 정리가 켜짐 |
 
-비밀값은 한 그룹에서 일부만 넣으면 서버가 시작할 때 실패합니다(의도된 동작). 그룹은 전부 넣거나 전부 비웁니다. 비밀값과 password의 저장 한도는 프로젝트당 합계 64,000바이트입니다.
+비밀값은 한 그룹에서 일부만 넣으면 서버가 시작할 때 실패합니다(의도된 동작).
+비밀값과 password의 저장 한도는 프로젝트당 합계 64,000바이트입니다.
+
+### 운영 퀴즈 팩 (todo 20 승인 대기)
+
+이 변경은 팩을 추가하거나 콘텐츠 승인을 대신하지 않습니다. 실제 검토한 `kind: "reviewed"`
+팩을 저장소 기준 `server/assets/quiz/reviewed-v1.json`에 넣는 작업은 todo 20입니다.
+[팩 형식과 버전 규칙](QUIZ_ENGINE_API.md)을 따릅니다.
+
+공식 [비 Dart 파일 가이드](https://docs.serverpod.dev/cloud/guides/ship-non-dart-files)의
+“Read an asset at runtime”은 서버 프로젝트 루트(`lib/`, `bin/`, `assets/`의 부모)를
+기준으로 `./assets/<path>`를 사용하도록 명시합니다. 따라서 저장소 루트의 `./server/assets`
+또는 빌드 머신의 절대 경로가 아니라 아래 값을 사용합니다.
+`.scloudignore`는 `assets/quiz/*.json`을 명시적으로 포함합니다.
+
+```sh
+# todo 20에서 reviewed-v1.json을 승인·공급한 후 소유자가 실행:
+scloud variable set BALMATCHUM_QUIZ_BANK_PATH ./assets/quiz/reviewed-v1.json --project balmatchum-prod
+```
+
+`configureQuizBank`(`server/lib/src/quiz/quiz_bank.dart:91`)가 시작 시 한 번 읽습니다.
+새 팩은 `reviewed-v2.json`처럼 불변 파일명으로 공급하고 변경 문항의 `version`을 증가시킵니다.
+새 코드·팩을 승인된 배포에 포함하고 변수도 해당 `./assets/quiz/reviewed-v2.json`로
+바꾼 뒤 새 서버 프로세스로 검증합니다. 변수만 바꿔도 실행 중 팩이 hot reload되지는 않습니다.
+기존 파일은 전환 중 제거하지 않습니다. 같은 `(questionId, version)` 내용 변경은
+`Quiz revision identity conflict`이므로 파일만 롤백해도 등록된 개정을 덮어쓰지 못합니다.
+
+장애 순서: 변수 누락/빈 팩이면 새 발급 `contentUnavailable` → 파일 누락이면 시작 시
+FileSystemException → JSON/검토 필드 오류·testFixture 운영 사용이면 FormatException →
+동일 개정 충돌과 DB migration 확인. 이미 본 모든 ID는 `exhausted`로 구분합니다.
+업로드 목록 확인은 소유자 인증 후 `scloud deploy --wet-run --show-files`로 수행하며
+`assets/quiz/reviewed-v1.json` 포함과 `config/passwords.yaml`, `test/` 제외를 확인합니다.
 
 ## 7. 알려진 운영 제약
 
-- **AdMob SSV 수신 불가**: SSV listener는 `127.0.0.1:<admobSsvPort>`에만 bind하며 TLS reverse proxy를 전제로 합니다. Cloud는 api/web/insights 세 표면만 공개하므로 Google이 이 포트로 callback을 보낼 수 없습니다. 이 설계로는 `admobPlacements`/`admobSsvPort`를 설정하지 않아 기능을 꺼 둡니다. 이 경우 광고 보상 endpoint는 미설정 오류를 반환합니다. Cloud에서 쓰려면 SSV를 Serverpod web/api 라우트로 옮기는 별도 코드 작업이 필요합니다.
 - **Apple Android/web callback·서버 알림 미구현**: web server route를 mount하지 않았습니다(SOCIAL_AUTH_API.md). iOS 네이티브 로그인만 대상입니다.
 - **Future call**: 현재 코드는 future call을 쓰지 않습니다. Starter 요금제에서는 future call이 비활성입니다.
 
