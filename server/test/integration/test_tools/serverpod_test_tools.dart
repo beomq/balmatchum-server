@@ -27,6 +27,7 @@ import 'package:balmatchum_server/src/generated/billing/purchase_configuration.d
     as _if6gfs7w;
 import 'package:balmatchum_server/src/generated/billing/purchase_input.dart'
     as _i1q0b6so;
+import 'package:balmatchum_server/src/generated/future_calls.dart' as _icaa5uxu;
 import 'package:balmatchum_server/src/generated/greetings/greeting.dart'
     as _id6ypawo;
 import 'package:balmatchum_server/src/generated/product/daily_quiz.dart'
@@ -194,6 +195,8 @@ void withServerpod(
 }
 
 class TestEndpoints {
+  late final futureCalls = _FutureCalls();
+
   late final _AccountEndpoint account;
 
   late final _AdsEndpoint ads;
@@ -275,6 +278,10 @@ class _InternalTestEndpoints extends TestEndpoints
       serializationManager,
     );
   }
+}
+
+class _FutureCalls {
+  late final billingRetentionPurgeCall = _BillingRetentionPurgeCallFutureCall();
 }
 
 class _AccountEndpoint {
@@ -2162,5 +2169,20 @@ class _RecordsEndpoint {
         await _localUniqueSession.close();
       }
     });
+  }
+}
+
+class _BillingRetentionPurgeCallFutureCall {
+  Future<void> purge(_ist.TestSessionBuilder sessionBuilder) async {
+    var _localUniqueSession =
+        (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild();
+    try {
+      await _icaa5uxu.BillingRetentionPurgeCallPurgeFutureCall().invoke(
+        _localUniqueSession,
+        null,
+      );
+    } finally {
+      await _localUniqueSession.close();
+    }
   }
 }

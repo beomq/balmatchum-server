@@ -3,7 +3,11 @@ serverOnly: true
 table: billing_purchase_tombstone
 fields:
   identityHash: String
+  # Null keeps the hash while the service runs (lifetime or unknown kind).
+  retainUntil: DateTime?
 indexes:
   billing_tombstone_identity:
     fields: identityHash
     unique: true
+  billing_tombstone_retention:
+    fields: retainUntil

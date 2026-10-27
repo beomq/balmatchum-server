@@ -67,9 +67,26 @@ Google은 purchase token이다. Google linkedPurchaseToken을 자동 귀속하�
 잠금 순서는 AuthUser → 구매 해시다. 기존 삭제 잠금과 동일한 AuthUser를 사용한다.
 
 탈퇴 트랜잭션은 바인딩·구매 원문·개인 연결을 지우고
-`billing_purchase_tombstone`에 `id`(DB surrogate)와 `identityHash`만 남긴다.
-owner, binding, product, store, 시간, token은 보존하지 않는다. 외부 조회 중 탈퇴가
-먼저 끝난 경우도 검증 완료 후 해시만 보존하고 거부한다. 재가입 시 새 binding이며
+`billing_purchase_tombstone`에 `id`(DB surrogate), `identityHash`, `retainUntil`만 남긴다.
+owner, binding, product, store, token은 보존하지 않는다. 외부 조회 중 탈퇴가
+먼저 끝난 경우도 검증 완료 후 해시만 보존하고 거부한다.
+
+해시 보관 기간(`retainUntil`): 평생 상품은 null(서비스 운영 중 보관), 구독은 스토어가
+알려 준 마지막 만료(`expiresAt`/`graceExpiresAt` 중 늦은 값, 없으면 관측 시각) + 1년.
+스토어 구독은 탈퇴로 해지되지 않으므로 탈퇴 뒤 같은 구매가 다시 조회되면 응답은
+그대로 거부하고 기간만 늘린다. 이 컬럼 도입 전 tombstone은 null이다.
+
+같은 트랜잭션에서 `billing_payment_record`에 전자상거래법 시행령 제6조의 대금결제·
+청약철회 기록을 회원과 분리해 남긴다. 필드: store, environment, productId, kind,
+`storeTransactionId`(Apple transaction id/Google order id), `originalTransactionId`
+(Apple만), state, 구매·만료·취소 시각, 기록 시각, `purgeAfter`. owner, binding,
+identityHash, Google purchase token은 남기지 않는다. `purgeAfter`는 마지막 거래 사건
+(구매, 취소, 구독이면 만료와 마지막 관측 중 이른 값) + 5년이다. 가격·통화는 저장하지
+않는다. 외부 조회 중 탈퇴가 먼저 끝난 첫 구매는 구매 행이 없어 이 기록에 남지 않는다.
+
+만료분 정리: 서버 시작 시 1회, future call이 켜져 있으면 매일 18:00 UTC
+(`billing-retention-purge`, 시작할 때마다 기존 예약을 교체)에 `purgeAfter`/`retainUntil`이
+지난 행만 500개씩 지운다. 지울 때 기간을 다시 확인하므로 동시에 연장된 해시는 남는다. 재가입 시 새 binding이며
 기존 구매의 바인딩 검증을 우회하지 않는다. 외부에서 바인딩이 바뀌어도 tombstone이
 재귀속을 거부한다. DB 삭제 rollback이면 구매와 바인딩도 유지된다.
 
