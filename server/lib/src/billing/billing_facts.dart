@@ -27,6 +27,12 @@ final class BillingVerificationException implements Exception {
   String toString() => 'BillingVerificationException(${code.name})';
 }
 
+/// The store answered 404/410: it no longer knows this reference. This is not
+/// a refund or cancellation; endpoints still see `invalidPurchase`.
+final class BillingPurchaseGone extends BillingVerificationException {
+  const BillingPurchaseGone() : super(BillingFailure.invalidPurchase);
+}
+
 /// An observation, NOT a persisted entitlement or proof of current account existence.
 final class BillingFacts {
   const BillingFacts._({

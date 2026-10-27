@@ -322,6 +322,7 @@ void main() {
                     ..['appAccountToken'] = a.binding;
                 } else {
                   purchase(reference, a.binding);
+                  responses[reference]!['orderId'] = 'order-$reference';
                 }
                 await a.client.billing.verifyPurchase(
                   input(reference, store: store),
@@ -344,13 +345,22 @@ void main() {
                   );
                   expect(rows, hasLength(hasActive ? 2 : 1));
                   if (status == 410) {
+                    // A reference the store no longer knows is not a refund.
                     expect(
                       rows.firstWhere((r) => r.purchaseReference == bad).state,
-                      'revoked',
+                      'expired',
                     );
                     final before = queryCount;
                     expect(await check(), hasActive);
-                    expect(queryCount - before, hasActive ? 1 : 0);
+                    expect(queryCount - before, hasActive ? 2 : 1);
+                    await a.client.account.deleteAccount();
+                    final record = (await RetainedPaymentRecord.db.find(
+                      admin,
+                      where: (t) => t.storeTransactionId.equals(
+                        store == 'apple' ? bad : 'order-$bad',
+                      ),
+                    )).single;
+                    expect(record.state, 'expired');
                   } else {
                     final view = await a.client.billing.getEntitlement();
                     expect(view.purchases.where((p) => p.active), hasLength(1));
@@ -365,6 +375,57 @@ void main() {
       }
     }
   }
+
+  Future<String> storedState(String owner, String reference) async =>
+      (await StoredPurchase.db.findFirstRow(
+        admin,
+        where: (t) =>
+            t.owner.equals(owner) & t.purchaseReference.equals(reference),
+      ))!.state;
+
+  test(
+    'response anomaly keeps the stored state and a later valid answer restores access',
+    () async {
+      // Given: the only verified purchase now gets a response failing validation.
+      final a = await user();
+      const token = 'anomaly-only';
+      purchase(token, a.binding);
+      await a.client.billing.verifyPurchase(input(token));
+      purchase(token, a.binding, state: 'UNEXPECTED_STATE');
+      await expectLater(
+        a.client.billing.getEntitlement(),
+        failure('invalidPurchase'),
+      );
+      expect(await storedState(a.owner, token), 'active');
+
+      // When: the store answers validly again.
+      purchase(token, a.binding);
+
+      // Then: server revalidation alone restores access.
+      expect((await a.client.billing.getEntitlement()).active, true);
+    },
+  );
+
+  test(
+    'response anomaly on one row neither changes it nor blocks another active row',
+    () async {
+      // Given: two verified purchases, one of which now answers anomalously.
+      final a = await user();
+      for (final token in ['anomaly-row', 'anomaly-good']) {
+        purchase(token, a.binding);
+        await a.client.billing.verifyPurchase(input(token));
+      }
+      purchase('anomaly-row', a.binding, state: 'UNEXPECTED_STATE');
+
+      // When
+      final view = await a.client.billing.getEntitlement();
+
+      // Then: only the freshly verified row grants; the anomalous row is untouched.
+      expect(view.active, true);
+      expect(view.purchases.where((p) => p.active), hasLength(1));
+      expect(await storedState(a.owner, 'anomaly-row'), 'active');
+    },
+  );
 
   Future<api.DailyRecord> steps(
     api.Client c,
