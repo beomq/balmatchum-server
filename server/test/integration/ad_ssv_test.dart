@@ -7,7 +7,6 @@ import 'package:balmatchum_server/src/ads/ad_service.dart';
 import 'package:balmatchum_server/src/ads/ad_setup.dart';
 import 'package:balmatchum_server/src/ads/ad_verifier.dart';
 import 'package:balmatchum_server/src/ads/ads_endpoint.dart';
-import 'package:balmatchum_server/src/ads/raw_query_server.dart';
 import 'package:balmatchum_server/src/account/account_endpoint.dart';
 import 'package:balmatchum_server/src/auth/auth_setup.dart';
 import 'package:balmatchum_server/src/generated/protocol.dart';
@@ -31,7 +30,6 @@ void main() {
   late Directory directory;
   late Serverpod pod;
   late Session admin;
-  late RawQueryServer listener;
   var now = DateTime.utc(2026, 10, 19);
   final clients = <api.Client>[];
   final sessions = <Session>[];
@@ -80,13 +78,13 @@ void main() {
     return u.client.ads.createIntent('dailyReward', '2026-10-19', revision);
   }
 
-  // A raw socket is essential: HttpClient/Uri would normalize signed escapes.
+  // Raw socket: send the exact request line to the public API server port.
   Future<int> send(
     String query, {
     String path = '/admob/ssv',
     String method = 'GET',
   }) async {
-    final socket = await Socket.connect('127.0.0.1', listener.port);
+    final socket = await Socket.connect('localhost', pod.server.port);
     final response = socket.cast<List<int>>().transform(utf8.decoder).join();
     socket.write(
       '$method $path?$query HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n',
@@ -107,7 +105,7 @@ void main() {
     int keyId = 1,
   }) => signAd(
     'ad_network=123&ad_unit=${unit ?? i.adUnit}&custom_data=${i.customData}'
-    '&reward_amount=$amount&reward_item=a%2fb%20%63'
+    '&reward_amount=$amount&reward_item=a%2Fb%20c'
     '&timestamp=${(at ?? now).millisecondsSinceEpoch}&transaction_id=$tx'
     '&user_id=${owner ?? i.userId}',
     keyId: keyId,
@@ -133,15 +131,18 @@ void main() {
     admin = await pod.createSession(enableLogging: false);
     expect(await configureAdMob(pod), isNull);
     final clock = Clock(() => now);
-    listener = (await configureAdMob(
-      pod,
-      config: AdConfig({
-        'dailyReward': const AdPlacement('unit', 'a/b c', '7'),
-        'extraQuiz': const AdPlacement('quiz', 'a/b c', '7'),
-      }, 0),
-      verifier: AdVerifier(loadKeys: () async => adKeys(), clock: clock),
-      clock: clock,
-    ))!;
+    expect(
+      await configureAdMob(
+        pod,
+        config: AdConfig({
+          'dailyReward': const AdPlacement('unit', 'a/b c', '7'),
+          'extraQuiz': const AdPlacement('quiz', 'a/b c', '7'),
+        }),
+        verifier: AdVerifier(loadKeys: () async => adKeys(), clock: clock),
+        clock: clock,
+      ),
+      isNotNull,
+    );
   });
   setUp(() {
     now = DateTime.utc(2026, 10, 19);
@@ -190,18 +191,27 @@ void main() {
   );
 
   test(
-    'real wired HTTP verifies raw crypto, rejects changed query/key/unit/owner/amount',
+    'public API route verifies crypto, rejects changed query/signature/key/unit/owner/amount',
     () async {
       final a = await user();
       final i = await intent(a, 2);
       final query = event(i, tx: '1001');
-      expect(await send(query.replaceFirst('%2f', '%2F')), 400);
-      expect(await send(query.replaceFirst('%63', 'c')), 400);
+      final signature = RegExp(r'signature=([^&]+)').firstMatch(query)!;
+      final tampered = query.replaceFirst(
+        signature.group(0)!,
+        'signature=${signature.group(1)!.substring(0, 20)}'
+        '${signature.group(1)![20] == 'A' ? 'B' : 'A'}'
+        '${signature.group(1)!.substring(21)}',
+      );
+      expect(await send(tampered), 400);
+      expect(await send(query.replaceFirst('%2F', '%2E')), 400);
+      expect(await send(query.replaceFirst('%20c', '%20d')), 400);
       expect(await send(event(i, keyId: 999)), 400);
       expect(await send(event(i, unit: 'other')), 409);
       expect(await send(event(i, owner: 'other')), 409);
       expect(await send(event(i, amount: '9999')), 409);
-      expect(await send(query, path: '/wrong'), 404);
+      // Other paths belong to Serverpod's endpoint dispatcher, not the callback.
+      expect(await send(query, path: '/wrong'), isNot(200));
       expect(await send(query, method: 'POST'), 405);
       expect((await a.client.ads.getIntent(i.id)).status, 'pending');
       expect(await send(query), 200);

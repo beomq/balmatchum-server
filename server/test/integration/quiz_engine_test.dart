@@ -133,7 +133,7 @@ void main() {
       AdConfig({
         'extraQuiz': const AdPlacement('quiz-unit', 'quiz', '1'),
         'dailyReward': const AdPlacement('reward-unit', 'quiz', '1'),
-      }, 0),
+      }),
       AdVerifier(loadKeys: () async => adKeys(), clock: clock),
       clock: clock,
     );

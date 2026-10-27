@@ -249,7 +249,7 @@ void main() {
       AdConfig({
         'dailyReward': const AdPlacement('reward-unit', 'points', '1'),
         'extraQuiz': const AdPlacement('quiz-unit', 'points', '1'),
-      }, 0),
+      }),
       AdVerifier(loadKeys: () async => adKeys(), clock: Clock(() => now)),
       clock: Clock(() => now),
     );

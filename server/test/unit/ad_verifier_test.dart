@@ -106,7 +106,7 @@ void main() {
   test('disabled and partial config fail closed without guessed metadata', () {
     expect(AdConfig.fromPasswords((_) => null), isNull);
     expect(
-      () => AdConfig.fromPasswords((k) => k == 'admobSsvPort' ? '0' : null),
+      () => AdConfig.fromPasswords((k) => k == 'admobPlacements' ? '{}' : null),
       throwsStateError,
     );
   });
