@@ -10,6 +10,9 @@ import 'package:pointycastle/asn1.dart';
 
 class AdKeysUnavailable implements Exception {}
 
+/// Kind of a reward-less request (one without custom_data), for logging only.
+enum AdPing { signatureValid, signatureInvalid, unsigned, emptyQuery }
+
 class AdEvent {
   AdEvent(
     this.owner,
@@ -111,16 +114,44 @@ class AdVerifier {
     return key;
   }
 
+  /// Null when the query carries a non-empty custom_data and must go through
+  /// [verify]. Otherwise it can grant nothing (e.g. the AdMob console's
+  /// "Verify URL" check, whose shape is undocumented), so it is acknowledged
+  /// whatever its signature or parameters; the kind is reported for logging.
+  Future<AdPing?> ping(String raw) async {
+    final parts = raw.split('&');
+    if (parts.any((p) => p.startsWith('custom_data=') && p.length > 12)) {
+      return null;
+    }
+    if (raw.isEmpty) return AdPing.emptyQuery;
+    if (!_signedTail(parts)) return AdPing.unsigned;
+    try {
+      await _checkSignature(parts);
+      return AdPing.signatureValid;
+    } on Exception {
+      return AdPing.signatureInvalid;
+    }
+  }
+
+  static bool _signedTail(List<String> parts) =>
+      parts.length >= 3 &&
+      parts[parts.length - 2].startsWith('signature=') &&
+      RegExp(r'^key_id=[0-9]+$').hasMatch(parts.last);
+
   Future<AdEvent> verify(String raw) async {
     if (raw.length > 16000 || raw.codeUnits.any((c) => c < 33 || c > 126)) {
       throw const FormatException('Invalid query');
     }
     final parts = raw.split('&');
-    if (parts.length < 3 ||
-        !parts[parts.length - 2].startsWith('signature=') ||
-        !RegExp(r'^key_id=[0-9]+$').hasMatch(parts.last)) {
+    if (!_signedTail(parts)) {
       throw const FormatException('Invalid signature placement');
     }
+    await _checkSignature(parts);
+    final signed = parts.take(parts.length - 2).join('&');
+    return _event(parts, signed);
+  }
+
+  Future<void> _checkSignature(List<String> parts) async {
     final signed = parts.take(parts.length - 2).join('&');
     final key = await _key(parts.last.substring(7));
     try {
@@ -153,6 +184,9 @@ class AdVerifier {
     } catch (_) {
       throw const FormatException('Invalid signature');
     }
+  }
+
+  AdEvent _event(List<String> parts, String signed) {
     // Decode only AFTER verification. Reject duplicate/encoded names and unknown
     // fields rather than ambiguously selecting one signed value.
     const names = {

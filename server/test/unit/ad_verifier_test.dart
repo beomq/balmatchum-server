@@ -30,6 +30,17 @@ void main() {
       }
     },
   );
+  test('reward-less request kind; custom_data defers to full verify', () async {
+    final v = AdVerifier(loadKeys: () async => adKeys());
+    const ping = 'ad_unit=1&transaction_id=1';
+    expect(await v.ping(signAd(ping)), AdPing.signatureValid);
+    expect(await v.ping(signAd(ping, keyId: 9)), AdPing.signatureInvalid);
+    expect(await v.ping(ping), AdPing.unsigned);
+    expect(await v.ping(''), AdPing.emptyQuery);
+    expect(await v.ping(signAd('$ping&custom_data=')), AdPing.signatureValid);
+    expect(await v.ping(signAd(raw)), isNull);
+    expect(await v.ping('custom_data=x'), isNull);
+  });
   test(
     'cache refresh coalesces and never uses keys past TTL after failure',
     () async {

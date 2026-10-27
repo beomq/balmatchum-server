@@ -98,7 +98,8 @@ void main() {
     final socket = await Socket.connect('localhost', pod.server.port);
     final response = socket.cast<List<int>>().transform(utf8.decoder).join();
     socket.write(
-      '$method $path?$query HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n',
+      '$method $path${query.isEmpty ? '' : '?$query'} HTTP/1.1\r\n'
+      'Host: localhost\r\nConnection: close\r\n\r\n',
     );
     await socket.flush();
     final text = await response.timeout(const Duration(seconds: 15));
@@ -327,6 +328,57 @@ void main() {
         await PointEntry.db.count(admin, where: (t) => t.owner.equals(a.owner)),
         0,
       );
+    },
+  );
+
+  test(
+    'console Verify URL request without custom_data is 200 and grants nothing',
+    () async {
+      final a = await user();
+      final i = await intent(a, 1);
+      Future<List<int>> counts() async => [
+        await StoredAdIntent.db.count(admin),
+        await PointEntry.db.count(admin),
+        await ProductRequest.db.count(admin),
+      ];
+      final before = await counts();
+      const ping =
+          'ad_network=5450213213286189855&ad_unit=1234567890'
+          '&reward_amount=1&reward_item=Reward&timestamp=1792368000000'
+          '&transaction_id=123456789';
+      final signed = signAd(ping);
+      final signature = RegExp(r'signature=([^&]+)').firstMatch(signed)!;
+      // Without custom_data nothing can be granted, so any shape is 200.
+      for (final query in [
+        signed,
+        signAd('$ping&custom_data=&user_id='),
+        signAd('$ping&user_id=console-test'),
+        signed.replaceFirst(
+          signature.group(0)!,
+          'signature=${signature.group(1)!.substring(0, 20)}'
+          '${signature.group(1)![20] == 'A' ? 'B' : 'A'}'
+          '${signature.group(1)!.substring(21)}',
+        ),
+        signAd(ping, keyId: 999),
+        ping,
+        '$ping&unknown=1',
+        '$ping&reward_amount=2',
+        '',
+      ]) {
+        expect(await send(query), 200, reason: query);
+      }
+      // Carrying custom_data keeps the full verification.
+      for (final query in [
+        'custom_data=${i.customData}',
+        signAd('$ping&custom_data=test&user_id=console-test'),
+      ]) {
+        expect(await send(query), 400, reason: query);
+      }
+      expect(await counts(), before);
+      expect((await a.client.ads.getIntent(i.id)).status, 'pending');
+      // The ping's transaction_id is not consumed by the acknowledgement.
+      expect(await send(event(i, tx: '123456789')), 200);
+      expect((await a.client.ads.getIntent(i.id)).status, 'verified');
     },
   );
 

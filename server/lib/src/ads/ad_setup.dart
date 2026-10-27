@@ -46,6 +46,15 @@ Future<AdService?> configureAdMob(
 /// escapes; Google's canonical encoding is unchanged by that normalization,
 /// and any other encoding fails signature verification (fail closed).
 Future<int> _callback(Serverpod pod, AdService service, String query) async {
+  final ping = await service.verifier.ping(query);
+  if (ping != null) {
+    // No custom_data: grants nothing and touches no ad/reward row. The callback
+    // session below has logging disabled, so record only the kind here.
+    final log = await pod.createSession();
+    log.log('AdMob SSV reward-less request acknowledged: ${ping.name}');
+    await log.close();
+    return 200;
+  }
   final session = await pod.createSession(enableLogging: false);
   try {
     await service.callback(session, query);
