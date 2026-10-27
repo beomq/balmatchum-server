@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_idp_server/core.dart';
 
+import '../config_password.dart';
 import 'kakao_provider.dart';
 import 'kakao_token_verifier.dart';
 import 'social_auth.dart';
@@ -23,18 +24,20 @@ void configureAuth(
   Future<void> Function(Session, UuidValue) cleanupSessions =
       removeOlderSessions,
 }) {
-  audience ??= pod.getPassword('kakaoAudience');
-  issuer ??= pod.getPassword('kakaoIssuer');
-  sessionPepper ??= pod.getPassword('serverSideSessionKeyHashPepper');
+  audience ??= pod.configPassword('kakaoAudience');
+  issuer ??= pod.configPassword('kakaoIssuer');
+  sessionPepper ??= pod.configPassword('serverSideSessionKeyHashPepper');
   // Parse supplied provider settings even when sessions are disabled: partial
   // deployment configuration is an error, never a silently disabled provider.
   final social = SocialAuthSettings.fromPasswords(
-    providerPassword ?? pod.getPassword,
+    providerPassword ?? pod.configPassword,
     sessionsEnabled: sessionPepper != null && sessionPepper.isNotEmpty,
     cleanupSessions: cleanupSessions,
   );
   socialAuthSettings[pod] = social;
-  final naver = NaverConfig.fromPasswords(providerPassword ?? pod.getPassword);
+  final naver = NaverConfig.fromPasswords(
+    providerPassword ?? pod.configPassword,
+  );
   naverSettings[pod] = sessionPepper != null && sessionPepper.isNotEmpty
       ? naver
       : null;

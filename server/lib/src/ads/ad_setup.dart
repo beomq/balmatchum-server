@@ -1,5 +1,6 @@
 import 'package:clock/clock.dart';
 import 'package:serverpod/serverpod.dart';
+import '../config_password.dart';
 import '../generated/protocol.dart';
 import 'ad_config.dart';
 import 'ad_service.dart';
@@ -17,7 +18,7 @@ Future<AdService?> configureAdMob(
   AdVerifier? verifier,
   Clock clock = const Clock(),
 }) async {
-  config ??= AdConfig.fromPasswords(pod.getPassword);
+  config ??= AdConfig.fromPasswords(pod.configPassword);
   if (config == null) return null;
   final service = AdService(
     config,
