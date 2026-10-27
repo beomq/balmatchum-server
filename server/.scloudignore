@@ -16,7 +16,14 @@ config/test.yaml
 
 # Local-only development and test material.
 docker-compose.yaml
-test/
+# scloud matches every file path on its own, so a directory-only rule such as
+# `test/` never excludes the files inside it. Use `dir/**` for directories.
+test/**
+# Local build and dartdoc output (`dart build cli --output build`, dartdoc).
+# .gitignore lists them as `build/` and `doc/api/`, which scloud does not apply
+# to the files inside.
+build/**
+doc/api/**
 
 # Opting out of ignoring generated files.
 !lib/src/generated/**
