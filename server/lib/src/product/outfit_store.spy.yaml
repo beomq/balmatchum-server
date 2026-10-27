@@ -1,0 +1,7 @@
+class: OutfitStore
+fields:
+  items: List<OutfitItem>
+  equippedOutfit: String?
+  breedId: String?
+  balance: int
+  fixtureLabel: String?

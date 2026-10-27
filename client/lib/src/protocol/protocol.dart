@@ -38,6 +38,8 @@ import 'product/daily_quiz.dart' as _i94q6xjz;
 import 'product/daily_record.dart' as _ie37ihl8;
 import 'product/daily_step_input.dart' as _i4z7ptb2;
 import 'product/day_route.dart' as _i7moag3o;
+import 'product/outfit_item.dart' as _ilwrhsef;
+import 'product/outfit_store.dart' as _i7c03me4;
 import 'product/product_exception.dart' as _ixe21ogc;
 import 'product/reward_grant.dart' as _iod7wzhm;
 import 'product/reward_slice.dart' as _ip4tl29k;
@@ -70,6 +72,8 @@ export 'product/daily_quiz.dart';
 export 'product/daily_record.dart';
 export 'product/daily_step_input.dart';
 export 'product/day_route.dart';
+export 'product/outfit_item.dart';
+export 'product/outfit_store.dart';
 export 'product/product_exception.dart';
 export 'product/reward_grant.dart';
 export 'product/reward_slice.dart';
@@ -169,6 +173,12 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _i7moag3o.DayRoute) {
       return _i7moag3o.DayRoute.fromJson(data) as T;
+    }
+    if (t == _ilwrhsef.OutfitItem) {
+      return _ilwrhsef.OutfitItem.fromJson(data) as T;
+    }
+    if (t == _i7c03me4.OutfitStore) {
+      return _i7c03me4.OutfitStore.fromJson(data) as T;
     }
     if (t == _ixe21ogc.ProductException) {
       return _ixe21ogc.ProductException.fromJson(data) as T;
@@ -279,6 +289,12 @@ class Protocol extends _isc.SerializationManager {
     if (t == _isc.getType<_i7moag3o.DayRoute?>()) {
       return (data != null ? _i7moag3o.DayRoute.fromJson(data) : null) as T;
     }
+    if (t == _isc.getType<_ilwrhsef.OutfitItem?>()) {
+      return (data != null ? _ilwrhsef.OutfitItem.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_i7c03me4.OutfitStore?>()) {
+      return (data != null ? _i7c03me4.OutfitStore.fromJson(data) : null) as T;
+    }
     if (t == _isc.getType<_ixe21ogc.ProductException?>()) {
       return (data != null ? _ixe21ogc.ProductException.fromJson(data) : null)
           as T;
@@ -359,6 +375,12 @@ class Protocol extends _isc.SerializationManager {
               .toList()
           as T;
     }
+    if (t == List<_ilwrhsef.OutfitItem>) {
+      return (data as List)
+              .map((e) => deserialize<_ilwrhsef.OutfitItem>(e))
+              .toList()
+          as T;
+    }
     if (t == List<_ip4tl29k.RewardSlice>) {
       return (data as List)
               .map((e) => deserialize<_ip4tl29k.RewardSlice>(e))
@@ -424,6 +446,8 @@ class Protocol extends _isc.SerializationManager {
       _ie37ihl8.DailyRecord => 'DailyRecord',
       _i4z7ptb2.DailyStepInput => 'DailyStepInput',
       _i7moag3o.DayRoute => 'DayRoute',
+      _ilwrhsef.OutfitItem => 'OutfitItem',
+      _i7c03me4.OutfitStore => 'OutfitStore',
       _ixe21ogc.ProductException => 'ProductException',
       _iod7wzhm.RewardGrant => 'RewardGrant',
       _ip4tl29k.RewardSlice => 'RewardSlice',
@@ -486,6 +510,10 @@ class Protocol extends _isc.SerializationManager {
         return 'DailyStepInput';
       case _i7moag3o.DayRoute():
         return 'DayRoute';
+      case _ilwrhsef.OutfitItem():
+        return 'OutfitItem';
+      case _i7c03me4.OutfitStore():
+        return 'OutfitStore';
       case _ixe21ogc.ProductException():
         return 'ProductException';
       case _iod7wzhm.RewardGrant():
@@ -587,6 +615,12 @@ class Protocol extends _isc.SerializationManager {
     }
     if (dataClassName == 'DayRoute') {
       return deserialize<_i7moag3o.DayRoute>(data['data']);
+    }
+    if (dataClassName == 'OutfitItem') {
+      return deserialize<_ilwrhsef.OutfitItem>(data['data']);
+    }
+    if (dataClassName == 'OutfitStore') {
+      return deserialize<_i7c03me4.OutfitStore>(data['data']);
     }
     if (dataClassName == 'ProductException') {
       return deserialize<_ixe21ogc.ProductException>(data['data']);

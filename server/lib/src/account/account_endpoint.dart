@@ -85,6 +85,11 @@ Future<void> deleteAccountData(
     where: (t) => t.owner.equals(owner),
     transaction: tx,
   );
+  await OutfitOwnership.db.deleteWhere(
+    session,
+    where: (t) => t.owner.equals(owner),
+    transaction: tx,
+  );
   await ProductRequest.db.deleteWhere(
     session,
     where: (t) => t.owner.equals(owner),

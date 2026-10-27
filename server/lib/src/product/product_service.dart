@@ -15,6 +15,7 @@ import '../quiz/quiz_bank.dart';
 const productFixtureLabel = 'development-fixture-v1-not-production';
 const stepPolicyVersion = 'steps-v1-20261019';
 const themePurchasePolicyVersion = 'theme-purchase-v1-20261027';
+const outfitPurchasePolicyVersion = 'outfit-purchase-v1-20261027';
 const stepsPerPoint = 100;
 const dailyBaseCap = 100;
 
@@ -174,7 +175,8 @@ class ProductService {
       'SELECT COALESCE(SUM(amount), 0) FROM point_entry '
       'WHERE owner = @owner AND ("policyVersion" = @policy '
       'OR "policyVersion" = @quizPolicy '
-      'OR "policyVersion" = @themePolicy)',
+      'OR "policyVersion" = @themePolicy '
+      'OR "policyVersion" = @outfitPolicy)',
       parameters: QueryParameters.named({
         'owner': owner,
         'policy': fixture ? productFixtureLabel : stepPolicyVersion,
@@ -182,6 +184,9 @@ class ProductService {
         'themePolicy': fixture
             ? productFixtureLabel
             : themePurchasePolicyVersion,
+        'outfitPolicy': fixture
+            ? productFixtureLabel
+            : outfitPurchasePolicyVersion,
       }),
       transaction: tx,
     );

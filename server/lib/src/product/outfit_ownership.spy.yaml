@@ -1,0 +1,11 @@
+class: OutfitOwnership
+serverOnly: true
+table: outfit_ownership
+fields:
+  owner: String
+  outfitId: String
+  purchasedAt: DateTime
+indexes:
+  outfit_ownership_key:
+    fields: owner, outfitId
+    unique: true

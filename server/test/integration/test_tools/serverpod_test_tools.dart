@@ -33,6 +33,8 @@ import 'package:balmatchum_server/src/generated/product/daily_record.dart'
     as _iny5mdqa;
 import 'package:balmatchum_server/src/generated/product/daily_step_input.dart'
     as _if016xvg;
+import 'package:balmatchum_server/src/generated/product/outfit_store.dart'
+    as _iqtb11z9;
 import 'package:balmatchum_server/src/generated/product/reward_grant.dart'
     as _iiyssm1r;
 import 'package:balmatchum_server/src/generated/product/theme_store.dart'
@@ -1545,6 +1547,137 @@ class _ProductEndpoint {
                   _localCallContext.arguments,
                 )
                 as _ida.Future<_idvwz1z2.ThemeStore>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_iqtb11z9.OutfitStore> listOutfits(
+    _ist.TestSessionBuilder sessionBuilder,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'product',
+            method: 'listOutfits',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'product',
+          methodName: 'listOutfits',
+          parameters: _ist.testObjectToJson({}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_iqtb11z9.OutfitStore>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_iqtb11z9.OutfitStore> purchaseOutfit(
+    _ist.TestSessionBuilder sessionBuilder,
+    String outfitId,
+    String requestId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'product',
+            method: 'purchaseOutfit',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'product',
+          methodName: 'purchaseOutfit',
+          parameters: _ist.testObjectToJson({
+            'outfitId': outfitId,
+            'requestId': requestId,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_iqtb11z9.OutfitStore>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_iqtb11z9.OutfitStore> equipOutfit(
+    _ist.TestSessionBuilder sessionBuilder,
+    String outfitId,
+    String requestId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'product',
+            method: 'equipOutfit',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'product',
+          methodName: 'equipOutfit',
+          parameters: _ist.testObjectToJson({
+            'outfitId': outfitId,
+            'requestId': requestId,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_iqtb11z9.OutfitStore>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_iqtb11z9.OutfitStore> unequipOutfit(
+    _ist.TestSessionBuilder sessionBuilder,
+    String requestId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'product',
+            method: 'unequipOutfit',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'product',
+          methodName: 'unequipOutfit',
+          parameters: _ist.testObjectToJson({'requestId': requestId}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_iqtb11z9.OutfitStore>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

@@ -4,6 +4,7 @@ import 'package:serverpod/serverpod.dart';
 
 import '../billing/billing_service.dart';
 import '../generated/protocol.dart';
+import 'outfit_service.dart';
 import 'product_service.dart';
 import 'quiz_theme_service.dart';
 
@@ -118,4 +119,25 @@ class ProductEndpoint extends Endpoint {
     String themeId,
     String requestId,
   ) => ProductService.run(session, (s) => s.equip(themeId, requestId));
+
+  Future<OutfitStore> listOutfits(Session session) =>
+      ProductService.run(session, (s) => s.outfits());
+
+  Future<OutfitStore> purchaseOutfit(
+    Session session,
+    String outfitId,
+    String requestId,
+  ) => ProductService.run(
+    session,
+    (s) => s.purchaseOutfit(outfitId, requestId),
+  );
+
+  Future<OutfitStore> equipOutfit(
+    Session session,
+    String outfitId,
+    String requestId,
+  ) => ProductService.run(session, (s) => s.equipOutfit(outfitId, requestId));
+
+  Future<OutfitStore> unequipOutfit(Session session, String requestId) =>
+      ProductService.run(session, (s) => s.unequipOutfit(requestId));
 }

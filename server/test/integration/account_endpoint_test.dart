@@ -29,6 +29,7 @@ const _ownedTables = [
   'point_entry',
   'quiz_state',
   'theme_ownership',
+  'outfit_ownership',
   'product_request',
   'product_account',
 ];
@@ -157,6 +158,15 @@ void main() {
           ThemeOwnership(
             owner: owner,
             themeId: 'cloudy',
+            purchasedAt: DateTime.utc(2026),
+          ),
+          transaction: s.tx,
+        );
+        await OutfitOwnership.db.insertRow(
+          session,
+          OutfitOwnership(
+            owner: owner,
+            outfitId: 'vest-low-v',
             purchasedAt: DateTime.utc(2026),
           ),
           transaction: s.tx,
