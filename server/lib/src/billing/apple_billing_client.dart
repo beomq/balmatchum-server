@@ -41,9 +41,11 @@ final class AppleBillingClient {
     final host = config.environment == BillingEnvironment.production
         ? 'api.storekit.apple.com'
         : 'api.storekit-sandbox.apple.com';
+    // Both calls look up this purchase; the JWT is signed locally.
     Future<Map<String, dynamic>> get(String path) => _http.send(
       http.Request('GET', Uri.https(host, path))
         ..headers['authorization'] = 'Bearer $jwt',
+      purchaseLookup: true,
     );
     final response = await get('/inApps/v1/transactions/$transactionId');
     var transaction = _decodeTrustedApple(response['signedTransactionInfo']);

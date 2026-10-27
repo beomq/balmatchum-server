@@ -15,9 +15,13 @@ final class _BillingHttp {
   static const timeout = Duration(seconds: 10);
   static const maxBytes = 1024 * 1024;
 
+  /// Only a [purchaseLookup] 404/410 means the store no longer knows the
+  /// purchase; the same status from a token or acknowledgement call is a
+  /// transient failure that says nothing about any purchase.
   Future<Map<String, dynamic>> send(
     http.Request request, {
     bool allowEmpty = false,
+    bool purchaseLookup = false,
   }) async {
     if (request.url.scheme != 'https' ||
         request.url.port != 443 ||
@@ -39,11 +43,10 @@ final class _BillingHttp {
         final response = await client.send(request);
         if (response.statusCode != 200 &&
             !(allowEmpty && response.statusCode == 204)) {
-          throw BillingVerificationException(
-            response.statusCode == 404 || response.statusCode == 410
-                ? BillingFailure.invalidPurchase
-                : BillingFailure.unavailable,
-          );
+          throw purchaseLookup &&
+                  (response.statusCode == 404 || response.statusCode == 410)
+              ? const BillingPurchaseGone()
+              : const BillingVerificationException(BillingFailure.unavailable);
         }
         if ((response.contentLength ?? 0) > maxBytes) {
           _invalid();

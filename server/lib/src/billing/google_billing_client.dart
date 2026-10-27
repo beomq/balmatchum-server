@@ -43,6 +43,7 @@ final class GoogleBillingClient {
     );
     final result = await _http.send(
       http.Request('GET', uri)..headers['authorization'] = 'Bearer $token',
+      purchaseLookup: true,
     );
     final observed = clock.now().toUtc();
     final subscription = kind == BillingProductKind.subscription;

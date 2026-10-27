@@ -306,6 +306,7 @@ class BillingService {
       return (binding: account.binding, sequence: account.sequence, rows: rows);
     });
     BillingVerificationException? unavailable;
+    BillingVerificationException? invalid;
     for (final row in snapshot.rows) {
       if (_environment(row.store).name != row.environment) {
         throw BillingException(code: 'configurationMissing');
@@ -323,29 +324,35 @@ class BillingService {
           ),
           reserved: (binding: snapshot.binding, sequence: snapshot.sequence),
         );
+      } on BillingPurchaseGone {
+        // A reference the store no longer knows is expired, not refunded; the
+        // retained payment record copies this state. Like any expired row it
+        // is queried again, so a misrouted 404 cannot become permanent.
+        await s.db.transaction((tx) async {
+          final account = await _account(s, tx);
+          if (account.binding != snapshot.binding ||
+              account.sequence != snapshot.sequence) {
+            throw BillingException(code: 'staleObservation');
+          }
+          // No store revocation timestamp is invented from a 404/410.
+          await StoredPurchase.db.updateWhere(
+            s,
+            columnValues: (t) => [
+              t.state('expired'),
+              t.sequence(snapshot.sequence),
+              t.observedAt(clock.now().toUtc()),
+              t.acknowledgementPending(false),
+            ],
+            where: (t) => t.id.equals(row.id) & t.owner.equals(_owner(s)),
+            transaction: tx,
+          );
+        });
       } on BillingVerificationException catch (error) {
         switch (error.code) {
           case BillingFailure.invalidPurchase:
-            await s.db.transaction((tx) async {
-              final account = await _account(s, tx);
-              if (account.binding != snapshot.binding ||
-                  account.sequence != snapshot.sequence) {
-                throw BillingException(code: 'staleObservation');
-              }
-              // Revoke local access, not the legal record. No store revocation
-              // timestamp is invented from an invalid-reference response.
-              await StoredPurchase.db.updateWhere(
-                s,
-                columnValues: (t) => [
-                  t.state('revoked'),
-                  t.sequence(snapshot.sequence),
-                  t.observedAt(clock.now().toUtc()),
-                  t.acknowledgementPending(false),
-                ],
-                where: (t) => t.id.equals(row.id) & t.owner.equals(_owner(s)),
-                transaction: tx,
-              );
-            });
+            // A response failing validation proves nothing about the purchase:
+            // keep the stored state and leave the row out of this decision.
+            invalid = error;
           case BillingFailure.unavailable:
             unavailable = error;
           case BillingFailure.configuration:
@@ -353,9 +360,10 @@ class BillingService {
         }
       }
     }
-    if (unavailable != null &&
+    final failure = unavailable ?? invalid;
+    if (failure != null &&
         !(await _view(s, sequence: snapshot.sequence)).active) {
-      throw unavailable;
+      throw failure;
     }
     return BillingBenefit._(
       this,
