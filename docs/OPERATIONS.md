@@ -175,8 +175,13 @@ reward item은 공백과 `~`가 없는 ASCII(예: `daily_reward`, `extra_quiz`)�
 
 ### 운영 퀴즈 팩 (todo 20 승인 대기)
 
-이 변경은 팩을 추가하거나 콘텐츠 승인을 대신하지 않습니다. 실제 검토한 `kind: "reviewed"`
-팩을 저장소 기준 `server/assets/quiz/reviewed-v1.json`에 넣는 작업은 todo 20입니다.
+저장소 기준 `server/assets/quiz/reviewed-v1.json`에 110문항 후보 팩을 준비했습니다.
+입력 `quiz-decisions.ai-draft.json`은 소유자의 실제 검토 확인 전입니다.
+검토자 `이범석`·검토일 `2026-10-27`·승인 110개·수정 필요 10개는 후보 입력의 표기이며
+콘텐츠 승인 증거가 아닙니다. 소유자 확인 전에는 push·PR·변수 설정·배포하지 않습니다.
+확인 시 후보 파일 SHA-256
+`35756fc9ce1d1dc5469adc8f825cc64ed271c3802a4d903eda7f563e526d7b04`와
+문항별 결정이 실제 검토 결과와 일치하는지 대조합니다. 수정 필요 10문항은 포함하지 않았습니다.
 [팩 형식과 버전 규칙](QUIZ_ENGINE_API.md)을 따릅니다.
 
 공식 [비 Dart 파일 가이드](https://docs.serverpod.dev/cloud/guides/ship-non-dart-files)의
@@ -202,6 +207,11 @@ FileSystemException → JSON/검토 필드 오류·testFixture 운영 사용이�
 동일 개정 충돌과 DB migration 확인. 이미 본 모든 ID는 `exhausted`로 구분합니다.
 업로드 목록 확인은 소유자 인증 후 `scloud deploy --wet-run --show-files`로 수행하며
 `assets/quiz/reviewed-v1.json` 포함과 `config/passwords.yaml`, `test/` 제외를 확인합니다.
+검토 확인 후 별도 승인으로 push·PR·병합을 진행하고, 위 Cloud 변수를 설정한 뒤
+승인된 릴리스에서 재배포합니다. 전용 퀴즈 팩 로드 성공 로그는 현재 없습니다.
+실제 로그인 토큰을 사용한 생성 클라이언트 `client.quiz.getToday()`에서
+`status == ready`, 무료 문항의 `fixtureLabel == null`을 확인합니다.
+제출 뒤 응답에서 해설·HTTPS 출처를 확인하고 토큰은 증거 파일에 남기지 않습니다.
 
 ## 7. 알려진 운영 제약
 
