@@ -15,6 +15,8 @@ import 'dart:async' as _ida;
 import 'dart:io' as _idi;
 import 'package:balmatchum_server/src/generated/ads/ad_intent.dart'
     as _ilwsi9fk;
+import 'package:balmatchum_server/src/generated/ads/ad_platform.dart'
+    as _imu3y5cy;
 import 'package:balmatchum_server/src/generated/auth/login_challenge.dart'
     as _i7mkon7c;
 import 'package:balmatchum_server/src/generated/auth/naver_login_challenge.dart'
@@ -331,6 +333,7 @@ class _AdsEndpoint {
     String purpose,
     String targetDate,
     int targetRevision,
+    _imu3y5cy.AdPlatform platform,
   ) async {
     return _ist.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -347,6 +350,7 @@ class _AdsEndpoint {
             'purpose': purpose,
             'targetDate': targetDate,
             'targetRevision': targetRevision,
+            'platform': platform,
           }),
           serializationManager: _serializationManager,
         );

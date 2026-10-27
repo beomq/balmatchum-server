@@ -26,6 +26,11 @@ class _Token implements api.ClientAuthKeyProvider {
   Future<String?> get authHeaderValue async => 'Bearer $token';
 }
 
+const iosDaily = 'ca-app-pub-0000000000000001/1000000001';
+const androidDaily = 'ca-app-pub-0000000000000001/1000000002';
+const iosQuiz = 'ca-app-pub-0000000000000001/2000000001';
+const androidQuiz = 'ca-app-pub-0000000000000001/2000000002';
+
 void main() {
   late Directory directory;
   late Serverpod pod;
@@ -54,8 +59,9 @@ void main() {
 
   Future<api.AdIntent> intent(
     ({api.Client client, Session session, String owner}) u,
-    int revision,
-  ) async {
+    int revision, {
+    api.AdPlatform platform = api.AdPlatform.ios,
+  }) async {
     await ProductEndpoint().registerStepStream(u.session, 'register', 0);
     for (var r = 1; r <= revision; r++) {
       await withClock(
@@ -75,7 +81,12 @@ void main() {
         ),
       );
     }
-    return u.client.ads.createIntent('dailyReward', '2026-10-19', revision);
+    return u.client.ads.createIntent(
+      'dailyReward',
+      '2026-10-19',
+      revision,
+      platform,
+    );
   }
 
   // Raw socket: send the exact request line to the public API server port.
@@ -135,8 +146,22 @@ void main() {
       await configureAdMob(
         pod,
         config: AdConfig({
-          'dailyReward': const AdPlacement('unit', 'a/b c', '7'),
-          'extraQuiz': const AdPlacement('quiz', 'a/b c', '7'),
+          'dailyReward': const AdPlacement(
+            (
+              ios: iosDaily,
+              android: androidDaily,
+            ),
+            'a/b c',
+            '7',
+          ),
+          'extraQuiz': const AdPlacement(
+            (
+              ios: iosQuiz,
+              android: androidQuiz,
+            ),
+            'a/b c',
+            '7',
+          ),
         }),
         verifier: AdVerifier(loadKeys: () async => adKeys(), clock: clock),
         clock: clock,
@@ -159,6 +184,83 @@ void main() {
     await directory.delete(recursive: true);
   });
 
+  Future<int> claimWithAd(Session session, String intentId) async {
+    try {
+      final grant = await withClock(
+        Clock(() => now),
+        () => ProductEndpoint().claimDayWithAd(
+          session,
+          '2026-10-19',
+          'claim-$intentId',
+          1,
+          intentId,
+        ),
+      );
+      return grant.amount;
+    } on AdException {
+      return 0;
+    }
+  }
+
+  for (final (platform, unit, otherPlatformUnit) in [
+    (api.AdPlatform.ios, iosDaily, androidDaily),
+    (api.AdPlatform.android, androidDaily, iosDaily),
+  ]) {
+    test('${platform.name} unit SSV rewards exactly once; other purpose, '
+        'other platform and unknown units are rejected', () async {
+      final a = await user();
+      final i = await intent(a, 1, platform: platform);
+      expect(i.adUnit, unit);
+      final rejected = [
+        event(i, tx: '${platform.index}a1', unit: otherPlatformUnit),
+        event(
+          i,
+          tx: '${platform.index}a2',
+          unit: otherPlatformUnit.split('/').last,
+        ),
+        event(i, tx: '${platform.index}a3', unit: iosQuiz),
+        event(i, tx: '${platform.index}a4', unit: androidQuiz.split('/').last),
+        event(
+          i,
+          tx: '${platform.index}a5',
+          unit: 'ca-app-pub-0000000000000001/9999999999',
+        ),
+      ];
+      for (final query in rejected) {
+        expect(await send(query), 409);
+      }
+      expect((await a.client.ads.getIntent(i.id)).status, 'pending');
+      expect(await claimWithAd(a.session, i.id), 0);
+      // Google's SSV ad_unit is the numeric unit ID after the slash.
+      final accepted = event(
+        i,
+        tx: '${platform.index}b1',
+        unit: unit.split('/').last,
+      );
+      expect(await send(accepted), 200);
+      expect(await send(accepted), 200);
+      expect(await send(event(i, tx: '${platform.index}b2')), 409);
+      expect(await claimWithAd(a.session, i.id), 140);
+      expect(await claimWithAd(a.session, i.id), 140);
+      expect((await a.client.product.getWallet()).balance, 140);
+      expect((await a.client.ads.getIntent(i.id)).status, 'consumed');
+    });
+  }
+
+  test('switching platform rebinds a pending intent to that unit', () async {
+    final a = await user();
+    final i = await intent(a, 1);
+    expect(i.adUnit, iosDaily);
+    final j = await intent(a, 1, platform: api.AdPlatform.android);
+    expect(j.id, i.id);
+    expect(j.adUnit, androidDaily);
+    expect(await send(event(i, tx: 'c1', unit: iosDaily)), 409);
+    expect(await send(event(j, tx: 'c2')), 200);
+    final k = await intent(a, 1);
+    expect(k.adUnit, androidDaily);
+    expect(k.status, 'verified');
+  });
+
   test(
     'authenticated create/get binds owner and repeated target; no client verification',
     () async {
@@ -167,7 +269,12 @@ void main() {
       final anonymous = api.Client('http://localhost:${pod.server.port}/');
       clients.add(anonymous);
       await expectLater(
-        anonymous.ads.createIntent('dailyReward', '2026-10-19', 1),
+        anonymous.ads.createIntent(
+          'dailyReward',
+          '2026-10-19',
+          1,
+          api.AdPlatform.ios,
+        ),
         throwsA(isA<api.ServerpodClientUnauthorized>()),
       );
       final intents = await Future.wait(
@@ -281,7 +388,12 @@ void main() {
       expect(await send(event(j, tx: '3002', at: j.createdAt)), 409);
       expect((await b.client.ads.getIntent(j.id)).status, 'expired');
       expect(
-        (await b.client.ads.createIntent('dailyReward', '2026-10-19', 1)).id,
+        (await b.client.ads.createIntent(
+          'dailyReward',
+          '2026-10-19',
+          1,
+          api.AdPlatform.ios,
+        )).id,
         j.id,
       );
     },
@@ -338,7 +450,13 @@ void main() {
       );
       expect(await send(query), 409);
       await expectLater(
-        AdsEndpoint().createIntent(a.session, 'dailyReward', '2026-10-19', 6),
+        AdsEndpoint().createIntent(
+          a.session,
+          'dailyReward',
+          '2026-10-19',
+          6,
+          AdPlatform.ios,
+        ),
         throwsA(isA<NotAuthorizedException>()),
       );
       expect(
@@ -379,7 +497,13 @@ void main() {
       );
       final callback = send(event(i, tx: '5001'));
       final stale = expectLater(
-        AdsEndpoint().createIntent(a.session, 'dailyReward', '2026-10-19', 8),
+        AdsEndpoint().createIntent(
+          a.session,
+          'dailyReward',
+          '2026-10-19',
+          8,
+          AdPlatform.ios,
+        ),
         throwsA(isA<NotAuthorizedException>()),
       );
       release.complete();
@@ -480,7 +604,12 @@ void main() {
     final a = await user();
     final b = await user();
     await expectLater(
-      a.client.ads.createIntent('dailyReward', '2026-10-19', 1),
+      a.client.ads.createIntent(
+        'dailyReward',
+        '2026-10-19',
+        1,
+        api.AdPlatform.ios,
+      ),
       throwsA(
         isA<api.ProductException>().having(
           (e) => e.code,
@@ -490,7 +619,12 @@ void main() {
       ),
     );
     await expectLater(
-      a.client.ads.createIntent('extraQuiz', '2026-10-19', 0),
+      a.client.ads.createIntent(
+        'extraQuiz',
+        '2026-10-19',
+        0,
+        api.AdPlatform.ios,
+      ),
       throwsA(
         isA<api.ProductException>().having(
           (e) => e.code,
@@ -500,7 +634,12 @@ void main() {
       ),
     );
     await expectLater(
-      a.client.ads.createIntent('dailyReward', '2026-10-20', 1),
+      a.client.ads.createIntent(
+        'dailyReward',
+        '2026-10-20',
+        1,
+        api.AdPlatform.ios,
+      ),
       throwsA(
         isA<api.AdException>().having((e) => e.code, 'code', 'invalidTarget'),
       ),
@@ -564,11 +703,21 @@ void main() {
     );
     expect((await a.client.ads.getIntent(i.id)).status, 'verified');
     expect(
-      (await a.client.ads.createIntent('dailyReward', '2026-10-19', 1)).id,
+      (await a.client.ads.createIntent(
+        'dailyReward',
+        '2026-10-19',
+        1,
+        api.AdPlatform.ios,
+      )).id,
       i.id,
     );
     await expectLater(
-      a.client.ads.createIntent('dailyReward', '2026-10-19', 2),
+      a.client.ads.createIntent(
+        'dailyReward',
+        '2026-10-19',
+        2,
+        api.AdPlatform.ios,
+      ),
       throwsA(
         isA<api.ProductException>().having(
           (e) => e.code,
@@ -672,6 +821,7 @@ void main() {
           'dailyReward',
           '2026-10-19',
           day.revision,
+          api.AdPlatform.android,
         );
         expect(await send(event(i, tx: '6004')), 200);
         final grant = await endpoint.claimDayWithAd(

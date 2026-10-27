@@ -20,19 +20,33 @@ AdMob SSV의 선택 설정과 공개 API 서버의 `/admob/ssv` 콜백 경로는
 
 첫 출시에는 보상형 광고와 인앱 결제가 포함되므로 Cloud 운영에서
 `admobPlacements`, 결제 공통 키와 Apple/Google 결제 묶음은 필수입니다.
-`admobPlacements`의 정확한 구조는 목적별 단일 객체입니다:
+`admobPlacements`의 정확한 구조는 목적별 iOS/Android 단위 객체입니다:
 
 ```json
 {
-  "dailyReward": {"adUnit": "CONSOLE_AD_UNIT", "rewardItem": "daily_reward", "rewardAmount": "1"},
-  "extraQuiz": {"adUnit": "CONSOLE_AD_UNIT", "rewardItem": "extra_quiz", "rewardAmount": "1"}
+  "dailyReward": {
+    "adUnits": {
+      "ios": "ca-app-pub-<게시자 16자리>/<iOS dailyReward 단위 10자리>",
+      "android": "ca-app-pub-<게시자 16자리>/<Android dailyReward 단위 10자리>"
+    },
+    "rewardItem": "daily_reward",
+    "rewardAmount": "1"
+  },
+  "extraQuiz": {
+    "adUnits": {
+      "ios": "ca-app-pub-<게시자 16자리>/<iOS extraQuiz 단위 10자리>",
+      "android": "ca-app-pub-<게시자 16자리>/<Android extraQuiz 단위 10자리>"
+    },
+    "rewardItem": "extra_quiz",
+    "rewardAmount": "1"
+  }
 }
 ```
 
 이 JSON은 형식 예시이며 실제 콘솔 값을 비밀 파일에 준비합니다. 수량도 문자열입니다.
-`ad_config.dart`에는 Android/iOS 구분 키나 배열 지원이 없으며 목적당 ad unit 하나입니다.
-콘솔에서는 플랫폼별 보상형 단위를 준비하되 이 설정에 플랫폼별 객체를 임의로 넣지 않습니다.
-두 플랫폼 동시 운영에는 별도 계약 변경·검증이 필요합니다.
+`adUnits`에는 `ios`·`android` 전체 ID(`ca-app-pub-<16자리>/<10자리>`)가 모두 필요하고,
+`/` 뒤 숫자 ID는 모든 목적·플랫폼에서 서로 달라야 합니다. 예전 `adUnit` 단일 키나
+형식 오류는 기동 오류입니다. 세부 규칙은 [AdMob SSV 인텐트 기반](ADMOB_SSV_API.md)을 따릅니다.
 SSV URL은 `https://balmatchum-prod.api.serverpod.space/admob/ssv`입니다.
 reward item은 공백과 `~`가 없는 ASCII로 정합니다. 비정규 인코딩은 400으로
 fail closed됩니다(todo 17). 파일 기반 입력 도우미와 운영 점검은

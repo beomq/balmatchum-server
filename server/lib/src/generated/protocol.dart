@@ -25,6 +25,7 @@ import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
     as _iais;
 import 'ads/ad_exception.dart' as _i8mgtt64;
 import 'ads/ad_intent.dart' as _i5ffg0dz;
+import 'ads/ad_platform.dart' as _ijoh8voo;
 import 'ads/stored_ad_intent.dart' as _ierwdq6g;
 import 'auth/external_identity.dart' as _i8thru7x;
 import 'auth/login_attempt.dart' as _i1apu3f2;
@@ -80,6 +81,7 @@ import 'records/route_point.dart' as _ir7rvxr1;
 import 'records/stored_gps_record.dart' as _iyylbrve;
 export 'ads/ad_exception.dart';
 export 'ads/ad_intent.dart';
+export 'ads/ad_platform.dart';
 export 'ads/stored_ad_intent.dart';
 export 'auth/external_identity.dart';
 export 'auth/login_attempt.dart';
@@ -1781,6 +1783,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _i5ffg0dz.AdIntent) {
       return _i5ffg0dz.AdIntent.fromJson(data) as T;
     }
+    if (t == _ijoh8voo.AdPlatform) {
+      return _ijoh8voo.AdPlatform.fromJson(data) as T;
+    }
     if (t == _ierwdq6g.StoredAdIntent) {
       return _ierwdq6g.StoredAdIntent.fromJson(data) as T;
     }
@@ -1945,6 +1950,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (t == _is.getType<_i5ffg0dz.AdIntent?>()) {
       return (data != null ? _i5ffg0dz.AdIntent.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_ijoh8voo.AdPlatform?>()) {
+      return (data != null ? _ijoh8voo.AdPlatform.fromJson(data) : null) as T;
     }
     if (t == _is.getType<_ierwdq6g.StoredAdIntent?>()) {
       return (data != null ? _ierwdq6g.StoredAdIntent.fromJson(data) : null)
@@ -2231,6 +2239,7 @@ class Protocol extends _is.DatabaseSerializationManager {
     return switch (type) {
       _i8mgtt64.AdException => 'AdException',
       _i5ffg0dz.AdIntent => 'AdIntent',
+      _ijoh8voo.AdPlatform => 'AdPlatform',
       _ierwdq6g.StoredAdIntent => 'StoredAdIntent',
       _i8thru7x.ExternalIdentity => 'ExternalIdentity',
       _i1apu3f2.LoginAttempt => 'LoginAttempt',
@@ -2302,6 +2311,8 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'AdException';
       case _i5ffg0dz.AdIntent():
         return 'AdIntent';
+      case _ijoh8voo.AdPlatform():
+        return 'AdPlatform';
       case _ierwdq6g.StoredAdIntent():
         return 'StoredAdIntent';
       case _i8thru7x.ExternalIdentity():
@@ -2439,6 +2450,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (dataClassName == 'AdIntent') {
       return deserialize<_i5ffg0dz.AdIntent>(data['data']);
+    }
+    if (dataClassName == 'AdPlatform') {
+      return deserialize<_ijoh8voo.AdPlatform>(data['data']);
     }
     if (dataClassName == 'StoredAdIntent') {
       return deserialize<_ierwdq6g.StoredAdIntent>(data['data']);

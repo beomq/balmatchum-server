@@ -18,9 +18,12 @@ class AdsEndpoint extends Endpoint {
     String purpose,
     String targetDate,
     int targetRevision,
+    AdPlatform platform,
   ) => ProductService.run(
     session,
-    (s) => _service(session).create(s, purpose, targetDate, targetRevision),
+    (s) => _service(
+      session,
+    ).create(s, purpose, targetDate, targetRevision, platform),
   );
 
   Future<AdIntent> getIntent(Session session, String intentId) =>

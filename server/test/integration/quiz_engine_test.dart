@@ -91,7 +91,13 @@ void main() {
 
   Future<AdIntent> verified(Session s, QuizToday t) async {
     final i = await at(
-      () => adEndpoint.createIntent(s, 'extraQuiz', t.date, t.extraRevision!),
+      () => adEndpoint.createIntent(
+        s,
+        'extraQuiz',
+        t.date,
+        t.extraRevision!,
+        AdPlatform.ios,
+      ),
     );
     await ads.callback(
       admin,
@@ -131,8 +137,22 @@ void main() {
     final clock = Clock(() => now);
     ads = AdService(
       AdConfig({
-        'extraQuiz': const AdPlacement('quiz-unit', 'quiz', '1'),
-        'dailyReward': const AdPlacement('reward-unit', 'quiz', '1'),
+        'extraQuiz': const AdPlacement(
+          (
+            ios: 'ca-app-pub-0000000000000001/2000000001',
+            android: 'ca-app-pub-0000000000000001/2000000002',
+          ),
+          'quiz',
+          '1',
+        ),
+        'dailyReward': const AdPlacement(
+          (
+            ios: 'ca-app-pub-0000000000000001/1000000001',
+            android: 'ca-app-pub-0000000000000001/1000000002',
+          ),
+          'quiz',
+          '1',
+        ),
       }),
       AdVerifier(loadKeys: () async => adKeys(), clock: clock),
       clock: clock,
@@ -218,6 +238,7 @@ void main() {
         'extraQuiz',
         today.date,
         today.extraRevision!,
+        api.AdPlatform.ios,
       );
       await ads.callback(
         admin,
@@ -267,6 +288,7 @@ void main() {
             'extraQuiz',
             initial.first.date,
             free.assignmentId,
+            AdPlatform.ios,
           ),
         ),
         error('freeRequired'),
@@ -323,6 +345,7 @@ void main() {
             'extraQuiz',
             t.date,
             t.extraRevision!,
+            AdPlatform.ios,
           ),
         ),
         error('dailyLimitReached'),
@@ -484,6 +507,7 @@ void main() {
             'extraQuiz',
             t.date,
             t.extraRevision!,
+            AdPlatform.ios,
           ),
         ),
         error('quizClosed'),
@@ -525,6 +549,7 @@ void main() {
             'extraQuiz',
             t.date,
             t.free!.assignmentId,
+            AdPlatform.ios,
           ),
         ),
         error('exhausted'),
@@ -593,6 +618,7 @@ void main() {
             'extraQuiz',
             t.date,
             t.extraRevision! + 1,
+            AdPlatform.ios,
           ),
         ),
         error('staleProjection'),
@@ -603,6 +629,7 @@ void main() {
           'extraQuiz',
           t.date,
           t.extraRevision!,
+          AdPlatform.ios,
         ),
       );
       await expectLater(
@@ -718,7 +745,13 @@ void main() {
       ),
     );
     final reward = await at(
-      () => adEndpoint.createIntent(a.session, 'dailyReward', t.date, 1),
+      () => adEndpoint.createIntent(
+        a.session,
+        'dailyReward',
+        t.date,
+        1,
+        AdPlatform.android,
+      ),
     );
     await ads.callback(
       admin,

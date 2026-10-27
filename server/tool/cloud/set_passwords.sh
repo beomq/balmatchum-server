@@ -51,6 +51,9 @@ entries=(
   billingGoogle:billingGooglePrivateKey
   billingGoogle:billingGoogleEnvironment
   billingGoogle:billingGoogleProducts
+  # JSON per purpose: {"adUnits":{"ios":"ca-app-pub-.../...","android":"ca-app-pub-.../..."},
+  # "rewardItem":"...","rewardAmount":"..."}. The server validates it at startup;
+  # see docs/OPERATIONS.md (AdMob section) for the exact shape.
   admob:admobPlacements
 )
 

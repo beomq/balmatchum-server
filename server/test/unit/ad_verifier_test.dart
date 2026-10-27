@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:balmatchum_server/src/ads/ad_verifier.dart';
 import 'package:balmatchum_server/src/ads/ad_config.dart';
+import 'package:balmatchum_server/src/generated/protocol.dart';
 import 'package:clock/clock.dart';
 import 'package:test/test.dart';
 import '../test_utils/ad_test_keys.dart';
@@ -109,5 +111,49 @@ void main() {
       () => AdConfig.fromPasswords((k) => k == 'admobPlacements' ? '{}' : null),
       throwsStateError,
     );
+  });
+  const ios = 'ca-app-pub-0000000000000001/1000000001';
+  const android = 'ca-app-pub-0000000000000001/1000000002';
+  String placement({Object? adUnits, Object? extra}) => jsonEncode({
+    'dailyReward': {
+      'adUnits': adUnits ?? {'ios': ios, 'android': android},
+      'rewardItem': 'daily_reward',
+      'rewardAmount': '1',
+      ...?(extra as Map<String, Object>?),
+    },
+  });
+  AdConfig? parse(String json) =>
+      AdConfig.fromPasswords((k) => k == 'admobPlacements' ? json : null);
+  test('per-platform placement selects the unit of the requested platform', () {
+    final p = parse(placement())!.placements['dailyReward']!;
+    expect(p.unit(AdPlatform.ios), ios);
+    expect(p.unit(AdPlatform.android), android);
+    expect(p.rewardItem, 'daily_reward');
+    expect(p.rewardAmount, '1');
+  });
+  test('malformed per-platform config fails fast at startup', () {
+    for (final json in [
+      'not json',
+      jsonEncode({
+        'dailyReward': {
+          'adUnit': ios,
+          'rewardItem': 'daily_reward',
+          'rewardAmount': '1',
+        },
+      }),
+      placement(adUnits: {'ios': ios}),
+      placement(adUnits: {'ios': ios, 'android': android, 'web': android}),
+      placement(adUnits: {'ios': ios, 'android': ''}),
+      placement(adUnits: {'ios': ios, 'android': '1000000002'}),
+      placement(adUnits: {'ios': ios, 'android': ios}),
+      placement(extra: {'adUnit': ios}),
+      jsonEncode({
+        'dailyReward': jsonDecode(placement())['dailyReward'],
+        'extraQuiz': jsonDecode(placement())['dailyReward'],
+      }),
+      jsonEncode({'otherPurpose': jsonDecode(placement())['dailyReward']}),
+    ]) {
+      expect(() => parse(json), throwsStateError, reason: json);
+    }
   });
 }
