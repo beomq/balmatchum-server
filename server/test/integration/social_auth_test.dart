@@ -299,6 +299,35 @@ void main() {
     setUpAll(() => start(configured: true));
     tearDownAll(stop);
 
+    test('Apple credential SQL failure is sanitized over HTTP', () async {
+      // Given: a real constraint failure embeds the refresh token in PostgreSQL.
+      await admin.db.unsafeExecute(
+        'ALTER TABLE serverpod_auth_idp_apple_account '
+        'ADD CONSTRAINT test_apple_secret_guard CHECK (false)',
+      );
+      final before = await AuthUser.db.count(admin);
+      try {
+        // When.
+        await expectLater(
+          apple('private-apple-credential-marker'),
+          throwsA(
+            isA<api.LoginException>().having(
+              (e) => e.code,
+              'code',
+              'temporarilyUnavailable',
+            ),
+          ),
+        );
+        // Then: the failed SDK transaction creates no user.
+        expect(await AuthUser.db.count(admin), before);
+      } finally {
+        await admin.db.unsafeExecute(
+          'ALTER TABLE serverpod_auth_idp_apple_account '
+          'DROP CONSTRAINT test_apple_secret_guard',
+        );
+      }
+    });
+
     test('invalid tokens cannot create accounts or sessions', () async {
       expect(await client().googleIdp.isConfigured(), true);
       expect(await client().appleIdp.isConfigured(), true);
