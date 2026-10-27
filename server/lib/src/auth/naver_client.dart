@@ -48,6 +48,7 @@ class NaverClient {
   Future<http.Response> _request(
     String path, {
     Map<String, String>? fields,
+    Duration timeout = const Duration(seconds: 10),
   }) async {
     final client = http.Client();
     try {
@@ -58,7 +59,7 @@ class NaverClient {
       if (fields != null) request.bodyFields = fields;
       return await (() async => http.Response.fromStream(
         await client.send(request),
-      ))().timeout(const Duration(seconds: 10));
+      ))().timeout(timeout);
     } finally {
       client.close();
     }
@@ -116,12 +117,16 @@ class NaverClient {
     }
   }
 
-  Future<void> revoke(String refreshToken) async {
+  Future<void> revoke(
+    String refreshToken, {
+    Duration timeout = const Duration(seconds: 10),
+  }) async {
     try {
       // The OIDC discovery endpoint is /oauth2/revoke, not the legacy
       // /oauth2.0/revoke documented for OAuth-only applications.
       final response = await _request(
         '/oauth2/revoke',
+        timeout: timeout,
         fields: {
           'client_id': config.clientId,
           'client_secret': config.clientSecret,
