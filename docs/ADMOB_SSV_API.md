@@ -140,9 +140,11 @@ Google timestamp 단위는 **epoch milliseconds**입니다.
 - custom_data가 **없거나 빈 값**인 요청은 서명·파라미터와 관계없이 200입니다. 서명이 유효하든 틀리든(모르는
   key_id 포함), 서명이 없든, 파라미터 없는 GET이든 같습니다. 이런 요청은 보상과 연결될 수 없으므로 서명 검사가
   보안을 더하지 않고, 확인 요청 형태가 문서에 없어 규칙을 엄격하게 하면 콘솔 확인이 다시 실패할 수 있습니다.
-  광고 인텐트·원장 행은 읽거나 쓰지 않으며, 종류만 info 세션 로그 한 줄로 남깁니다(값 미기록):
-  `AdMob SSV reward-less request acknowledged: signatureValid | signatureInvalid | unsigned | emptyQuery`.
-  서명 꼬리가 있으면 종류를 정하려고 서명을 검사하므로 gstatic 키를 가져올 수 있습니다. 키 장애도 signatureInvalid로 200입니다.
+  미들웨어가 Session/DB 생성 전에 200을 결정하며 DB를 전혀 사용하지 않습니다. 프레임워크 전역 로거에
+  `AdMob SSV reward-less request acknowledged: <kind>` info 한 줄과 `kind` 메타데이터만 남깁니다(요청 값 미기록).
+  종류는 signatureValid / signatureInvalid / unsigned / emptyQuery입니다.
+  길이 16000자 초과 또는 ASCII 33~126 밖 문자는 signatureInvalid로 기록하고 키 fetch 없이 200입니다.
+  그 밖에 서명 꼬리가 있으면 종류를 정하려고 gstatic 키를 가져올 수 있습니다. 키 장애도 signatureInvalid로 200입니다.
 - custom_data가 비어 있지 않은 요청은 이전과 같습니다. 서명이 필수이고 400/409/410/503/200 규칙도 그대로입니다.
   따라서 확인 요청에는 custom_data를 입력하지 않습니다. 입력하면 형식 오류 400 또는 없는 인텐트 409입니다.
 

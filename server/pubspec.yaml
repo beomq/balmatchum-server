@@ -8,6 +8,7 @@ environment:
 
 dependencies:
   serverpod: 4.0.3
+  serverpod_shared: 4.0.3
   serverpod_auth_core_server: 4.0.3
   serverpod_auth_idp_server: 4.0.3
   sign_in_with_apple_server: 1.0.0

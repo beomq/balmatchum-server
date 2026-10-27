@@ -41,6 +41,32 @@ void main() {
     expect(await v.ping(signAd(raw)), isNull);
     expect(await v.ping('custom_data=x'), isNull);
   });
+  for (final query in [
+    'ad_unit=${'a' * 16000}&signature=AA&key_id=1',
+    'ad_unit=a b&signature=AA&key_id=1',
+    'ad_unit=a\u0000b&signature=AA&key_id=1',
+    'ad_unit=a\u007fb&signature=AA&key_id=1',
+    'ad_unit=한글&signature=AA&key_id=1',
+  ]) {
+    test(
+      'invalid local ping input skips key fetch (${query.length})',
+      () async {
+        // Given: a cold verifier whose key fetch is observable.
+        var fetches = 0;
+        final v = AdVerifier(
+          loadKeys: () async {
+            fetches++;
+            return adKeys();
+          },
+        );
+        // When: classify an oversized or malformed signed ping.
+        final kind = await v.ping(query);
+        // Then: acknowledge as invalid without making an external request.
+        expect(kind, AdPing.signatureInvalid);
+        expect(fetches, 0);
+      },
+    );
+  }
   test(
     'cache refresh coalesces and never uses keys past TTL after failure',
     () async {

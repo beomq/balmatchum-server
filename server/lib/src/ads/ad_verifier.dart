@@ -123,6 +123,9 @@ class AdVerifier {
     if (parts.any((p) => p.startsWith('custom_data=') && p.length > 12)) {
       return null;
     }
+    if (raw.length > 16000 || raw.codeUnits.any((c) => c < 33 || c > 126)) {
+      return AdPing.signatureInvalid;
+    }
     if (raw.isEmpty) return AdPing.emptyQuery;
     if (!_signedTail(parts)) return AdPing.unsigned;
     try {

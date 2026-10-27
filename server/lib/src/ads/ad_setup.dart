@@ -1,5 +1,6 @@
 import 'package:clock/clock.dart';
 import 'package:serverpod/serverpod.dart';
+import 'package:serverpod_shared/log.dart' as shared;
 import '../config_password.dart';
 import '../generated/protocol.dart';
 import 'ad_config.dart';
@@ -33,6 +34,15 @@ Future<AdService?> configureAdMob(
         return next(request);
       }
       if (request.method != Method.get) return Response(405);
+      final ping = await active.verifier.ping(request.url.query);
+      if (ping != null) {
+        // Framework logger: no Session, database acquisition or DB log writes.
+        shared.log.info(
+          'AdMob SSV reward-less request acknowledged: ${ping.name}',
+          metadata: {'kind': ping.name},
+        );
+        return Response(200);
+      }
       return Response(await _callback(pod, active, request.url.query));
     },
   );
@@ -46,15 +56,6 @@ Future<AdService?> configureAdMob(
 /// escapes; Google's canonical encoding is unchanged by that normalization,
 /// and any other encoding fails signature verification (fail closed).
 Future<int> _callback(Serverpod pod, AdService service, String query) async {
-  final ping = await service.verifier.ping(query);
-  if (ping != null) {
-    // No custom_data: grants nothing and touches no ad/reward row. The callback
-    // session below has logging disabled, so record only the kind here.
-    final log = await pod.createSession();
-    log.log('AdMob SSV reward-less request acknowledged: ${ping.name}');
-    await log.close();
-    return 200;
-  }
   final session = await pod.createSession(enableLogging: false);
   try {
     await service.callback(session, query);

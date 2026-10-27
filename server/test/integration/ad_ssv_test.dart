@@ -35,6 +35,8 @@ void main() {
   late Directory directory;
   late Serverpod pod;
   late Session admin;
+  var observeDatabaseAccess = false;
+  var databaseAccesses = 0;
   var now = DateTime.utc(2026, 10, 19);
   final clients = <api.Client>[];
   final sessions = <Session>[];
@@ -127,6 +129,10 @@ void main() {
     directory = await Directory.systemTemp.createTemp('ad-');
     pod = generated.Serverpod(
       ['--mode=test', '--apply-migrations'],
+      databaseInterceptor: (session, database) {
+        if (observeDatabaseAccess) databaseAccesses++;
+        return database;
+      },
       configOverride: (c) => c.copyWith(
         database: PostgresDatabaseConfig(
           host: '127.0.0.1',
@@ -365,7 +371,23 @@ void main() {
         '$ping&reward_amount=2',
         '',
       ]) {
-        expect(await send(query), 200, reason: query);
+        // Given: count database acquisition, not just writes or changed rows.
+        databaseAccesses = 0;
+        observeDatabaseAccess = true;
+        late int status;
+        try {
+          // When: drive the real public HTTP route.
+          status = await send(query);
+        } finally {
+          observeDatabaseAccess = false;
+        }
+        // Then: acknowledgement must not even construct a database session.
+        expect(status, 200, reason: query);
+        expect(
+          databaseAccesses,
+          0,
+          reason: 'ping must not access the database',
+        );
       }
       // Carrying custom_data keeps the full verification.
       for (final query in [
