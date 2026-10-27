@@ -43,6 +43,7 @@ void main() {
   late Directory directory;
   final callers = <api.Client>[];
   final responses = <String, Map<String, dynamic>>{};
+  final lookupStatus = <String, int>{};
   final acknowledgements = <String>[];
   var ackFails = false;
   String? heldLookup;
@@ -51,6 +52,7 @@ void main() {
   Completer<void>? ackEntered;
   Completer<void>? releaseAck;
   var queryCount = 0;
+  var freshSequence = 98000;
   var now = fixture.now;
   var storeUnavailable = false;
   var adSequence = 0;
@@ -183,6 +185,9 @@ void main() {
       await releaseLookup!.future.timeout(bound);
     }
     if (storeUnavailable) return http.Response('unavailable', 503);
+    if (lookupStatus[segment] case final int status) {
+      return http.Response('private-store-error', status);
+    }
     if (value == null) return http.Response('private-token-not-found', 404);
     if (request.url.host == 'api.storekit-sandbox.apple.com') {
       return http.Response(
@@ -298,6 +303,69 @@ void main() {
     isA<api.ProductException>().having((e) => e.code, 'code', code),
   );
 
+  for (final store in ['google', 'apple']) {
+    for (final benefit in [false, true]) {
+      for (final status in [410, 503]) {
+        for (final hasActive in [false, true]) {
+          test(
+            'fresh $store benefit=$benefit status=$status active=$hasActive',
+            () async {
+              // Given: cached active rows must not substitute for fresh proof.
+              final a = await user();
+              final bad = '${++freshSequence}';
+              final good = '${++freshSequence}';
+              for (final reference in [bad, if (hasActive) good]) {
+                if (store == 'apple') {
+                  responses[reference] = fixture.transaction(lifetime: true)
+                    ..['transactionId'] = reference
+                    ..['originalTransactionId'] = reference
+                    ..['appAccountToken'] = a.binding;
+                } else {
+                  purchase(reference, a.binding);
+                }
+                await a.client.billing.verifyPurchase(
+                  input(reference, store: store),
+                );
+              }
+              lookupStatus[bad] = status;
+              Future<bool> check() async => benefit
+                  ? (await a.client.quiz.getTodayWithPremium()).paidEntitlement
+                  : (await a.client.billing.getEntitlement()).active;
+
+              // When / Then: the real endpoint must classify each store result.
+              try {
+                if (status == 503 && !hasActive) {
+                  await expectLater(check(), failure('temporarilyUnavailable'));
+                } else {
+                  expect(await check(), hasActive);
+                  final rows = await StoredPurchase.db.find(
+                    admin,
+                    where: (t) => t.owner.equals(a.owner),
+                  );
+                  expect(rows, hasLength(hasActive ? 2 : 1));
+                  if (status == 410) {
+                    expect(
+                      rows.firstWhere((r) => r.purchaseReference == bad).state,
+                      'revoked',
+                    );
+                    final before = queryCount;
+                    expect(await check(), hasActive);
+                    expect(queryCount - before, hasActive ? 1 : 0);
+                  } else {
+                    final view = await a.client.billing.getEntitlement();
+                    expect(view.purchases.where((p) => p.active), hasLength(1));
+                  }
+                }
+              } finally {
+                lookupStatus.remove(bad);
+              }
+            },
+          );
+        }
+      }
+    }
+  }
+
   Future<api.DailyRecord> steps(
     api.Client c,
     int total, {
@@ -387,15 +455,15 @@ void main() {
       expect(rows.map((r) => r.state), contains('revoked'));
       final more = await steps(a.client, 200, revision: 2);
       responses.remove('multi-refunded');
-      await expectLater(
-        a.client.product.claimDayWithPremium(
+      expect(
+        (await a.client.product.claimDayWithPremium(
           more.date,
           'partial-failure',
           more.revision,
-        ),
-        failure('invalidPurchase'),
+        )).amount,
+        2,
       );
-      expect((await a.client.product.getWallet()).balance, 2);
+      expect((await a.client.product.getWallet()).balance, 4);
     },
   );
 

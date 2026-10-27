@@ -305,19 +305,57 @@ class BillingService {
       );
       return (binding: account.binding, sequence: account.sequence, rows: rows);
     });
+    BillingVerificationException? unavailable;
     for (final row in snapshot.rows) {
       if (_environment(row.store).name != row.environment) {
         throw BillingException(code: 'configurationMissing');
       }
-      await _verify(
-        s,
-        PurchaseInput(
-          store: row.store,
-          productId: row.productId,
-          purchaseReference: row.purchaseReference,
-        ),
-        reserved: (binding: snapshot.binding, sequence: snapshot.sequence),
-      );
+      // Revocation is terminal; retain the billing record without repeatedly
+      // querying a store reference that can no longer grant access.
+      if (row.state == 'revoked') continue;
+      try {
+        await _verify(
+          s,
+          PurchaseInput(
+            store: row.store,
+            productId: row.productId,
+            purchaseReference: row.purchaseReference,
+          ),
+          reserved: (binding: snapshot.binding, sequence: snapshot.sequence),
+        );
+      } on BillingVerificationException catch (error) {
+        switch (error.code) {
+          case BillingFailure.invalidPurchase:
+            await s.db.transaction((tx) async {
+              final account = await _account(s, tx);
+              if (account.binding != snapshot.binding ||
+                  account.sequence != snapshot.sequence) {
+                throw BillingException(code: 'staleObservation');
+              }
+              // Revoke local access, not the legal record. No store revocation
+              // timestamp is invented from an invalid-reference response.
+              await StoredPurchase.db.updateWhere(
+                s,
+                columnValues: (t) => [
+                  t.state('revoked'),
+                  t.sequence(snapshot.sequence),
+                  t.observedAt(clock.now().toUtc()),
+                  t.acknowledgementPending(false),
+                ],
+                where: (t) => t.id.equals(row.id) & t.owner.equals(_owner(s)),
+                transaction: tx,
+              );
+            });
+          case BillingFailure.unavailable:
+            unavailable = error;
+          case BillingFailure.configuration:
+            rethrow;
+        }
+      }
+    }
+    if (unavailable != null &&
+        !(await _view(s, sequence: snapshot.sequence)).active) {
+      throw unavailable;
     }
     return BillingBenefit._(
       this,
@@ -328,60 +366,44 @@ class BillingService {
   }
 
   Future<EntitlementView> entitlement(Session s) async {
-    final rows = await s.db.transaction((tx) async {
-      await _account(s, tx);
-      return StoredPurchase.db.find(
-        s,
-        where: (t) => t.owner.equals(_owner(s)),
-        transaction: tx,
-      );
-    });
-    for (final row in rows) {
-      // Fail closed if configuration changed: old environment observations are
-      // never reinterpreted as purchases from a newly selected environment.
-      if (_environment(row.store).name != row.environment) {
-        throw BillingException(code: 'configurationMissing');
-      }
-      await verify(
-        s,
-        PurchaseInput(
-          store: row.store,
-          productId: row.productId,
-          purchaseReference: row.purchaseReference,
-        ),
-      );
-    }
-    return _view(s);
+    final benefit = await revalidateBenefit(s);
+    return _view(s, sequence: benefit._sequence);
   }
 
-  Future<EntitlementView> _view(Session s) => s.db.transaction((tx) async {
-    await _account(s, tx);
-    final rows = await StoredPurchase.db.find(
-      s,
-      where: (t) => t.owner.equals(_owner(s)),
-      orderBy: (t) => t.id,
-      transaction: tx,
-    );
-    final now = clock.now().toUtc();
-    final views = [
-      for (final row in rows)
-        PurchaseView(
-          store: row.store,
-          productId: row.productId,
-          kind: row.kind,
-          state: row.state,
-          active: _active(row, now),
-          observedAt: row.observedAt,
-          expiresAt: row.expiresAt,
-          graceExpiresAt: row.graceExpiresAt,
-          acknowledgementPending: row.acknowledgementPending,
-        ),
-    ];
-    return EntitlementView(
-      active: views.any((v) => v.active),
-      purchases: views,
-    );
-  });
+  Future<EntitlementView> _view(Session s, {int? sequence}) =>
+      s.db.transaction((tx) async {
+        final account = await _account(s, tx);
+        if (sequence != null && account.sequence != sequence) {
+          throw BillingException(code: 'staleObservation');
+        }
+        final rows = await StoredPurchase.db.find(
+          s,
+          where: (t) => t.owner.equals(_owner(s)),
+          orderBy: (t) => t.id,
+          transaction: tx,
+        );
+        final now = clock.now().toUtc();
+        final views = [
+          for (final row in rows)
+            PurchaseView(
+              store: row.store,
+              productId: row.productId,
+              kind: row.kind,
+              state: row.state,
+              active:
+                  (sequence == null || row.sequence == sequence) &&
+                  _active(row, now),
+              observedAt: row.observedAt,
+              expiresAt: row.expiresAt,
+              graceExpiresAt: row.graceExpiresAt,
+              acknowledgementPending: row.acknowledgementPending,
+            ),
+        ];
+        return EntitlementView(
+          active: views.any((v) => v.active),
+          purchases: views,
+        );
+      });
 
   bool _active(StoredPurchase p, DateTime now) {
     if (now.isBefore(p.observedAt) ||
@@ -426,11 +448,10 @@ class BillingBenefit {
       where: (t) => t.owner.equals(s.owner),
       transaction: s.tx,
     );
-    if (rows.any((p) => p.sequence != _sequence)) {
-      throw BillingException(code: 'staleObservation');
-    }
     final now = _service.clock.now().toUtc();
-    return rows.any((p) => _service._active(p, now));
+    return rows.any(
+      (p) => p.sequence == _sequence && _service._active(p, now),
+    );
   }
 
   Future<void> requireActive(ProductService s) async {
