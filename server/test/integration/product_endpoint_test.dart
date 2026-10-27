@@ -1078,10 +1078,12 @@ void main() {
         final grant = await claim;
         expect((await deletion).deleted, isTrue);
         expect((await endpoint.getWallet(a)).balance, 70);
-        expect(
-          (await endpoint.claimDay(a, date, 'claim', 1)).toJson(),
-          grant.toJson(),
-        );
+        final replay = await endpoint.claimDay(a, date, 'claim', 1);
+        expect(replay.ledgerId, grant.ledgerId);
+        expect(replay.amount, grant.amount);
+        expect([replay.fromUnits, replay.throughUnits], [0, 0]);
+        expect(replay.slices, isNull);
+        expect(replay.basePoints, isNull);
         expect((await endpoint.getDay(a, date)).steps, isNull);
         await expectLater(
           at(() => endpoint.submitSteps(a, snapshot(9999, revision: 2))),
@@ -1089,6 +1091,104 @@ void main() {
         );
       },
     );
+
+    test('day deletion clears units while preserving ledger amounts', () async {
+      // Given: two paid tranches and an unrelated owner's same date.
+      final a = await ready(steps: 700);
+      final b = await ready(steps: 300);
+      await at(() async {
+        final first = await endpoint.getDay(a, date);
+        await endpoint.claimDay(a, date, 'first', first.revision);
+        final second = await endpoint.submitSteps(
+          a,
+          snapshot(900, revision: 2),
+        );
+        await endpoint.claimDay(a, date, 'second', second.revision);
+        final other = await endpoint.getDay(b, date);
+        await endpoint.claimDay(b, date, 'other', other.revision);
+      });
+      final before = await PointEntry.db.find(
+        a,
+        where: (t) => t.owner.equals(a.authenticated!.userIdentifier),
+      );
+
+      // When.
+      await endpoint.deleteDay(a, date, 'delete-units');
+
+      // Then: tombstone, identities and amounts survive, unit detail does not.
+      final day = (await ProductDay.db.find(
+        a,
+        where: (t) => t.owner.equals(a.authenticated!.userIdentifier),
+      )).single;
+      expect(day.deleted, isTrue);
+      expect(day.steps, isNull);
+      expect(day.windows, isEmpty);
+      expect([day.grantedUnits, day.confirmedUnits], [0, 0]);
+      expect(
+        await StepRevision.db.count(
+          a,
+          where: (t) => t.owner.equals(a.authenticated!.userIdentifier),
+        ),
+        0,
+      );
+      final entries = await PointEntry.db.find(
+        a,
+        where: (t) => t.owner.equals(a.authenticated!.userIdentifier),
+        orderBy: (t) => t.id,
+      );
+      expect(entries.map((e) => e.amount), [7, 2]);
+      expect(entries.map((e) => e.entryKey), before.map((e) => e.entryKey));
+      for (final entry in entries) {
+        expect(entry.fromUnits, isNull);
+        expect(entry.throughUnits, isNull);
+        expect(entry.slices, isNull);
+      }
+      final receipt = await endpoint.claimDay(a, date, 'first', 1);
+      expect([receipt.fromUnits, receipt.throughUnits], [0, 0]);
+      expect(receipt.slices, isNull);
+      expect(receipt.basePoints, isNull);
+      expect((await endpoint.getWallet(a)).balance, 9);
+      expect((await endpoint.getWallet(b)).balance, 3);
+      final other = (await PointEntry.db.find(
+        b,
+        where: (t) => t.owner.equals(b.authenticated!.userIdentifier),
+      )).single;
+      expect(other.throughUnits, 3);
+    });
+
+    for (final total in [700, 9900]) {
+      test('deleted day rejects resync of $total without regrant', () async {
+        // Given: a claimed day with its unit fields cleared by deletion.
+        final a = await ready(steps: 700);
+        final day = await at(() => endpoint.getDay(a, date));
+        await at(() => endpoint.claimDay(a, date, 'paid', day.revision));
+        final deleted = await endpoint.deleteDay(a, date, 'delete');
+
+        // When: same or higher step totals return through the endpoint.
+        await expectLater(
+          at(() => endpoint.submitSteps(a, snapshot(total, revision: 2))),
+          productError('dayDeleted'),
+        );
+
+        // Then: neither a new key nor replay of the paid key adds points.
+        await expectLater(
+          at(() => endpoint.claimDay(a, date, 'new', deleted.revision)),
+          productError('dayDeleted'),
+        );
+        expect(
+          (await endpoint.claimDay(a, date, 'paid', day.revision)).amount,
+          7,
+        );
+        expect((await endpoint.getWallet(a)).balance, 7);
+        expect(
+          await PointEntry.db.count(
+            a,
+            where: (t) => t.owner.equals(a.authenticated!.userIdentifier),
+          ),
+          1,
+        );
+      });
+    }
 
     test('delete first wins claim race without ledger insertion', () async {
       final a = await ready();
@@ -1134,7 +1234,17 @@ void main() {
             ),
           ],
         );
-        final receipt = await records.saveConfirmed(a, input);
+        // Pre-launch legacy rows may contain coordinates; deletion must still
+        // purge them even though the upload endpoint now refuses location.
+        final legacy = await StoredGpsRecord.db.insertRow(
+          a,
+          StoredGpsRecord(
+            owner: a.authenticated!.userIdentifier,
+            clientRecordId: input.clientRecordId,
+            persistedAt: fixedNow,
+            payload: input,
+          ),
+        );
         expect(
           (await endpoint.getDay(a, '2026-10-13')).routes.single.points,
           hasLength(1),
@@ -1145,18 +1255,24 @@ void main() {
         );
         await endpoint.deleteDay(a, date, 'delete');
         expect((await endpoint.getDay(a, '2026-10-13')).routes, isEmpty);
-        final row = await StoredGpsRecord.db.findById(a, receipt.recordId);
+        final row = await StoredGpsRecord.db.findById(a, legacy.id!);
         expect(row!.payload, isNull);
         expect(row.deleted, isTrue);
         final deleted = throwsA(
           isA<RecordException>().having((e) => e.code, 'code', 'dayDeleted'),
         );
-        await expectLater(records.getMine(a, receipt.recordId), deleted);
-        await expectLater(records.saveConfirmed(a, input), deleted);
+        await expectLater(records.getMine(a, legacy.id!), deleted);
+        await expectLater(
+          records.saveConfirmed(a, input.copyWith(routePoints: [])),
+          deleted,
+        );
         await expectLater(
           records.saveConfirmed(
             a,
-            input.copyWith(clientRecordId: const Uuid().v4obj()),
+            input.copyWith(
+              clientRecordId: const Uuid().v4obj(),
+              routePoints: [],
+            ),
           ),
           deleted,
         );
@@ -1168,7 +1284,10 @@ void main() {
           1,
         );
         final b = await owner();
-        expect(await records.saveConfirmed(b, input), isA<RecordReceipt>());
+        expect(
+          await records.saveConfirmed(b, input.copyWith(routePoints: [])),
+          isA<RecordReceipt>(),
+        );
       },
     );
 

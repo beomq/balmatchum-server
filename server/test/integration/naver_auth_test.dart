@@ -48,6 +48,7 @@ void main() {
   final clients = <api.Client>[];
   final claimsByCode = <String, Map<String, dynamic>>{};
   final revoked = <String>{};
+  final revokeStatuses = <String, int>{};
   final calls = <String>[];
   Map<String, dynamic>? header;
   var exchangeStatus = 200;
@@ -138,8 +139,9 @@ void main() {
         revokeEntered!.complete();
         await releaseRevoke!.future.timeout(_bound);
       }
-      if (revokeStatus != 200) {
-        return http.Response('private-revocation-response', revokeStatus);
+      final status = revokeStatuses[fields['token']] ?? revokeStatus;
+      if (status != 200) {
+        return http.Response('private-revocation-response', status);
       }
       revoked.add(fields['token']!);
       return http.Response('', 200);
@@ -264,6 +266,7 @@ void main() {
     claimsByCode.clear();
     calls.clear();
     revoked.clear();
+    revokeStatuses.clear();
     header = null;
     exchangeStatus = jwksStatus = revokeStatus = 200;
     missingIdToken = missingRefreshToken = forged = cleanupFails = false;
@@ -602,7 +605,7 @@ void main() {
         expect(results.first.authUserId, results.last.authUserId);
         expect(await AuthUser.db.count(admin), 1);
         expect(await ExternalIdentity.db.count(admin), 1);
-        expect(await NaverGrant.db.count(admin), 2);
+        expect(await NaverGrant.db.count(admin), 1);
         expect(await ServerSideSession.db.count(admin), 1);
         final current = (await ServerSideSession.db.find(admin)).single;
         String sessionId(String token) => UuidValue.fromByteList(
@@ -693,13 +696,133 @@ void main() {
     });
 
     test(
-      'deletion revokes all grants, cascades and new login creates new identity',
+      'returning login retains only the latest grant without unlinking',
+      () async {
+        // Given.
+        final first = await login('latest-old');
+        // When.
+        final latest = await login('latest-new');
+        // Then: revoking the old grant here would unlink the new login too.
+        expect(latest.authUserId, first.authUserId);
+        expect(
+          (await NaverGrant.db.find(admin)).map((g) => g.refreshToken),
+          ['refresh-latest-new'],
+        );
+        expect(revokeCount, 0);
+      },
+    );
+
+    for (final newestFails in [false, true]) {
+      test(
+        'legacy grant deletion newest first fallback=$newestFails',
+        () async {
+          // Given: pre-fix accounts can still have multiple grants.
+          final auth = await login('legacy-old');
+          await NaverGrant.db.insertRow(
+            admin,
+            NaverGrant(
+              authUserId: auth.authUserId,
+              clientId: 'test-naver-client',
+              refreshToken: 'legacy-newest',
+            ),
+          );
+          if (newestFails) revokeStatuses['legacy-newest'] = 503;
+
+          // When.
+          await client(auth.token).account.deleteAccount();
+
+          // Then: success unlinks the app, so no subsequent grant is queried.
+          expect(revokeCount, newestFails ? 2 : 1);
+          expect(revoked, {
+            newestFails ? 'refresh-legacy-old' : 'legacy-newest',
+          });
+          await noAccount();
+        },
+      );
+    }
+
+    test('all legacy revocations failing preserve every local grant', () async {
+      // Given.
+      final auth = await login('legacy-preserved');
+      await NaverGrant.db.insertRow(
+        admin,
+        NaverGrant(
+          authUserId: auth.authUserId,
+          clientId: 'test-naver-client',
+          refreshToken: 'legacy-preserved-new',
+        ),
+      );
+      revokeStatus = 503;
+      // When.
+      await expectLater(
+        client(auth.token).account.deleteAccount(),
+        _error('naverRevocationFailed'),
+      );
+      // Then.
+      expect(await NaverGrant.db.count(admin), 2);
+      expect(await AuthUser.db.count(admin), 1);
+      expect(await ServerSideSession.db.count(admin), 1);
+    });
+
+    test('failed returning login preserves the previous grant', () async {
+      // Given.
+      await login('previous');
+      await admin.db.unsafeExecute(
+        'ALTER TABLE naver_grant ADD CONSTRAINT test_replacement_guard '
+        'CHECK ("refreshToken" <> \'refresh-replacement\')',
+      );
+      // When.
+      await expectLater(login('replacement'), _error('temporarilyUnavailable'));
+      // Then: replacing the row is atomic with issuing the new server session.
+      expect(
+        (await NaverGrant.db.find(admin)).single.refreshToken,
+        'refresh-previous',
+      );
+      expect(await ServerSideSession.db.count(admin), 1);
+      expect(revokeCount, 0);
+    });
+
+    test(
+      'stalled revocation exhausts one shared budget and keeps grants',
+      () async {
+        // Given: completion signals, not sleeps, hold the real HTTP transport.
+        final auth = await login('bounded-old');
+        await NaverGrant.db.insertRow(
+          admin,
+          NaverGrant(
+            authUserId: auth.authUserId,
+            clientId: 'test-naver-client',
+            refreshToken: 'bounded-new',
+          ),
+        );
+        revokeEntered = Completer<void>();
+        releaseRevoke = Completer<void>();
+        // When.
+        final failed = expectLater(
+          client(auth.token).account.deleteAccount().timeout(
+            const Duration(seconds: 12),
+          ),
+          _error('naverRevocationFailed'),
+        );
+        await revokeEntered!.future.timeout(_bound);
+        await failed;
+        // Then: no fresh ten second budget for a second credential.
+        releaseRevoke!.complete();
+        expect(revokeCount, 1);
+        expect(await NaverGrant.db.count(admin), 2);
+        expect(await AuthUser.db.count(admin), 1);
+        expect(await ServerSideSession.db.count(admin), 1);
+      },
+    );
+
+    test(
+      'deletion revokes latest grant, cascades and new login creates new identity',
       () async {
         final first = await login('grant-a');
         final second = await login('grant-b');
         final other = await login('other', subject: 'other');
         await client(second.token).account.deleteAccount();
-        expect(revoked, {'refresh-grant-a', 'refresh-grant-b'});
+        expect(revoked, {'refresh-grant-b'});
         expect(await NaverGrant.db.count(admin), 1);
         expect(await ExternalIdentity.db.count(admin), 1);
         expect((await AuthUser.db.find(admin)).single.id, other.authUserId);

@@ -446,11 +446,5 @@ GpsRecordInput record() => GpsRecordInput(
   startedAt: DateTime.utc(2026, 10, 14),
   endedAt: DateTime.utc(2026, 10, 14, 0, 1),
   source: 'watch',
-  routePoints: [
-    RoutePoint(
-      recordedAt: DateTime.utc(2026, 10, 14),
-      latitude: 37,
-      longitude: 127,
-    ),
-  ],
+  routePoints: [],
 );

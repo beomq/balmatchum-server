@@ -80,25 +80,29 @@ unique identity 경합만 재시도하며 이미 교환한 코드를 다시 교�
 
 ## 탈퇴와 최소 추가 저장
 
-네이버 문서는 탈퇴/연동 해제 시 token revocation을 안내하며 refresh token을
-철회하면 연결된 access token도 폐기한다고 명시합니다. **모든 과거 grant까지
-철회한다는 보장은 아니므로** 성공한 로그인마다 `NaverGrant`에 client ID와
-refresh token을 보관합니다. ID/access token, 이메일, 프로필은 보관하지 않습니다.
+네이버 개발 가이드 4.3은 token revocation 성공 시 연결된 서비스 관리에서
+앱 연동 항목이 삭제된다고 명시합니다. 따라서 로그인 중 과거 토큰을 revoke하면
+새 로그인 연결도 끊을 수 있으므로, 성공한 로그인 트랜잭션에서 이전 행만 삭제하고
+`NaverGrant`에 최신 client ID와 refresh token 하나를 보관합니다.
+ID/access token, 이메일, 프로필은 보관하지 않습니다.
 refresh token이 없는 교환 응답도 받아들이지 않습니다.
 
 `NaverGrant`는 serverOnly 모델이며 생성 앱 client에 포함되지 않습니다.
 기존 Apple 저장 방식과 같이 DB가 읽을 수 있는 credential입니다. 이 증분은 별도
 KMS나 앱 수준 암호화를 도입하지 않습니다. DB/백업 접근 통제·암호화·파기 정책은
 배포 전 운영 조건입니다. token은 로그인 갱신에 사용하지 않고 탈퇴 철회에만 씁니다.
-성공한 grant는 탈퇴까지 보관하므로 로그인 횟수에 따라 행이 증가합니다.
+최신 grant만 탈퇴 또는 다음 성공한 로그인까지 보관합니다.
 로그인 저장 경로는 기존 결제 코드와 같은 `enableLogging: false` 내부 DB 세션을
 사용합니다. 느린/실패 쿼리 로깅을 켜도 refresh token 바인딩 값을 기록하지 않으며,
 실패 행을 포함할 수 있는 DB 예외는 `temporarilyUnavailable`로 치환합니다.
 
-`deleteAccount`는 기존 AuthUser → ProductAccount 잠금 뒤 모든 Naver grant를
-`/oauth2/revoke`로 철회합니다. `token_type_hint=refresh_token`과 서버 secret을
+`deleteAccount`는 기존 AuthUser → ProductAccount 잠금 뒤 Naver grant를
+최신순으로 `/oauth2/revoke`에 전달하고 첫 성공에서 중단합니다.
+기존 누적 행의 첫 토큰이 실패하면 다음 토큰을 시도하되 전체 외부 요청에
+10초 예산을 공유합니다. `token_type_hint=refresh_token`과 서버 secret을
 보내며 공식 규격에 따라 HTTP 200(이미 폐기된/없는 token 포함)을 성공으로 봅니다.
-실패·redirect·timeout은 로컬 삭제를 rollback하여 재시도 credential을 남깁니다.
+모든 토큰 실패·redirect·전체 timeout은 로컬 삭제를 rollback하여 모든 재시도
+credential을 남깁니다.
 client ID가 저장 grant와 달라진 경우도 삭제를 fail closed합니다.
 
 성공하면 기존 identity 삭제와 AuthUser 삭제에 의해 grant/세션이 cascade됩니다.
@@ -187,6 +191,12 @@ state/verifier 시도 수명 → 코드 교환/JWKS → 세션 정리 → 철회
   exit 1이었습니다. 전체 green으로 보고하지 않으며 인증 관련 177개는 별도로 통과했습니다.
 
 ## 공식 근거 (2026-10-21 직접 조회)
+
+2026-10-27 F2 재확인: 아래 가이드 4.3은 연결 항목 삭제와 재동의를 설명합니다.
+현재 API 명세는 과거 `grant_type=delete` 대신 `/revoke`를 문서화합니다.
+단일 토큰 폐기는 연결 항목을 제거하지만 모든 과거 토큰 쌍의 무효화까지 보장한다고
+확대 해석하지 않습니다. OIDC 주소는 discovery의 `/oauth2/revoke`를 유지합니다.
+공식 API 명세: https://developers.naver.com/docs/login/api/api.md
 
 - https://developers.naver.com/docs/login/devguide/devguide.md
   - 3.5.1~3.5.7: OIDC 전용 경로, PKCE, nonce, code 교환과 claim 검증.

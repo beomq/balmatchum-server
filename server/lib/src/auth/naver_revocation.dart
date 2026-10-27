@@ -5,8 +5,8 @@ import 'naver_client.dart';
 import 'naver_provider.dart';
 
 /// AuthUser lock is held by deletion; failed revocation preserves every grant.
-/// Each successful login can mint a token pair. Do not retain only the latest:
-/// Naver documents pairwise cascade, not revocation of all earlier grants.
+/// Guide 4.3 also removes the app's linked-service entry on successful revoke.
+/// Legacy accumulated grants are tried newest-first within one overall budget.
 Future<void> revokeNaverAccount(
   Session session,
   UuidValue authUserId,
@@ -15,6 +15,7 @@ Future<void> revokeNaverAccount(
   final grants = await NaverGrant.db.find(
     session,
     where: (t) => t.authUserId.equals(authUserId),
+    orderBy: (t) => t.id.desc(),
     transaction: transaction,
   );
   if (grants.isEmpty) return;
@@ -24,7 +25,16 @@ Future<void> revokeNaverAccount(
     throw LoginException(code: 'configurationMissing');
   }
   final client = NaverClient(config);
+  final elapsed = Stopwatch()..start();
   for (final grant in grants) {
-    await client.revoke(grant.refreshToken);
+    final remaining = const Duration(seconds: 10) - elapsed.elapsed;
+    if (remaining <= Duration.zero) break;
+    try {
+      await client.revoke(grant.refreshToken, timeout: remaining);
+      return;
+    } on LoginException {
+      // Try another retained credential, but never reset the timeout budget.
+    }
   }
+  throw LoginException(code: 'naverRevocationFailed');
 }

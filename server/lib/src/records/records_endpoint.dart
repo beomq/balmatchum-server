@@ -90,22 +90,8 @@ class RecordsEndpoint extends Endpoint {
         input.endedAt.isBefore(input.startedAt)) {
       throw RecordException(code: 'invalidRecord');
     }
-    var previous = input.startedAt;
-    for (final point in input.routePoints) {
-      final accuracy = point.horizontalAccuracyMeters;
-      if (!point.recordedAt.isUtc ||
-          point.recordedAt.isBefore(previous) ||
-          point.recordedAt.isAfter(input.endedAt) ||
-          !point.latitude.isFinite ||
-          point.latitude < -90 ||
-          point.latitude > 90 ||
-          !point.longitude.isFinite ||
-          point.longitude < -180 ||
-          point.longitude > 180 ||
-          (accuracy != null && (!accuracy.isFinite || accuracy < 0))) {
-        throw RecordException(code: 'invalidRoute');
-      }
-      previous = point.recordedAt;
+    if (input.routePoints.isNotEmpty) {
+      throw RecordException(code: 'invalidRoute');
     }
   }
 }

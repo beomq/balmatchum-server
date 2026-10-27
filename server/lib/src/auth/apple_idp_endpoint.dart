@@ -1,6 +1,7 @@
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_idp_server/providers/apple.dart';
 
+import '../generated/protocol.dart';
 import 'social_auth.dart';
 
 class AppleIdpEndpoint extends AppleIdpBaseEndpoint {
@@ -20,15 +21,26 @@ class AppleIdpEndpoint extends AppleIdpBaseEndpoint {
   }) => finishSocialLogin(
     session,
     requireSocialAuth(session, apple: true),
-    () => super.login(
-      session,
-      identityToken: identityToken,
-      authorizationCode: authorizationCode,
-      isNativeApplePlatformSignIn: isNativeApplePlatformSignIn,
-      // The SDK copies these into AppleAccount; the app never uses names.
-      firstName: null,
-      lastName: null,
-    ),
+    () async {
+      // SDK SQL contains refresh tokens, including on failed/slow queries.
+      final db = await session.serverpod.createSession(enableLogging: false);
+      db.updateAuthenticated(session.authenticated);
+      try {
+        return await super.login(
+          db,
+          identityToken: identityToken,
+          authorizationCode: authorizationCode,
+          isNativeApplePlatformSignIn: isNativeApplePlatformSignIn,
+          // The SDK copies these into AppleAccount; the app never uses names.
+          firstName: null,
+          lastName: null,
+        );
+      } on DatabaseQueryException {
+        throw LoginException(code: 'temporarilyUnavailable');
+      } finally {
+        await db.close();
+      }
+    },
   );
 
   @override

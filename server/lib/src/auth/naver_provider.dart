@@ -212,6 +212,13 @@ class NaverProvider implements IdentityProvider {
         transaction: tx,
       );
       if (user == null) throw LoginException(code: 'invalidAttempt');
+      // Revocation unlinks the app (Naver guide 4.3), so do not revoke the
+      // previous token during login. Replace it under the deletion owner lock.
+      await NaverGrant.db.deleteWhere(
+        session,
+        where: (t) => t.authUserId.equals(identity!.authUserId),
+        transaction: tx,
+      );
       await NaverGrant.db.insertRow(
         session,
         NaverGrant(

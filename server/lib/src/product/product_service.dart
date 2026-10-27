@@ -462,11 +462,34 @@ class ProductService {
       value.steps = null;
       value.availability = 'deleted';
       value.windows = [];
+      value.grantedUnits = 0;
+      value.confirmedUnits = 0;
       await ProductAccount.db.updateRow(session, account, transaction: tx);
       await saveDay(value);
       await StepRevision.db.deleteWhere(
         session,
         where: (t) => t.owner.equals(owner) & t.date.equals(date),
+        transaction: tx,
+      );
+      await PointEntry.db.updateWhere(
+        session,
+        columnValues: (t) => [
+          t.fromUnits(null),
+          t.throughUnits(null),
+          t.slices(null),
+        ],
+        where: (t) => t.owner.equals(owner) & t.date.equals(date),
+        transaction: tx,
+      );
+      // Retry receipts duplicate the same units. Preserve their key, digest,
+      // ledger identity and paid amount, but not the deleted step detail.
+      await session.db.unsafeExecute(
+        'UPDATE product_request SET result = '
+        '((result::jsonb - \'slices\' - \'basePoints\') || '
+        '\'{"fromUnits":0,"throughUnits":0}\'::jsonb)::text '
+        'WHERE owner = @owner AND result::jsonb ->> \'date\' = @date '
+        'AND result::jsonb ? \'ledgerId\'',
+        parameters: QueryParameters.named({'owner': owner, 'date': date}),
         transaction: tx,
       );
       final records = await StoredGpsRecord.db.find(
