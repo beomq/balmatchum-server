@@ -84,14 +84,30 @@ class QuizService {
     );
   }
 
+  /// Issue-free projection for lock-free reads; null when today's free slot
+  /// is still missing and [today] must issue it under the account lock.
+  Future<QuizToday?> todayView({BillingBenefit? premium}) async {
+    final date = localDate(clock.now());
+    final free = await slot(date, 'free');
+    return free == null ? null : project(date, free, premium);
+  }
+
   Future<QuizToday> today({BillingBenefit? premium}) async {
-    final paid = premium != null && await premium.isActive(s);
     final date = localDate(clock.now());
     var free = await slot(date, 'free');
     if (free == null) {
       final next = await candidate();
       if (next != null) free = await issue(date, 'free', next);
     }
+    return project(date, free, premium);
+  }
+
+  Future<QuizToday> project(
+    String date,
+    QuizAssignment? free,
+    BillingBenefit? premium,
+  ) async {
+    final paid = premium != null && await premium.isActive(s);
     final extra = await slot(date, 'extra');
     final extraStatus = extra != null
         ? 'issued'
