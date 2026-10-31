@@ -294,6 +294,13 @@ class BillingService {
       } on BillingVerificationException {
         // Entitlement was committed. Never report that persistence failed or
         // clear the marker because a remote acknowledgement outcome is unknown.
+        // Purchase queries stay unlogged; only this static warning is recorded.
+        await s.serverpod.withSession((logSession) async {
+          logSession.log(
+            'Google purchase acknowledgement failed; pending marker retained.',
+            level: LogLevel.warning,
+          );
+        });
       }
     }
   }

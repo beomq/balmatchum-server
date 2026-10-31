@@ -18,7 +18,7 @@ import 'package:clock/clock.dart';
 import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:serverpod/protocol.dart' show FutureCallEntry;
+import 'package:serverpod/protocol.dart' show FutureCallEntry, LogEntry;
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
 import 'package:test/test.dart';
@@ -1769,6 +1769,62 @@ void main() {
         a.client.billing.getEntitlement(),
         throwsA(isA<api.ServerpodClientUnauthorized>()),
       );
+    },
+  );
+
+  test(
+    'ack failure logs safely while preserving response and pending purchase',
+    () async {
+      final a = await user();
+      const token = 'ack-log-private-purchase-token';
+      const rawBody = 'private-upstream-error';
+      purchase(token, a.binding, pendingAck: true);
+      ackFails = true;
+      final before =
+          (await admin.db.unsafeQuery(
+                'SELECT COALESCE(MAX(id), 0) FROM serverpod_log',
+              )).single.single
+              as int;
+
+      // The HTTP fake returns 503, so the real acknowledge client throws.
+      final view = await a.client.billing.verifyPurchase(input(token));
+      expect(view.active, true);
+      final response = view.purchases.single;
+      expect(response.store, 'google');
+      expect(response.productId, 'lifetime');
+      expect(response.state, 'active');
+      expect(response.active, true);
+      expect(response.acknowledgementPending, true);
+      expect(acknowledgements.where((t) => t == token), hasLength(1));
+      stdout.writeln('T31_RESPONSE active=true purchases=1 pending=true');
+
+      final row = (await StoredPurchase.db.find(
+        admin,
+        where: (t) =>
+            t.authUserId.equals(authUserIdOf(a.owner)) &
+            t.identityHash.equals(hash('google', token)),
+      )).single;
+      expect(row.acknowledgementPending, true);
+      stdout.writeln('T31_PENDING persisted=true');
+
+      // The warning session closes before the response, awaiting log writes.
+      final entries = await LogEntry.db.find(
+        admin,
+        where: (t) => t.id > before,
+      );
+      expect(entries, hasLength(1));
+      final entry = entries.single;
+      expect(entry.logLevel, LogLevel.warning);
+      expect(entry.message, isNotEmpty);
+      expect(entry.error, isNull);
+      expect(entry.stackTrace, isNull);
+      final recorded = jsonEncode(entries.map((e) => e.toJson()).toList());
+      expect(recorded, isNot(contains(token)));
+      expect(recorded, isNot(contains(rawBody)));
+      expect(recorded, isNot(contains(a.owner)));
+      expect(recorded, isNot(contains(row.identityHash)));
+      stdout.writeln('T31_LOG ${entry.message}');
+      stdout.writeln('T31_SECRET tokenAbsent=true rawBodyAbsent=true');
     },
   );
 
