@@ -20,7 +20,15 @@ const stepsPerPoint = 100;
 const dailyBaseCap = 100;
 
 /// User-scoped queries and dual writes share the same AuthUser identity.
-UuidValue authUserIdOf(String owner) => UuidValue.fromString(owner);
+UuidValue authUserIdOf(String owner) {
+  try {
+    return UuidValue.withValidation(owner);
+  } on FormatException {
+    throw NotAuthorizedException(
+      reason: AuthenticationFailureReason.unauthenticated,
+    );
+  }
+}
 
 bool productFixturesEnabled(Session session) {
   final config = session.server.serverpod.config;
@@ -82,7 +90,7 @@ Future<ProductAccount> lockProductAccount(
 ) async {
   final user = await AuthUser.db.findFirstRow(
     session,
-    where: (t) => t.id.equals(UuidValue.fromString(owner)),
+    where: (t) => t.id.equals(authUserIdOf(owner)),
     lockMode: LockMode.forUpdate,
     transaction: tx,
   );
@@ -189,7 +197,7 @@ class ProductService {
     // outside the transaction without taking a lock; reads stay read-only.
     final user = await AuthUser.db.findById(
       session,
-      UuidValue.fromString(owner),
+      authUserIdOf(owner),
     );
     if (user == null) {
       throw NotAuthorizedException(

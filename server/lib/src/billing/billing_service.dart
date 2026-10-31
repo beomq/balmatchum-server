@@ -187,7 +187,7 @@ class BillingService {
       // of a verified lookup that was already in flight when deletion won.
       final user = await AuthUser.db.findFirstRow(
         s,
-        where: (t) => t.id.equals(UuidValue.fromString(owner)),
+        where: (t) => t.id.equals(authUserIdOf(owner)),
         lockMode: LockMode.forUpdate,
         transaction: tx,
       );
@@ -275,7 +275,7 @@ class BillingService {
         await s.db.transaction((tx) async {
           final user = await AuthUser.db.findFirstRow(
             s,
-            where: (t) => t.id.equals(UuidValue.fromString(owner)),
+            where: (t) => t.id.equals(authUserIdOf(owner)),
             lockMode: LockMode.forUpdate,
             transaction: tx,
           );

@@ -37,8 +37,8 @@ Future<void> deleteAccountData(
 ) async {
   // Same AuthUser -> ProductAccount order as every product/profile/GPS call.
   await lockProductAccount(session, owner, tx);
-  await revokeAppleAccount(session, UuidValue.fromString(owner), tx);
-  await revokeNaverAccount(session, UuidValue.fromString(owner), tx);
+  await revokeAppleAccount(session, authUserIdOf(owner), tx);
+  await revokeNaverAccount(session, authUserIdOf(owner), tx);
   await deleteBillingData(session, owner, tx);
   await StoredAdIntent.db.deleteWhere(
     session,
@@ -100,7 +100,7 @@ Future<void> deleteAccountData(
     where: (t) => t.authUserId.equals(authUserIdOf(owner)),
     transaction: tx,
   );
-  final authUserId = UuidValue.fromString(owner);
+  final authUserId = authUserIdOf(owner);
   // This application relation is RESTRICT, unlike the SDK auth cascades.
   await ExternalIdentity.db.deleteWhere(
     session,

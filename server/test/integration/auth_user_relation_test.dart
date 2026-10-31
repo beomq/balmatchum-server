@@ -78,14 +78,18 @@ void main() {
   });
 
   test('malformed owner fails closed before persistence', () async {
-    // UuidValue.fromString does not validate (uuid 4.x); the AuthUser lookup
-    // that precedes every user-row insert rejects the value instead.
+    // The shared identity conversion rejects malformed input before any UUID
+    // expression can reach the database.
     await expectLater(
       session.db.transaction(
         (tx) => lockProductAccount(session, 'not-a-uuid', tx),
       ),
       throwsA(
-        isA<DatabaseQueryException>().having((e) => e.code, 'code', '22P02'),
+        isA<NotAuthorizedException>().having(
+          (e) => e.reason,
+          'reason',
+          AuthenticationFailureReason.unauthenticated,
+        ),
       ),
     );
     expect(await ProductAccount.db.count(session), 0);

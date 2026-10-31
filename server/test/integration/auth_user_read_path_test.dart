@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:balmatchum_server/src/generated/protocol.dart';
+import 'package:balmatchum_server/src/product/product_endpoint.dart';
 import 'package:balmatchum_server/src/product/product_service.dart';
 import 'package:balmatchum_server/src/quiz/quiz_bank.dart';
 import 'package:balmatchum_server/src/quiz/quiz_service.dart';
@@ -35,6 +36,60 @@ void main() {
         AuthenticationInfo(id.uuid, {}, authId: 'test'),
       );
     });
+
+    for (final (label, owner) in [
+      (
+        'SQL-shaped owner',
+        "00000000-0000-0000-0000-000000000000' OR TRUE --",
+      ),
+      ('plain non-UUID owner', 'not-a-uuid'),
+      ('unknown UUID owner', '00000000-0000-0000-0000-000000000000'),
+    ]) {
+      test(
+        'getWallet rejects $label without returning another user row',
+        () async {
+          await ProductService.run(
+            session,
+            (s) => s.appendPointEntry(
+              PointEntry(
+                owner: id.uuid,
+                entryKey: 'victim-credit',
+                kind: 'steps',
+                amount: 31337,
+                policyVersion: stepPolicyVersion,
+                createdAt: DateTime.utc(2026, 10, 31),
+              ),
+            ),
+          );
+          final endpoint = ProductEndpoint();
+          expect((await endpoint.getWallet(session)).balance, 31337);
+          final accountCount = await ProductAccount.db.count(session);
+          session.updateAuthenticated(
+            AuthenticationInfo(owner, {}, authId: 'test'),
+          );
+          final rejected = throwsA(
+            isA<NotAuthorizedException>().having(
+              (e) => e.reason,
+              'reason',
+              AuthenticationFailureReason.unauthenticated,
+            ),
+          );
+          await expectLater(endpoint.getWallet(session), rejected);
+          await expectLater(
+            session.db.transaction(
+              (tx) => lockProductAccount(session, owner, tx),
+            ),
+            rejected,
+          );
+          expect(await ProductAccount.db.count(session), accountCount);
+          session.updateAuthenticated(
+            AuthenticationInfo(id.uuid, {}, authId: 'test'),
+          );
+          expect((await endpoint.getWallet(session)).balance, 31337);
+          expect(await reconcilePointBalances(session), isEmpty);
+        },
+      );
+    }
 
     test(
       'lockProductAccount five separate transactions leave exactly one row',
