@@ -93,7 +93,9 @@ void main() {
       );
       for (final row in tables) {
         final table = row[0] as String;
-        result[table] = (await admin.db.unsafeQuery(
+        // App tables carry both owner and authUserId; keep both views.
+        final key = result.containsKey(table) ? '$table.authUserId' : table;
+        result[key] = (await admin.db.unsafeQuery(
           'SELECT row_to_json(t)::text FROM "$table" t '
           'WHERE "authUserId" = CAST(@owner AS uuid) ORDER BY id',
           parameters: parameters,

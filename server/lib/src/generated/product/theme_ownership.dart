@@ -8,15 +8,21 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: dead_code, unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:balmatchum_server/src/generated/protocol.dart' as _iu3f2ih9;
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+    as _iacs;
 
 abstract class ThemeOwnership
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
   ThemeOwnership._({
     this.id,
     required this.owner,
+    this.authUserId,
+    this.authUser,
     required this.themeId,
     required this.purchasedAt,
   });
@@ -24,6 +30,8 @@ abstract class ThemeOwnership
   factory ThemeOwnership({
     int? id,
     required String owner,
+    _is.UuidValue? authUserId,
+    _iacs.AuthUser? authUser,
     required String themeId,
     required DateTime purchasedAt,
   }) = _ThemeOwnershipImpl;
@@ -32,6 +40,16 @@ abstract class ThemeOwnership
     return ThemeOwnership(
       id: jsonSerialization['id'] as int?,
       owner: jsonSerialization['owner'] as String,
+      authUserId: jsonSerialization['authUserId'] == null
+          ? null
+          : _is.UuidValueJsonExtension.fromJson(
+              jsonSerialization['authUserId'],
+            ),
+      authUser: jsonSerialization['authUser'] == null
+          ? null
+          : _iu3f2ih9.Protocol().deserialize<_iacs.AuthUser>(
+              jsonSerialization['authUser'],
+            ),
       themeId: jsonSerialization['themeId'] as String,
       purchasedAt: _is.DateTimeJsonExtension.fromJson(
         jsonSerialization['purchasedAt'],
@@ -48,6 +66,10 @@ abstract class ThemeOwnership
 
   String owner;
 
+  _is.UuidValue? authUserId;
+
+  _iacs.AuthUser? authUser;
+
   String themeId;
 
   DateTime purchasedAt;
@@ -61,6 +83,8 @@ abstract class ThemeOwnership
   ThemeOwnership copyWith({
     int? id,
     String? owner,
+    _is.UuidValue? authUserId,
+    _iacs.AuthUser? authUser,
     String? themeId,
     DateTime? purchasedAt,
   });
@@ -70,6 +94,8 @@ abstract class ThemeOwnership
       '__className__': 'ThemeOwnership',
       if (id != null) 'id': id,
       'owner': owner,
+      if (authUserId != null) 'authUserId': authUserId?.toJson(),
+      if (authUser != null) 'authUser': authUser?.toJson(),
       'themeId': themeId,
       'purchasedAt': purchasedAt.toJson(),
     };
@@ -80,8 +106,8 @@ abstract class ThemeOwnership
     return {};
   }
 
-  static ThemeOwnershipInclude include() {
-    return ThemeOwnershipInclude._();
+  static ThemeOwnershipInclude include({_iacs.AuthUserInclude? authUser}) {
+    return ThemeOwnershipInclude._(authUser: authUser);
   }
 
   static ThemeOwnershipIncludeList includeList({
@@ -114,11 +140,15 @@ class _ThemeOwnershipImpl extends ThemeOwnership {
   _ThemeOwnershipImpl({
     int? id,
     required String owner,
+    _is.UuidValue? authUserId,
+    _iacs.AuthUser? authUser,
     required String themeId,
     required DateTime purchasedAt,
   }) : super._(
          id: id,
          owner: owner,
+         authUserId: authUserId,
+         authUser: authUser,
          themeId: themeId,
          purchasedAt: purchasedAt,
        );
@@ -130,12 +160,18 @@ class _ThemeOwnershipImpl extends ThemeOwnership {
   ThemeOwnership copyWith({
     Object? id = _Undefined,
     String? owner,
+    Object? authUserId = _Undefined,
+    Object? authUser = _Undefined,
     String? themeId,
     DateTime? purchasedAt,
   }) {
     return ThemeOwnership(
       id: id is int? ? id : this.id,
       owner: owner ?? this.owner,
+      authUserId: authUserId is _is.UuidValue? ? authUserId : this.authUserId,
+      authUser: authUser is _iacs.AuthUser?
+          ? authUser
+          : this.authUser?.copyWith(),
       themeId: themeId ?? this.themeId,
       purchasedAt: purchasedAt ?? this.purchasedAt,
     );
@@ -147,6 +183,13 @@ class ThemeOwnershipUpdateTable extends _is.UpdateTable<ThemeOwnershipTable> {
 
   _is.ColumnValue<String, String> owner(String value) => _is.ColumnValue(
     table.owner,
+    value,
+  );
+
+  _is.ColumnValue<_is.UuidValue, _is.UuidValue> authUserId(
+    _is.UuidValue? value,
+  ) => _is.ColumnValue(
+    table.authUserId,
     value,
   );
 
@@ -170,6 +213,10 @@ class ThemeOwnershipTable extends _is.Table<int?> {
       'owner',
       this,
     );
+    authUserId = _is.ColumnUuid(
+      'authUserId',
+      this,
+    );
     themeId = _is.ColumnString(
       'themeId',
       this,
@@ -184,24 +231,54 @@ class ThemeOwnershipTable extends _is.Table<int?> {
 
   late final _is.ColumnString owner;
 
+  late final _is.ColumnUuid authUserId;
+
+  _iacs.AuthUserTable? _authUser;
+
   late final _is.ColumnString themeId;
 
   late final _is.ColumnDateTime purchasedAt;
+
+  _iacs.AuthUserTable get authUser {
+    if (_authUser != null) return _authUser!;
+    _authUser = _is.createRelationTable(
+      relationFieldName: 'authUser',
+      field: ThemeOwnership.t.authUserId,
+      foreignField: _iacs.AuthUser.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _iacs.AuthUserTable(tableRelation: foreignTableRelation),
+    );
+    return _authUser!;
+  }
 
   @override
   List<_is.Column> get columns => [
     id,
     owner,
+    authUserId,
     themeId,
     purchasedAt,
   ];
+
+  @override
+  _is.Table? getRelationTable(String relationField) {
+    if (relationField == 'authUser') {
+      return authUser;
+    }
+    return null;
+  }
 }
 
 class ThemeOwnershipInclude extends _is.IncludeObject {
-  ThemeOwnershipInclude._();
+  ThemeOwnershipInclude._({_iacs.AuthUserInclude? authUser}) {
+    _authUser = authUser;
+  }
+
+  _iacs.AuthUserInclude? _authUser;
 
   @override
-  Map<String, _is.Include?> get includes => {};
+  Map<String, _is.Include?> get includes => {'authUser': _authUser};
 
   @override
   _is.Table<int?> get table => ThemeOwnership.t;
@@ -228,6 +305,10 @@ class ThemeOwnershipIncludeList extends _is.IncludeList {
 
 class ThemeOwnershipRepository {
   const ThemeOwnershipRepository._();
+
+  final attachRow = const ThemeOwnershipAttachRowRepository._();
+
+  final detachRow = const ThemeOwnershipDetachRowRepository._();
 
   /// Returns a list of [ThemeOwnership]s matching the given query parameters.
   ///
@@ -259,6 +340,7 @@ class ThemeOwnershipRepository {
     _is.OrderByBuilder<ThemeOwnershipTable>? orderBy,
     _is.OrderByListBuilder<ThemeOwnershipTable>? orderByList,
     _is.Transaction? transaction,
+    ThemeOwnershipInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
@@ -269,6 +351,7 @@ class ThemeOwnershipRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -298,6 +381,7 @@ class ThemeOwnershipRepository {
     _is.OrderByBuilder<ThemeOwnershipTable>? orderBy,
     _is.OrderByListBuilder<ThemeOwnershipTable>? orderByList,
     _is.Transaction? transaction,
+    ThemeOwnershipInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
@@ -307,6 +391,7 @@ class ThemeOwnershipRepository {
       orderByList: orderByList?.call(ThemeOwnership.t),
       offset: offset,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -317,12 +402,14 @@ class ThemeOwnershipRepository {
     _is.DatabaseSession session,
     int id, {
     _is.Transaction? transaction,
+    ThemeOwnershipInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
     return session.db.findById<ThemeOwnership>(
       id,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -616,6 +703,59 @@ class ThemeOwnershipRepository {
       where: where(ThemeOwnership.t),
       lockMode: lockMode,
       lockBehavior: lockBehavior,
+      transaction: transaction,
+    );
+  }
+}
+
+class ThemeOwnershipAttachRowRepository {
+  const ThemeOwnershipAttachRowRepository._();
+
+  /// Creates a relation between the given [ThemeOwnership] and [AuthUser]
+  /// by setting the [ThemeOwnership]'s foreign key `authUserId` to refer to the [AuthUser].
+  Future<void> authUser(
+    _is.DatabaseSession session,
+    ThemeOwnership themeOwnership,
+    _iacs.AuthUser authUser, {
+    _is.Transaction? transaction,
+  }) async {
+    if (themeOwnership.id == null) {
+      throw ArgumentError.notNull('themeOwnership.id');
+    }
+    if (authUser.id == null) {
+      throw ArgumentError.notNull('authUser.id');
+    }
+
+    var $themeOwnership = themeOwnership.copyWith(authUserId: authUser.id);
+    await session.db.updateRow<ThemeOwnership>(
+      $themeOwnership,
+      columns: [ThemeOwnership.t.authUserId],
+      transaction: transaction,
+    );
+  }
+}
+
+class ThemeOwnershipDetachRowRepository {
+  const ThemeOwnershipDetachRowRepository._();
+
+  /// Detaches the relation between this [ThemeOwnership] and the [AuthUser] set in `authUser`
+  /// by setting the [ThemeOwnership]'s foreign key `authUserId` to `null`.
+  ///
+  /// This removes the association between the two models without deleting
+  /// the related record.
+  Future<void> authUser(
+    _is.DatabaseSession session,
+    ThemeOwnership themeOwnership, {
+    _is.Transaction? transaction,
+  }) async {
+    if (themeOwnership.id == null) {
+      throw ArgumentError.notNull('themeOwnership.id');
+    }
+
+    var $themeOwnership = themeOwnership.copyWith(authUserId: null);
+    await session.db.updateRow<ThemeOwnership>(
+      $themeOwnership,
+      columns: [ThemeOwnership.t.authUserId],
       transaction: transaction,
     );
   }

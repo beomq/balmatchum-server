@@ -8,15 +8,21 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: dead_code, unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:balmatchum_server/src/generated/protocol.dart' as _iu3f2ih9;
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+    as _iacs;
 
 abstract class StoredAdIntent
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
   StoredAdIntent._({
     this.id,
     required this.owner,
+    this.authUserId,
+    this.authUser,
     required this.nonce,
     required this.purpose,
     required this.targetDate,
@@ -38,6 +44,8 @@ abstract class StoredAdIntent
   factory StoredAdIntent({
     int? id,
     required String owner,
+    _is.UuidValue? authUserId,
+    _iacs.AuthUser? authUser,
     required String nonce,
     required String purpose,
     required String targetDate,
@@ -60,6 +68,16 @@ abstract class StoredAdIntent
     return StoredAdIntent(
       id: jsonSerialization['id'] as int?,
       owner: jsonSerialization['owner'] as String,
+      authUserId: jsonSerialization['authUserId'] == null
+          ? null
+          : _is.UuidValueJsonExtension.fromJson(
+              jsonSerialization['authUserId'],
+            ),
+      authUser: jsonSerialization['authUser'] == null
+          ? null
+          : _iu3f2ih9.Protocol().deserialize<_iacs.AuthUser>(
+              jsonSerialization['authUser'],
+            ),
       nonce: jsonSerialization['nonce'] as String,
       purpose: jsonSerialization['purpose'] as String,
       targetDate: jsonSerialization['targetDate'] as String,
@@ -99,6 +117,10 @@ abstract class StoredAdIntent
   int? id;
 
   String owner;
+
+  _is.UuidValue? authUserId;
+
+  _iacs.AuthUser? authUser;
 
   String nonce;
 
@@ -141,6 +163,8 @@ abstract class StoredAdIntent
   StoredAdIntent copyWith({
     int? id,
     String? owner,
+    _is.UuidValue? authUserId,
+    _iacs.AuthUser? authUser,
     String? nonce,
     String? purpose,
     String? targetDate,
@@ -164,6 +188,8 @@ abstract class StoredAdIntent
       '__className__': 'StoredAdIntent',
       if (id != null) 'id': id,
       'owner': owner,
+      if (authUserId != null) 'authUserId': authUserId?.toJson(),
+      if (authUser != null) 'authUser': authUser?.toJson(),
       'nonce': nonce,
       'purpose': purpose,
       'targetDate': targetDate,
@@ -188,8 +214,8 @@ abstract class StoredAdIntent
     return {};
   }
 
-  static StoredAdIntentInclude include() {
-    return StoredAdIntentInclude._();
+  static StoredAdIntentInclude include({_iacs.AuthUserInclude? authUser}) {
+    return StoredAdIntentInclude._(authUser: authUser);
   }
 
   static StoredAdIntentIncludeList includeList({
@@ -222,6 +248,8 @@ class _StoredAdIntentImpl extends StoredAdIntent {
   _StoredAdIntentImpl({
     int? id,
     required String owner,
+    _is.UuidValue? authUserId,
+    _iacs.AuthUser? authUser,
     required String nonce,
     required String purpose,
     required String targetDate,
@@ -241,6 +269,8 @@ class _StoredAdIntentImpl extends StoredAdIntent {
   }) : super._(
          id: id,
          owner: owner,
+         authUserId: authUserId,
+         authUser: authUser,
          nonce: nonce,
          purpose: purpose,
          targetDate: targetDate,
@@ -266,6 +296,8 @@ class _StoredAdIntentImpl extends StoredAdIntent {
   StoredAdIntent copyWith({
     Object? id = _Undefined,
     String? owner,
+    Object? authUserId = _Undefined,
+    Object? authUser = _Undefined,
     String? nonce,
     String? purpose,
     String? targetDate,
@@ -286,6 +318,10 @@ class _StoredAdIntentImpl extends StoredAdIntent {
     return StoredAdIntent(
       id: id is int? ? id : this.id,
       owner: owner ?? this.owner,
+      authUserId: authUserId is _is.UuidValue? ? authUserId : this.authUserId,
+      authUser: authUser is _iacs.AuthUser?
+          ? authUser
+          : this.authUser?.copyWith(),
       nonce: nonce ?? this.nonce,
       purpose: purpose ?? this.purpose,
       targetDate: targetDate ?? this.targetDate,
@@ -315,6 +351,13 @@ class StoredAdIntentUpdateTable extends _is.UpdateTable<StoredAdIntentTable> {
 
   _is.ColumnValue<String, String> owner(String value) => _is.ColumnValue(
     table.owner,
+    value,
+  );
+
+  _is.ColumnValue<_is.UuidValue, _is.UuidValue> authUserId(
+    _is.UuidValue? value,
+  ) => _is.ColumnValue(
+    table.authUserId,
     value,
   );
 
@@ -414,6 +457,10 @@ class StoredAdIntentTable extends _is.Table<int?> {
       'owner',
       this,
     );
+    authUserId = _is.ColumnUuid(
+      'authUserId',
+      this,
+    );
     nonce = _is.ColumnString(
       'nonce',
       this,
@@ -485,6 +532,10 @@ class StoredAdIntentTable extends _is.Table<int?> {
 
   late final _is.ColumnString owner;
 
+  late final _is.ColumnUuid authUserId;
+
+  _iacs.AuthUserTable? _authUser;
+
   late final _is.ColumnString nonce;
 
   late final _is.ColumnString purpose;
@@ -517,10 +568,24 @@ class StoredAdIntentTable extends _is.Table<int?> {
 
   late final _is.ColumnDateTime consumedAt;
 
+  _iacs.AuthUserTable get authUser {
+    if (_authUser != null) return _authUser!;
+    _authUser = _is.createRelationTable(
+      relationFieldName: 'authUser',
+      field: StoredAdIntent.t.authUserId,
+      foreignField: _iacs.AuthUser.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _iacs.AuthUserTable(tableRelation: foreignTableRelation),
+    );
+    return _authUser!;
+  }
+
   @override
   List<_is.Column> get columns => [
     id,
     owner,
+    authUserId,
     nonce,
     purpose,
     targetDate,
@@ -538,13 +603,25 @@ class StoredAdIntentTable extends _is.Table<int?> {
     verifiedAt,
     consumedAt,
   ];
+
+  @override
+  _is.Table? getRelationTable(String relationField) {
+    if (relationField == 'authUser') {
+      return authUser;
+    }
+    return null;
+  }
 }
 
 class StoredAdIntentInclude extends _is.IncludeObject {
-  StoredAdIntentInclude._();
+  StoredAdIntentInclude._({_iacs.AuthUserInclude? authUser}) {
+    _authUser = authUser;
+  }
+
+  _iacs.AuthUserInclude? _authUser;
 
   @override
-  Map<String, _is.Include?> get includes => {};
+  Map<String, _is.Include?> get includes => {'authUser': _authUser};
 
   @override
   _is.Table<int?> get table => StoredAdIntent.t;
@@ -571,6 +648,10 @@ class StoredAdIntentIncludeList extends _is.IncludeList {
 
 class StoredAdIntentRepository {
   const StoredAdIntentRepository._();
+
+  final attachRow = const StoredAdIntentAttachRowRepository._();
+
+  final detachRow = const StoredAdIntentDetachRowRepository._();
 
   /// Returns a list of [StoredAdIntent]s matching the given query parameters.
   ///
@@ -602,6 +683,7 @@ class StoredAdIntentRepository {
     _is.OrderByBuilder<StoredAdIntentTable>? orderBy,
     _is.OrderByListBuilder<StoredAdIntentTable>? orderByList,
     _is.Transaction? transaction,
+    StoredAdIntentInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
@@ -612,6 +694,7 @@ class StoredAdIntentRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -641,6 +724,7 @@ class StoredAdIntentRepository {
     _is.OrderByBuilder<StoredAdIntentTable>? orderBy,
     _is.OrderByListBuilder<StoredAdIntentTable>? orderByList,
     _is.Transaction? transaction,
+    StoredAdIntentInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
@@ -650,6 +734,7 @@ class StoredAdIntentRepository {
       orderByList: orderByList?.call(StoredAdIntent.t),
       offset: offset,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -660,12 +745,14 @@ class StoredAdIntentRepository {
     _is.DatabaseSession session,
     int id, {
     _is.Transaction? transaction,
+    StoredAdIntentInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
     return session.db.findById<StoredAdIntent>(
       id,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -959,6 +1046,59 @@ class StoredAdIntentRepository {
       where: where(StoredAdIntent.t),
       lockMode: lockMode,
       lockBehavior: lockBehavior,
+      transaction: transaction,
+    );
+  }
+}
+
+class StoredAdIntentAttachRowRepository {
+  const StoredAdIntentAttachRowRepository._();
+
+  /// Creates a relation between the given [StoredAdIntent] and [AuthUser]
+  /// by setting the [StoredAdIntent]'s foreign key `authUserId` to refer to the [AuthUser].
+  Future<void> authUser(
+    _is.DatabaseSession session,
+    StoredAdIntent storedAdIntent,
+    _iacs.AuthUser authUser, {
+    _is.Transaction? transaction,
+  }) async {
+    if (storedAdIntent.id == null) {
+      throw ArgumentError.notNull('storedAdIntent.id');
+    }
+    if (authUser.id == null) {
+      throw ArgumentError.notNull('authUser.id');
+    }
+
+    var $storedAdIntent = storedAdIntent.copyWith(authUserId: authUser.id);
+    await session.db.updateRow<StoredAdIntent>(
+      $storedAdIntent,
+      columns: [StoredAdIntent.t.authUserId],
+      transaction: transaction,
+    );
+  }
+}
+
+class StoredAdIntentDetachRowRepository {
+  const StoredAdIntentDetachRowRepository._();
+
+  /// Detaches the relation between this [StoredAdIntent] and the [AuthUser] set in `authUser`
+  /// by setting the [StoredAdIntent]'s foreign key `authUserId` to `null`.
+  ///
+  /// This removes the association between the two models without deleting
+  /// the related record.
+  Future<void> authUser(
+    _is.DatabaseSession session,
+    StoredAdIntent storedAdIntent, {
+    _is.Transaction? transaction,
+  }) async {
+    if (storedAdIntent.id == null) {
+      throw ArgumentError.notNull('storedAdIntent.id');
+    }
+
+    var $storedAdIntent = storedAdIntent.copyWith(authUserId: null);
+    await session.db.updateRow<StoredAdIntent>(
+      $storedAdIntent,
+      columns: [StoredAdIntent.t.authUserId],
       transaction: transaction,
     );
   }

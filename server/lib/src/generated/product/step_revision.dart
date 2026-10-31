@@ -8,15 +8,21 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: dead_code, unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:balmatchum_server/src/generated/protocol.dart' as _iu3f2ih9;
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+    as _iacs;
 
 abstract class StepRevision
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
   StepRevision._({
     this.id,
     required this.owner,
+    this.authUserId,
+    this.authUser,
     required this.date,
     required this.generation,
     required this.revision,
@@ -26,6 +32,8 @@ abstract class StepRevision
   factory StepRevision({
     int? id,
     required String owner,
+    _is.UuidValue? authUserId,
+    _iacs.AuthUser? authUser,
     required String date,
     required int generation,
     required int revision,
@@ -36,6 +44,16 @@ abstract class StepRevision
     return StepRevision(
       id: jsonSerialization['id'] as int?,
       owner: jsonSerialization['owner'] as String,
+      authUserId: jsonSerialization['authUserId'] == null
+          ? null
+          : _is.UuidValueJsonExtension.fromJson(
+              jsonSerialization['authUserId'],
+            ),
+      authUser: jsonSerialization['authUser'] == null
+          ? null
+          : _iu3f2ih9.Protocol().deserialize<_iacs.AuthUser>(
+              jsonSerialization['authUser'],
+            ),
       date: jsonSerialization['date'] as String,
       generation: jsonSerialization['generation'] as int,
       revision: jsonSerialization['revision'] as int,
@@ -51,6 +69,10 @@ abstract class StepRevision
   int? id;
 
   String owner;
+
+  _is.UuidValue? authUserId;
+
+  _iacs.AuthUser? authUser;
 
   String date;
 
@@ -69,6 +91,8 @@ abstract class StepRevision
   StepRevision copyWith({
     int? id,
     String? owner,
+    _is.UuidValue? authUserId,
+    _iacs.AuthUser? authUser,
     String? date,
     int? generation,
     int? revision,
@@ -80,6 +104,8 @@ abstract class StepRevision
       '__className__': 'StepRevision',
       if (id != null) 'id': id,
       'owner': owner,
+      if (authUserId != null) 'authUserId': authUserId?.toJson(),
+      if (authUser != null) 'authUser': authUser?.toJson(),
       'date': date,
       'generation': generation,
       'revision': revision,
@@ -92,8 +118,8 @@ abstract class StepRevision
     return {};
   }
 
-  static StepRevisionInclude include() {
-    return StepRevisionInclude._();
+  static StepRevisionInclude include({_iacs.AuthUserInclude? authUser}) {
+    return StepRevisionInclude._(authUser: authUser);
   }
 
   static StepRevisionIncludeList includeList({
@@ -126,6 +152,8 @@ class _StepRevisionImpl extends StepRevision {
   _StepRevisionImpl({
     int? id,
     required String owner,
+    _is.UuidValue? authUserId,
+    _iacs.AuthUser? authUser,
     required String date,
     required int generation,
     required int revision,
@@ -133,6 +161,8 @@ class _StepRevisionImpl extends StepRevision {
   }) : super._(
          id: id,
          owner: owner,
+         authUserId: authUserId,
+         authUser: authUser,
          date: date,
          generation: generation,
          revision: revision,
@@ -146,6 +176,8 @@ class _StepRevisionImpl extends StepRevision {
   StepRevision copyWith({
     Object? id = _Undefined,
     String? owner,
+    Object? authUserId = _Undefined,
+    Object? authUser = _Undefined,
     String? date,
     int? generation,
     int? revision,
@@ -154,6 +186,10 @@ class _StepRevisionImpl extends StepRevision {
     return StepRevision(
       id: id is int? ? id : this.id,
       owner: owner ?? this.owner,
+      authUserId: authUserId is _is.UuidValue? ? authUserId : this.authUserId,
+      authUser: authUser is _iacs.AuthUser?
+          ? authUser
+          : this.authUser?.copyWith(),
       date: date ?? this.date,
       generation: generation ?? this.generation,
       revision: revision ?? this.revision,
@@ -167,6 +203,13 @@ class StepRevisionUpdateTable extends _is.UpdateTable<StepRevisionTable> {
 
   _is.ColumnValue<String, String> owner(String value) => _is.ColumnValue(
     table.owner,
+    value,
+  );
+
+  _is.ColumnValue<_is.UuidValue, _is.UuidValue> authUserId(
+    _is.UuidValue? value,
+  ) => _is.ColumnValue(
+    table.authUserId,
     value,
   );
 
@@ -198,6 +241,10 @@ class StepRevisionTable extends _is.Table<int?> {
       'owner',
       this,
     );
+    authUserId = _is.ColumnUuid(
+      'authUserId',
+      this,
+    );
     date = _is.ColumnString(
       'date',
       this,
@@ -220,6 +267,10 @@ class StepRevisionTable extends _is.Table<int?> {
 
   late final _is.ColumnString owner;
 
+  late final _is.ColumnUuid authUserId;
+
+  _iacs.AuthUserTable? _authUser;
+
   late final _is.ColumnString date;
 
   late final _is.ColumnInt generation;
@@ -228,22 +279,48 @@ class StepRevisionTable extends _is.Table<int?> {
 
   late final _is.ColumnString digest;
 
+  _iacs.AuthUserTable get authUser {
+    if (_authUser != null) return _authUser!;
+    _authUser = _is.createRelationTable(
+      relationFieldName: 'authUser',
+      field: StepRevision.t.authUserId,
+      foreignField: _iacs.AuthUser.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _iacs.AuthUserTable(tableRelation: foreignTableRelation),
+    );
+    return _authUser!;
+  }
+
   @override
   List<_is.Column> get columns => [
     id,
     owner,
+    authUserId,
     date,
     generation,
     revision,
     digest,
   ];
+
+  @override
+  _is.Table? getRelationTable(String relationField) {
+    if (relationField == 'authUser') {
+      return authUser;
+    }
+    return null;
+  }
 }
 
 class StepRevisionInclude extends _is.IncludeObject {
-  StepRevisionInclude._();
+  StepRevisionInclude._({_iacs.AuthUserInclude? authUser}) {
+    _authUser = authUser;
+  }
+
+  _iacs.AuthUserInclude? _authUser;
 
   @override
-  Map<String, _is.Include?> get includes => {};
+  Map<String, _is.Include?> get includes => {'authUser': _authUser};
 
   @override
   _is.Table<int?> get table => StepRevision.t;
@@ -270,6 +347,10 @@ class StepRevisionIncludeList extends _is.IncludeList {
 
 class StepRevisionRepository {
   const StepRevisionRepository._();
+
+  final attachRow = const StepRevisionAttachRowRepository._();
+
+  final detachRow = const StepRevisionDetachRowRepository._();
 
   /// Returns a list of [StepRevision]s matching the given query parameters.
   ///
@@ -301,6 +382,7 @@ class StepRevisionRepository {
     _is.OrderByBuilder<StepRevisionTable>? orderBy,
     _is.OrderByListBuilder<StepRevisionTable>? orderByList,
     _is.Transaction? transaction,
+    StepRevisionInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
@@ -311,6 +393,7 @@ class StepRevisionRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -340,6 +423,7 @@ class StepRevisionRepository {
     _is.OrderByBuilder<StepRevisionTable>? orderBy,
     _is.OrderByListBuilder<StepRevisionTable>? orderByList,
     _is.Transaction? transaction,
+    StepRevisionInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
@@ -349,6 +433,7 @@ class StepRevisionRepository {
       orderByList: orderByList?.call(StepRevision.t),
       offset: offset,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -359,12 +444,14 @@ class StepRevisionRepository {
     _is.DatabaseSession session,
     int id, {
     _is.Transaction? transaction,
+    StepRevisionInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
     return session.db.findById<StepRevision>(
       id,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -658,6 +745,59 @@ class StepRevisionRepository {
       where: where(StepRevision.t),
       lockMode: lockMode,
       lockBehavior: lockBehavior,
+      transaction: transaction,
+    );
+  }
+}
+
+class StepRevisionAttachRowRepository {
+  const StepRevisionAttachRowRepository._();
+
+  /// Creates a relation between the given [StepRevision] and [AuthUser]
+  /// by setting the [StepRevision]'s foreign key `authUserId` to refer to the [AuthUser].
+  Future<void> authUser(
+    _is.DatabaseSession session,
+    StepRevision stepRevision,
+    _iacs.AuthUser authUser, {
+    _is.Transaction? transaction,
+  }) async {
+    if (stepRevision.id == null) {
+      throw ArgumentError.notNull('stepRevision.id');
+    }
+    if (authUser.id == null) {
+      throw ArgumentError.notNull('authUser.id');
+    }
+
+    var $stepRevision = stepRevision.copyWith(authUserId: authUser.id);
+    await session.db.updateRow<StepRevision>(
+      $stepRevision,
+      columns: [StepRevision.t.authUserId],
+      transaction: transaction,
+    );
+  }
+}
+
+class StepRevisionDetachRowRepository {
+  const StepRevisionDetachRowRepository._();
+
+  /// Detaches the relation between this [StepRevision] and the [AuthUser] set in `authUser`
+  /// by setting the [StepRevision]'s foreign key `authUserId` to `null`.
+  ///
+  /// This removes the association between the two models without deleting
+  /// the related record.
+  Future<void> authUser(
+    _is.DatabaseSession session,
+    StepRevision stepRevision, {
+    _is.Transaction? transaction,
+  }) async {
+    if (stepRevision.id == null) {
+      throw ArgumentError.notNull('stepRevision.id');
+    }
+
+    var $stepRevision = stepRevision.copyWith(authUserId: null);
+    await session.db.updateRow<StepRevision>(
+      $stepRevision,
+      columns: [StepRevision.t.authUserId],
       transaction: transaction,
     );
   }

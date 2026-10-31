@@ -3,6 +3,7 @@ serverOnly: true
 table: ad_intent
 fields:
   owner: String
+  authUser: module:serverpod_auth_core:AuthUser?, relation(optional, onDelete=Cascade)
   nonce: String
   purpose: String
   targetDate: String
@@ -25,6 +26,9 @@ indexes:
     unique: true
   ad_intent_target:
     fields: owner, purpose, targetDate, targetRevision
+    unique: true
+  ad_intent_auth_user_target:
+    fields: authUserId, purpose, targetDate, targetRevision
     unique: true
   ad_intent_transaction:
     fields: transactionId

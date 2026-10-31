@@ -8,35 +8,58 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: dead_code, unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:balmatchum_server/src/generated/protocol.dart' as _iu3f2ih9;
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+    as _iacs;
 
 abstract class ProductRequest
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
   ProductRequest._({
     this.id,
     required this.owner,
+    this.authUserId,
+    this.authUser,
     required this.requestId,
     required this.digest,
     required this.result,
-  });
+    DateTime? createdAt,
+  }) : createdAt = createdAt ?? DateTime.now();
 
   factory ProductRequest({
     int? id,
     required String owner,
+    _is.UuidValue? authUserId,
+    _iacs.AuthUser? authUser,
     required String requestId,
     required String digest,
     required String result,
+    DateTime? createdAt,
   }) = _ProductRequestImpl;
 
   factory ProductRequest.fromJson(Map<String, dynamic> jsonSerialization) {
     return ProductRequest(
       id: jsonSerialization['id'] as int?,
       owner: jsonSerialization['owner'] as String,
+      authUserId: jsonSerialization['authUserId'] == null
+          ? null
+          : _is.UuidValueJsonExtension.fromJson(
+              jsonSerialization['authUserId'],
+            ),
+      authUser: jsonSerialization['authUser'] == null
+          ? null
+          : _iu3f2ih9.Protocol().deserialize<_iacs.AuthUser>(
+              jsonSerialization['authUser'],
+            ),
       requestId: jsonSerialization['requestId'] as String,
       digest: jsonSerialization['digest'] as String,
       result: jsonSerialization['result'] as String,
+      createdAt: jsonSerialization['createdAt'] == null
+          ? null
+          : _is.DateTimeJsonExtension.fromJson(jsonSerialization['createdAt']),
     );
   }
 
@@ -49,11 +72,17 @@ abstract class ProductRequest
 
   String owner;
 
+  _is.UuidValue? authUserId;
+
+  _iacs.AuthUser? authUser;
+
   String requestId;
 
   String digest;
 
   String result;
+
+  DateTime createdAt;
 
   @override
   _is.Table<int?> get table => t;
@@ -64,9 +93,12 @@ abstract class ProductRequest
   ProductRequest copyWith({
     int? id,
     String? owner,
+    _is.UuidValue? authUserId,
+    _iacs.AuthUser? authUser,
     String? requestId,
     String? digest,
     String? result,
+    DateTime? createdAt,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -74,9 +106,12 @@ abstract class ProductRequest
       '__className__': 'ProductRequest',
       if (id != null) 'id': id,
       'owner': owner,
+      if (authUserId != null) 'authUserId': authUserId?.toJson(),
+      if (authUser != null) 'authUser': authUser?.toJson(),
       'requestId': requestId,
       'digest': digest,
       'result': result,
+      'createdAt': createdAt.toJson(),
     };
   }
 
@@ -85,8 +120,8 @@ abstract class ProductRequest
     return {};
   }
 
-  static ProductRequestInclude include() {
-    return ProductRequestInclude._();
+  static ProductRequestInclude include({_iacs.AuthUserInclude? authUser}) {
+    return ProductRequestInclude._(authUser: authUser);
   }
 
   static ProductRequestIncludeList includeList({
@@ -119,15 +154,21 @@ class _ProductRequestImpl extends ProductRequest {
   _ProductRequestImpl({
     int? id,
     required String owner,
+    _is.UuidValue? authUserId,
+    _iacs.AuthUser? authUser,
     required String requestId,
     required String digest,
     required String result,
+    DateTime? createdAt,
   }) : super._(
          id: id,
          owner: owner,
+         authUserId: authUserId,
+         authUser: authUser,
          requestId: requestId,
          digest: digest,
          result: result,
+         createdAt: createdAt,
        );
 
   /// Returns a shallow copy of this [ProductRequest]
@@ -137,16 +178,24 @@ class _ProductRequestImpl extends ProductRequest {
   ProductRequest copyWith({
     Object? id = _Undefined,
     String? owner,
+    Object? authUserId = _Undefined,
+    Object? authUser = _Undefined,
     String? requestId,
     String? digest,
     String? result,
+    DateTime? createdAt,
   }) {
     return ProductRequest(
       id: id is int? ? id : this.id,
       owner: owner ?? this.owner,
+      authUserId: authUserId is _is.UuidValue? ? authUserId : this.authUserId,
+      authUser: authUser is _iacs.AuthUser?
+          ? authUser
+          : this.authUser?.copyWith(),
       requestId: requestId ?? this.requestId,
       digest: digest ?? this.digest,
       result: result ?? this.result,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 }
@@ -156,6 +205,13 @@ class ProductRequestUpdateTable extends _is.UpdateTable<ProductRequestTable> {
 
   _is.ColumnValue<String, String> owner(String value) => _is.ColumnValue(
     table.owner,
+    value,
+  );
+
+  _is.ColumnValue<_is.UuidValue, _is.UuidValue> authUserId(
+    _is.UuidValue? value,
+  ) => _is.ColumnValue(
+    table.authUserId,
     value,
   );
 
@@ -173,6 +229,12 @@ class ProductRequestUpdateTable extends _is.UpdateTable<ProductRequestTable> {
     table.result,
     value,
   );
+
+  _is.ColumnValue<DateTime, DateTime> createdAt(DateTime value) =>
+      _is.ColumnValue(
+        table.createdAt,
+        value,
+      );
 }
 
 class ProductRequestTable extends _is.Table<int?> {
@@ -181,6 +243,10 @@ class ProductRequestTable extends _is.Table<int?> {
     updateTable = ProductRequestUpdateTable(this);
     owner = _is.ColumnString(
       'owner',
+      this,
+    );
+    authUserId = _is.ColumnUuid(
+      'authUserId',
       this,
     );
     requestId = _is.ColumnString(
@@ -195,11 +261,20 @@ class ProductRequestTable extends _is.Table<int?> {
       'result',
       this,
     );
+    createdAt = _is.ColumnDateTime(
+      'createdAt',
+      this,
+      hasDefault: true,
+    );
   }
 
   late final ProductRequestUpdateTable updateTable;
 
   late final _is.ColumnString owner;
+
+  late final _is.ColumnUuid authUserId;
+
+  _iacs.AuthUserTable? _authUser;
 
   late final _is.ColumnString requestId;
 
@@ -207,21 +282,50 @@ class ProductRequestTable extends _is.Table<int?> {
 
   late final _is.ColumnString result;
 
+  late final _is.ColumnDateTime createdAt;
+
+  _iacs.AuthUserTable get authUser {
+    if (_authUser != null) return _authUser!;
+    _authUser = _is.createRelationTable(
+      relationFieldName: 'authUser',
+      field: ProductRequest.t.authUserId,
+      foreignField: _iacs.AuthUser.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _iacs.AuthUserTable(tableRelation: foreignTableRelation),
+    );
+    return _authUser!;
+  }
+
   @override
   List<_is.Column> get columns => [
     id,
     owner,
+    authUserId,
     requestId,
     digest,
     result,
+    createdAt,
   ];
+
+  @override
+  _is.Table? getRelationTable(String relationField) {
+    if (relationField == 'authUser') {
+      return authUser;
+    }
+    return null;
+  }
 }
 
 class ProductRequestInclude extends _is.IncludeObject {
-  ProductRequestInclude._();
+  ProductRequestInclude._({_iacs.AuthUserInclude? authUser}) {
+    _authUser = authUser;
+  }
+
+  _iacs.AuthUserInclude? _authUser;
 
   @override
-  Map<String, _is.Include?> get includes => {};
+  Map<String, _is.Include?> get includes => {'authUser': _authUser};
 
   @override
   _is.Table<int?> get table => ProductRequest.t;
@@ -248,6 +352,10 @@ class ProductRequestIncludeList extends _is.IncludeList {
 
 class ProductRequestRepository {
   const ProductRequestRepository._();
+
+  final attachRow = const ProductRequestAttachRowRepository._();
+
+  final detachRow = const ProductRequestDetachRowRepository._();
 
   /// Returns a list of [ProductRequest]s matching the given query parameters.
   ///
@@ -279,6 +387,7 @@ class ProductRequestRepository {
     _is.OrderByBuilder<ProductRequestTable>? orderBy,
     _is.OrderByListBuilder<ProductRequestTable>? orderByList,
     _is.Transaction? transaction,
+    ProductRequestInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
@@ -289,6 +398,7 @@ class ProductRequestRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -318,6 +428,7 @@ class ProductRequestRepository {
     _is.OrderByBuilder<ProductRequestTable>? orderBy,
     _is.OrderByListBuilder<ProductRequestTable>? orderByList,
     _is.Transaction? transaction,
+    ProductRequestInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
@@ -327,6 +438,7 @@ class ProductRequestRepository {
       orderByList: orderByList?.call(ProductRequest.t),
       offset: offset,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -337,12 +449,14 @@ class ProductRequestRepository {
     _is.DatabaseSession session,
     int id, {
     _is.Transaction? transaction,
+    ProductRequestInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
     return session.db.findById<ProductRequest>(
       id,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -636,6 +750,59 @@ class ProductRequestRepository {
       where: where(ProductRequest.t),
       lockMode: lockMode,
       lockBehavior: lockBehavior,
+      transaction: transaction,
+    );
+  }
+}
+
+class ProductRequestAttachRowRepository {
+  const ProductRequestAttachRowRepository._();
+
+  /// Creates a relation between the given [ProductRequest] and [AuthUser]
+  /// by setting the [ProductRequest]'s foreign key `authUserId` to refer to the [AuthUser].
+  Future<void> authUser(
+    _is.DatabaseSession session,
+    ProductRequest productRequest,
+    _iacs.AuthUser authUser, {
+    _is.Transaction? transaction,
+  }) async {
+    if (productRequest.id == null) {
+      throw ArgumentError.notNull('productRequest.id');
+    }
+    if (authUser.id == null) {
+      throw ArgumentError.notNull('authUser.id');
+    }
+
+    var $productRequest = productRequest.copyWith(authUserId: authUser.id);
+    await session.db.updateRow<ProductRequest>(
+      $productRequest,
+      columns: [ProductRequest.t.authUserId],
+      transaction: transaction,
+    );
+  }
+}
+
+class ProductRequestDetachRowRepository {
+  const ProductRequestDetachRowRepository._();
+
+  /// Detaches the relation between this [ProductRequest] and the [AuthUser] set in `authUser`
+  /// by setting the [ProductRequest]'s foreign key `authUserId` to `null`.
+  ///
+  /// This removes the association between the two models without deleting
+  /// the related record.
+  Future<void> authUser(
+    _is.DatabaseSession session,
+    ProductRequest productRequest, {
+    _is.Transaction? transaction,
+  }) async {
+    if (productRequest.id == null) {
+      throw ArgumentError.notNull('productRequest.id');
+    }
+
+    var $productRequest = productRequest.copyWith(authUserId: null);
+    await session.db.updateRow<ProductRequest>(
+      $productRequest,
+      columns: [ProductRequest.t.authUserId],
       transaction: transaction,
     );
   }

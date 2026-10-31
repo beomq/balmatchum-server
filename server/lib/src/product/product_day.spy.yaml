@@ -3,6 +3,7 @@ serverOnly: true
 table: product_day
 fields:
   owner: String
+  authUser: module:serverpod_auth_core:AuthUser?, relation(optional, onDelete=Cascade)
   date: String
   revision: int, default=0
   deleted: bool, default=false
@@ -19,3 +20,8 @@ indexes:
   product_day_owner_date:
     fields: owner, date
     unique: true
+  product_day_auth_user_date:
+    fields: authUserId, date
+    unique: true
+  product_day_auth_user_deleted:
+    fields: authUserId, deleted, deletionVersion

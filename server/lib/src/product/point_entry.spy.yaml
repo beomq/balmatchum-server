@@ -3,6 +3,7 @@ serverOnly: true
 table: point_entry
 fields:
   owner: String
+  authUser: module:serverpod_auth_core:AuthUser?, relation(optional, onDelete=Cascade)
   entryKey: String
   kind: String
   date: String?
@@ -16,3 +17,8 @@ indexes:
   point_entry_key:
     fields: owner, entryKey
     unique: true
+  point_entry_auth_user_key:
+    fields: authUserId, entryKey
+    unique: true
+  point_entry_auth_user_date:
+    fields: authUserId, date
