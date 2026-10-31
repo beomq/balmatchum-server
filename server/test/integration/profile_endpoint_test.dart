@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:balmatchum_client/balmatchum_client.dart' as api;
 import 'package:balmatchum_server/src/auth/auth_setup.dart';
 import 'package:balmatchum_server/src/generated/protocol.dart';
 import 'package:balmatchum_server/src/generated/serverpod.dart' as generated;
+import 'package:balmatchum_server/src/product/product_service.dart';
 import 'package:clock/clock.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
@@ -29,6 +31,46 @@ class _Token implements api.ClientAuthKeyProvider {
 }
 
 void main() {
+  withServerpod('Profile read path', (builder, endpoints) {
+    test(
+      'getProfile completes while another session holds the account lock',
+      () async {
+        final a = builder.copyWith(
+          authentication: AuthenticationOverride.authenticationInfo(
+            const Uuid().v4(),
+            {},
+          ),
+        );
+        final session = a.build();
+        await AuthUser.db.insertRow(
+          session,
+          AuthUser(
+            id: UuidValue.fromString(session.authenticated!.userIdentifier),
+            scopeNames: {},
+          ),
+        );
+        final locked = Completer<void>();
+        final release = Completer<void>();
+        final write = ProductService.run(session, (s) async {
+          locked.complete();
+          await release.future.timeout(const Duration(seconds: 10));
+        });
+        try {
+          await locked.future.timeout(const Duration(seconds: 10));
+          expect(
+            await endpoints.profile
+                .getProfile(a)
+                .timeout(const Duration(seconds: 5)),
+            isNull,
+          );
+        } finally {
+          release.complete();
+          await write;
+        }
+      },
+    );
+  }, rollbackDatabase: RollbackDatabase.disabled);
+
   withServerpod('Owner scoped dog profile', (builder, endpoints) {
     final a = builder.copyWith(
       authentication: AuthenticationOverride.authenticationInfo(
