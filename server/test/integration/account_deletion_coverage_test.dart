@@ -200,6 +200,7 @@ void main() {
         admin,
         PointEntry(
           owner: owner,
+          authUserId: id,
           entryKey: 'seed',
           kind: 'quiz',
           amount: 2,
@@ -209,12 +210,18 @@ void main() {
       );
       await QuizState.db.insertRow(
         admin,
-        QuizState(owner: owner, date: '2026-10-14', questionId: 'test'),
+        QuizState(
+          owner: owner,
+          authUserId: id,
+          date: '2026-10-14',
+          questionId: 'test',
+        ),
       );
       await QuizAssignment.db.insertRow(
         admin,
         QuizAssignment(
           owner: owner,
+          authUserId: id,
           date: '2026-10-14',
           slot: 'daily',
           questionId: 'test',
@@ -226,16 +233,27 @@ void main() {
       );
       await ThemeOwnership.db.insertRow(
         admin,
-        ThemeOwnership(owner: owner, themeId: 'cloudy', purchasedAt: at),
+        ThemeOwnership(
+          owner: owner,
+          authUserId: id,
+          themeId: 'cloudy',
+          purchasedAt: at,
+        ),
       );
       await OutfitOwnership.db.insertRow(
         admin,
-        OutfitOwnership(owner: owner, outfitId: 'vest-low-v', purchasedAt: at),
+        OutfitOwnership(
+          owner: owner,
+          authUserId: id,
+          outfitId: 'vest-low-v',
+          purchasedAt: at,
+        ),
       );
       await StoredAdIntent.db.insertRow(
         admin,
         StoredAdIntent(
           owner: owner,
+          authUserId: id,
           nonce: 'coverage-nonce',
           purpose: 'test',
           targetDate: '2026-10-14',
@@ -250,12 +268,17 @@ void main() {
       );
       await BillingAccount.db.insertRow(
         admin,
-        BillingAccount(owner: owner, binding: 'coverage-binding'),
+        BillingAccount(
+          owner: owner,
+          authUserId: id,
+          binding: 'coverage-binding',
+        ),
       );
       await StoredPurchase.db.insertRow(
         admin,
         StoredPurchase(
           owner: owner,
+          authUserId: id,
           identityHash: 'coverage-identity',
           store: 'google',
           environment: 'test',
@@ -306,6 +329,13 @@ void main() {
           greaterThan(0),
           reason: 'unseeded $table $byColumn',
         );
+        if (byColumn.containsKey('owner')) {
+          expect(
+            byColumn['authUserId'],
+            byColumn['owner'],
+            reason: 'missing or mismatched foreign key in $table',
+          );
+        }
       }
 
       await client.account.deleteAccount();

@@ -46,7 +46,12 @@ extension QuizThemeService on ProductService {
     }
     return QuizState.db.insertRow(
       session,
-      QuizState(owner: owner, date: date, questionId: _questionId),
+      QuizState(
+        owner: owner,
+        authUserId: authUserIdOf(owner),
+        date: date,
+        questionId: _questionId,
+      ),
       transaction: tx,
     );
   }
@@ -170,6 +175,7 @@ extension QuizThemeService on ProductService {
         session,
         ThemeOwnership(
           owner: owner,
+          authUserId: authUserIdOf(owner),
           themeId: themeId,
           purchasedAt: clock.now().toUtc(),
         ),

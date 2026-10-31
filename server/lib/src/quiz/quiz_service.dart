@@ -72,6 +72,7 @@ class QuizService {
       s.session,
       QuizAssignment(
         owner: s.owner,
+        authUserId: authUserIdOf(s.owner),
         date: date,
         slot: slot,
         questionId: q['questionId'] as String,

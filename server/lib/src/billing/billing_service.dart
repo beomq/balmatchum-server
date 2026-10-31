@@ -108,7 +108,11 @@ class BillingService {
         ) ??
         await BillingAccount.db.insertRow(
           s,
-          BillingAccount(owner: owner, binding: const Uuid().v4()),
+          BillingAccount(
+            owner: owner,
+            authUserId: authUserIdOf(owner),
+            binding: const Uuid().v4(),
+          ),
           transaction: tx,
         );
   }
@@ -232,6 +236,7 @@ class BillingService {
       final row = StoredPurchase(
         id: previous?.id,
         owner: owner,
+        authUserId: authUserIdOf(owner),
         identityHash: hash,
         store: facts.store.name,
         environment: facts.environment.name,
