@@ -10,6 +10,7 @@ import 'package:balmatchum_server/src/generated/protocol.dart';
 import 'package:balmatchum_server/src/generated/serverpod.dart' as generated;
 import 'package:clock/clock.dart';
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
+import 'package:http/http.dart' as http;
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
 import 'package:test/test.dart';
@@ -539,5 +540,29 @@ void main() {
         );
       },
     );
+  });
+
+  test('31st beginLogin from one forwarded address is rejected', () async {
+    await start();
+    final url = Uri.parse(
+      'http://localhost:${pod.server.port}/kakao/beginLogin',
+    );
+    Future<http.Response> begin(String forwarded) => http.post(
+      url,
+      headers: {
+        'content-type': 'application/json',
+        'x-forwarded-for': forwarded,
+      },
+      body: jsonEncode({'provider': 'kakao'}),
+    );
+    for (var i = 0; i < 30; i++) {
+      expect((await begin('198.51.100.1, 203.0.113.7')).statusCode, 200);
+    }
+    // A different client-supplied left entry does not escape the proxy key.
+    final rejected = await begin('198.51.100.2, 203.0.113.7');
+    expect(rejected.statusCode, isNot(200));
+    expect(rejected.body, contains('tooManyAttempts'));
+    expect(await LoginAttempt.db.count(session), 30);
+    expect((await begin('203.0.113.8')).statusCode, 200);
   });
 }
