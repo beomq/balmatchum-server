@@ -20,8 +20,7 @@ abstract class OutfitOwnership
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
   OutfitOwnership._({
     this.id,
-    required this.owner,
-    this.authUserId,
+    required this.authUserId,
     this.authUser,
     required this.outfitId,
     required this.purchasedAt,
@@ -29,8 +28,7 @@ abstract class OutfitOwnership
 
   factory OutfitOwnership({
     int? id,
-    required String owner,
-    _is.UuidValue? authUserId,
+    required _is.UuidValue authUserId,
     _iacs.AuthUser? authUser,
     required String outfitId,
     required DateTime purchasedAt,
@@ -39,12 +37,9 @@ abstract class OutfitOwnership
   factory OutfitOwnership.fromJson(Map<String, dynamic> jsonSerialization) {
     return OutfitOwnership(
       id: jsonSerialization['id'] as int?,
-      owner: jsonSerialization['owner'] as String,
-      authUserId: jsonSerialization['authUserId'] == null
-          ? null
-          : _is.UuidValueJsonExtension.fromJson(
-              jsonSerialization['authUserId'],
-            ),
+      authUserId: _is.UuidValueJsonExtension.fromJson(
+        jsonSerialization['authUserId'],
+      ),
       authUser: jsonSerialization['authUser'] == null
           ? null
           : _iu3f2ih9.Protocol().deserialize<_iacs.AuthUser>(
@@ -64,9 +59,7 @@ abstract class OutfitOwnership
   @override
   int? id;
 
-  String owner;
-
-  _is.UuidValue? authUserId;
+  _is.UuidValue authUserId;
 
   _iacs.AuthUser? authUser;
 
@@ -82,7 +75,6 @@ abstract class OutfitOwnership
   @_is.useResult
   OutfitOwnership copyWith({
     int? id,
-    String? owner,
     _is.UuidValue? authUserId,
     _iacs.AuthUser? authUser,
     String? outfitId,
@@ -93,8 +85,7 @@ abstract class OutfitOwnership
     return {
       '__className__': 'OutfitOwnership',
       if (id != null) 'id': id,
-      'owner': owner,
-      if (authUserId != null) 'authUserId': authUserId?.toJson(),
+      'authUserId': authUserId.toJson(),
       if (authUser != null) 'authUser': authUser?.toJson(),
       'outfitId': outfitId,
       'purchasedAt': purchasedAt.toJson(),
@@ -139,14 +130,12 @@ class _Undefined {}
 class _OutfitOwnershipImpl extends OutfitOwnership {
   _OutfitOwnershipImpl({
     int? id,
-    required String owner,
-    _is.UuidValue? authUserId,
+    required _is.UuidValue authUserId,
     _iacs.AuthUser? authUser,
     required String outfitId,
     required DateTime purchasedAt,
   }) : super._(
          id: id,
-         owner: owner,
          authUserId: authUserId,
          authUser: authUser,
          outfitId: outfitId,
@@ -159,16 +148,14 @@ class _OutfitOwnershipImpl extends OutfitOwnership {
   @override
   OutfitOwnership copyWith({
     Object? id = _Undefined,
-    String? owner,
-    Object? authUserId = _Undefined,
+    _is.UuidValue? authUserId,
     Object? authUser = _Undefined,
     String? outfitId,
     DateTime? purchasedAt,
   }) {
     return OutfitOwnership(
       id: id is int? ? id : this.id,
-      owner: owner ?? this.owner,
-      authUserId: authUserId is _is.UuidValue? ? authUserId : this.authUserId,
+      authUserId: authUserId ?? this.authUserId,
       authUser: authUser is _iacs.AuthUser?
           ? authUser
           : this.authUser?.copyWith(),
@@ -181,13 +168,8 @@ class _OutfitOwnershipImpl extends OutfitOwnership {
 class OutfitOwnershipUpdateTable extends _is.UpdateTable<OutfitOwnershipTable> {
   OutfitOwnershipUpdateTable(super.table);
 
-  _is.ColumnValue<String, String> owner(String value) => _is.ColumnValue(
-    table.owner,
-    value,
-  );
-
   _is.ColumnValue<_is.UuidValue, _is.UuidValue> authUserId(
-    _is.UuidValue? value,
+    _is.UuidValue value,
   ) => _is.ColumnValue(
     table.authUserId,
     value,
@@ -209,10 +191,6 @@ class OutfitOwnershipTable extends _is.Table<int?> {
   OutfitOwnershipTable({super.tableRelation})
     : super(tableName: 'outfit_ownership') {
     updateTable = OutfitOwnershipUpdateTable(this);
-    owner = _is.ColumnString(
-      'owner',
-      this,
-    );
     authUserId = _is.ColumnUuid(
       'authUserId',
       this,
@@ -228,8 +206,6 @@ class OutfitOwnershipTable extends _is.Table<int?> {
   }
 
   late final OutfitOwnershipUpdateTable updateTable;
-
-  late final _is.ColumnString owner;
 
   late final _is.ColumnUuid authUserId;
 
@@ -255,7 +231,6 @@ class OutfitOwnershipTable extends _is.Table<int?> {
   @override
   List<_is.Column> get columns => [
     id,
-    owner,
     authUserId,
     outfitId,
     purchasedAt,
@@ -307,8 +282,6 @@ class OutfitOwnershipRepository {
   const OutfitOwnershipRepository._();
 
   final attachRow = const OutfitOwnershipAttachRowRepository._();
-
-  final detachRow = const OutfitOwnershipDetachRowRepository._();
 
   /// Returns a list of [OutfitOwnership]s matching the given query parameters.
   ///
@@ -729,32 +702,6 @@ class OutfitOwnershipAttachRowRepository {
     }
 
     var $outfitOwnership = outfitOwnership.copyWith(authUserId: authUser.id);
-    await session.db.updateRow<OutfitOwnership>(
-      $outfitOwnership,
-      columns: [OutfitOwnership.t.authUserId],
-      transaction: transaction,
-    );
-  }
-}
-
-class OutfitOwnershipDetachRowRepository {
-  const OutfitOwnershipDetachRowRepository._();
-
-  /// Detaches the relation between this [OutfitOwnership] and the [AuthUser] set in `authUser`
-  /// by setting the [OutfitOwnership]'s foreign key `authUserId` to `null`.
-  ///
-  /// This removes the association between the two models without deleting
-  /// the related record.
-  Future<void> authUser(
-    _is.DatabaseSession session,
-    OutfitOwnership outfitOwnership, {
-    _is.Transaction? transaction,
-  }) async {
-    if (outfitOwnership.id == null) {
-      throw ArgumentError.notNull('outfitOwnership.id');
-    }
-
-    var $outfitOwnership = outfitOwnership.copyWith(authUserId: null);
     await session.db.updateRow<OutfitOwnership>(
       $outfitOwnership,
       columns: [OutfitOwnership.t.authUserId],

@@ -20,8 +20,7 @@ abstract class StoredAdIntent
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
   StoredAdIntent._({
     this.id,
-    required this.owner,
-    this.authUserId,
+    required this.authUserId,
     this.authUser,
     required this.nonce,
     required this.purpose,
@@ -43,8 +42,7 @@ abstract class StoredAdIntent
 
   factory StoredAdIntent({
     int? id,
-    required String owner,
-    _is.UuidValue? authUserId,
+    required _is.UuidValue authUserId,
     _iacs.AuthUser? authUser,
     required String nonce,
     required String purpose,
@@ -67,12 +65,9 @@ abstract class StoredAdIntent
   factory StoredAdIntent.fromJson(Map<String, dynamic> jsonSerialization) {
     return StoredAdIntent(
       id: jsonSerialization['id'] as int?,
-      owner: jsonSerialization['owner'] as String,
-      authUserId: jsonSerialization['authUserId'] == null
-          ? null
-          : _is.UuidValueJsonExtension.fromJson(
-              jsonSerialization['authUserId'],
-            ),
+      authUserId: _is.UuidValueJsonExtension.fromJson(
+        jsonSerialization['authUserId'],
+      ),
       authUser: jsonSerialization['authUser'] == null
           ? null
           : _iu3f2ih9.Protocol().deserialize<_iacs.AuthUser>(
@@ -116,9 +111,7 @@ abstract class StoredAdIntent
   @override
   int? id;
 
-  String owner;
-
-  _is.UuidValue? authUserId;
+  _is.UuidValue authUserId;
 
   _iacs.AuthUser? authUser;
 
@@ -162,7 +155,6 @@ abstract class StoredAdIntent
   @_is.useResult
   StoredAdIntent copyWith({
     int? id,
-    String? owner,
     _is.UuidValue? authUserId,
     _iacs.AuthUser? authUser,
     String? nonce,
@@ -187,8 +179,7 @@ abstract class StoredAdIntent
     return {
       '__className__': 'StoredAdIntent',
       if (id != null) 'id': id,
-      'owner': owner,
-      if (authUserId != null) 'authUserId': authUserId?.toJson(),
+      'authUserId': authUserId.toJson(),
       if (authUser != null) 'authUser': authUser?.toJson(),
       'nonce': nonce,
       'purpose': purpose,
@@ -247,8 +238,7 @@ class _Undefined {}
 class _StoredAdIntentImpl extends StoredAdIntent {
   _StoredAdIntentImpl({
     int? id,
-    required String owner,
-    _is.UuidValue? authUserId,
+    required _is.UuidValue authUserId,
     _iacs.AuthUser? authUser,
     required String nonce,
     required String purpose,
@@ -268,7 +258,6 @@ class _StoredAdIntentImpl extends StoredAdIntent {
     DateTime? consumedAt,
   }) : super._(
          id: id,
-         owner: owner,
          authUserId: authUserId,
          authUser: authUser,
          nonce: nonce,
@@ -295,8 +284,7 @@ class _StoredAdIntentImpl extends StoredAdIntent {
   @override
   StoredAdIntent copyWith({
     Object? id = _Undefined,
-    String? owner,
-    Object? authUserId = _Undefined,
+    _is.UuidValue? authUserId,
     Object? authUser = _Undefined,
     String? nonce,
     String? purpose,
@@ -317,8 +305,7 @@ class _StoredAdIntentImpl extends StoredAdIntent {
   }) {
     return StoredAdIntent(
       id: id is int? ? id : this.id,
-      owner: owner ?? this.owner,
-      authUserId: authUserId is _is.UuidValue? ? authUserId : this.authUserId,
+      authUserId: authUserId ?? this.authUserId,
       authUser: authUser is _iacs.AuthUser?
           ? authUser
           : this.authUser?.copyWith(),
@@ -349,13 +336,8 @@ class _StoredAdIntentImpl extends StoredAdIntent {
 class StoredAdIntentUpdateTable extends _is.UpdateTable<StoredAdIntentTable> {
   StoredAdIntentUpdateTable(super.table);
 
-  _is.ColumnValue<String, String> owner(String value) => _is.ColumnValue(
-    table.owner,
-    value,
-  );
-
   _is.ColumnValue<_is.UuidValue, _is.UuidValue> authUserId(
-    _is.UuidValue? value,
+    _is.UuidValue value,
   ) => _is.ColumnValue(
     table.authUserId,
     value,
@@ -453,10 +435,6 @@ class StoredAdIntentUpdateTable extends _is.UpdateTable<StoredAdIntentTable> {
 class StoredAdIntentTable extends _is.Table<int?> {
   StoredAdIntentTable({super.tableRelation}) : super(tableName: 'ad_intent') {
     updateTable = StoredAdIntentUpdateTable(this);
-    owner = _is.ColumnString(
-      'owner',
-      this,
-    );
     authUserId = _is.ColumnUuid(
       'authUserId',
       this,
@@ -530,8 +508,6 @@ class StoredAdIntentTable extends _is.Table<int?> {
 
   late final StoredAdIntentUpdateTable updateTable;
 
-  late final _is.ColumnString owner;
-
   late final _is.ColumnUuid authUserId;
 
   _iacs.AuthUserTable? _authUser;
@@ -584,7 +560,6 @@ class StoredAdIntentTable extends _is.Table<int?> {
   @override
   List<_is.Column> get columns => [
     id,
-    owner,
     authUserId,
     nonce,
     purpose,
@@ -650,8 +625,6 @@ class StoredAdIntentRepository {
   const StoredAdIntentRepository._();
 
   final attachRow = const StoredAdIntentAttachRowRepository._();
-
-  final detachRow = const StoredAdIntentDetachRowRepository._();
 
   /// Returns a list of [StoredAdIntent]s matching the given query parameters.
   ///
@@ -1070,32 +1043,6 @@ class StoredAdIntentAttachRowRepository {
     }
 
     var $storedAdIntent = storedAdIntent.copyWith(authUserId: authUser.id);
-    await session.db.updateRow<StoredAdIntent>(
-      $storedAdIntent,
-      columns: [StoredAdIntent.t.authUserId],
-      transaction: transaction,
-    );
-  }
-}
-
-class StoredAdIntentDetachRowRepository {
-  const StoredAdIntentDetachRowRepository._();
-
-  /// Detaches the relation between this [StoredAdIntent] and the [AuthUser] set in `authUser`
-  /// by setting the [StoredAdIntent]'s foreign key `authUserId` to `null`.
-  ///
-  /// This removes the association between the two models without deleting
-  /// the related record.
-  Future<void> authUser(
-    _is.DatabaseSession session,
-    StoredAdIntent storedAdIntent, {
-    _is.Transaction? transaction,
-  }) async {
-    if (storedAdIntent.id == null) {
-      throw ArgumentError.notNull('storedAdIntent.id');
-    }
-
-    var $storedAdIntent = storedAdIntent.copyWith(authUserId: null);
     await session.db.updateRow<StoredAdIntent>(
       $storedAdIntent,
       columns: [StoredAdIntent.t.authUserId],

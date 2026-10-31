@@ -21,8 +21,7 @@ abstract class StoredGpsRecord
     implements _is.TableRow<_is.UuidValue?>, _is.ProtocolSerialization {
   StoredGpsRecord._({
     this.id,
-    required this.owner,
-    this.authUserId,
+    required this.authUserId,
     this.authUser,
     required this.clientRecordId,
     required this.persistedAt,
@@ -34,8 +33,7 @@ abstract class StoredGpsRecord
 
   factory StoredGpsRecord({
     _is.UuidValue? id,
-    required String owner,
-    _is.UuidValue? authUserId,
+    required _is.UuidValue authUserId,
     _iacs.AuthUser? authUser,
     required _is.UuidValue clientRecordId,
     required DateTime persistedAt,
@@ -50,12 +48,9 @@ abstract class StoredGpsRecord
       id: jsonSerialization['id'] == null
           ? null
           : _is.UuidValueJsonExtension.fromJson(jsonSerialization['id']),
-      owner: jsonSerialization['owner'] as String,
-      authUserId: jsonSerialization['authUserId'] == null
-          ? null
-          : _is.UuidValueJsonExtension.fromJson(
-              jsonSerialization['authUserId'],
-            ),
+      authUserId: _is.UuidValueJsonExtension.fromJson(
+        jsonSerialization['authUserId'],
+      ),
       authUser: jsonSerialization['authUser'] == null
           ? null
           : _iu3f2ih9.Protocol().deserialize<_iacs.AuthUser>(
@@ -87,9 +82,7 @@ abstract class StoredGpsRecord
   @override
   _is.UuidValue? id;
 
-  String owner;
-
-  _is.UuidValue? authUserId;
+  _is.UuidValue authUserId;
 
   _iacs.AuthUser? authUser;
 
@@ -113,7 +106,6 @@ abstract class StoredGpsRecord
   @_is.useResult
   StoredGpsRecord copyWith({
     _is.UuidValue? id,
-    String? owner,
     _is.UuidValue? authUserId,
     _iacs.AuthUser? authUser,
     _is.UuidValue? clientRecordId,
@@ -128,8 +120,7 @@ abstract class StoredGpsRecord
     return {
       '__className__': 'StoredGpsRecord',
       if (id != null) 'id': id?.toJson(),
-      'owner': owner,
-      if (authUserId != null) 'authUserId': authUserId?.toJson(),
+      'authUserId': authUserId.toJson(),
       if (authUser != null) 'authUser': authUser?.toJson(),
       'clientRecordId': clientRecordId.toJson(),
       'persistedAt': persistedAt.toJson(),
@@ -178,8 +169,7 @@ class _Undefined {}
 class _StoredGpsRecordImpl extends StoredGpsRecord {
   _StoredGpsRecordImpl({
     _is.UuidValue? id,
-    required String owner,
-    _is.UuidValue? authUserId,
+    required _is.UuidValue authUserId,
     _iacs.AuthUser? authUser,
     required _is.UuidValue clientRecordId,
     required DateTime persistedAt,
@@ -189,7 +179,6 @@ class _StoredGpsRecordImpl extends StoredGpsRecord {
     int? lastLocalDay,
   }) : super._(
          id: id,
-         owner: owner,
          authUserId: authUserId,
          authUser: authUser,
          clientRecordId: clientRecordId,
@@ -206,8 +195,7 @@ class _StoredGpsRecordImpl extends StoredGpsRecord {
   @override
   StoredGpsRecord copyWith({
     Object? id = _Undefined,
-    String? owner,
-    Object? authUserId = _Undefined,
+    _is.UuidValue? authUserId,
     Object? authUser = _Undefined,
     _is.UuidValue? clientRecordId,
     DateTime? persistedAt,
@@ -218,8 +206,7 @@ class _StoredGpsRecordImpl extends StoredGpsRecord {
   }) {
     return StoredGpsRecord(
       id: id is _is.UuidValue? ? id : this.id,
-      owner: owner ?? this.owner,
-      authUserId: authUserId is _is.UuidValue? ? authUserId : this.authUserId,
+      authUserId: authUserId ?? this.authUserId,
       authUser: authUser is _iacs.AuthUser?
           ? authUser
           : this.authUser?.copyWith(),
@@ -238,13 +225,8 @@ class _StoredGpsRecordImpl extends StoredGpsRecord {
 class StoredGpsRecordUpdateTable extends _is.UpdateTable<StoredGpsRecordTable> {
   StoredGpsRecordUpdateTable(super.table);
 
-  _is.ColumnValue<String, String> owner(String value) => _is.ColumnValue(
-    table.owner,
-    value,
-  );
-
   _is.ColumnValue<_is.UuidValue, _is.UuidValue> authUserId(
-    _is.UuidValue? value,
+    _is.UuidValue value,
   ) => _is.ColumnValue(
     table.authUserId,
     value,
@@ -289,10 +271,6 @@ class StoredGpsRecordUpdateTable extends _is.UpdateTable<StoredGpsRecordTable> {
 class StoredGpsRecordTable extends _is.Table<_is.UuidValue?> {
   StoredGpsRecordTable({super.tableRelation}) : super(tableName: 'gps_record') {
     updateTable = StoredGpsRecordUpdateTable(this);
-    owner = _is.ColumnString(
-      'owner',
-      this,
-    );
     authUserId = _is.ColumnUuid(
       'authUserId',
       this,
@@ -326,8 +304,6 @@ class StoredGpsRecordTable extends _is.Table<_is.UuidValue?> {
 
   late final StoredGpsRecordUpdateTable updateTable;
 
-  late final _is.ColumnString owner;
-
   late final _is.ColumnUuid authUserId;
 
   _iacs.AuthUserTable? _authUser;
@@ -360,7 +336,6 @@ class StoredGpsRecordTable extends _is.Table<_is.UuidValue?> {
   @override
   List<_is.Column> get columns => [
     id,
-    owner,
     authUserId,
     clientRecordId,
     persistedAt,
@@ -416,8 +391,6 @@ class StoredGpsRecordRepository {
   const StoredGpsRecordRepository._();
 
   final attachRow = const StoredGpsRecordAttachRowRepository._();
-
-  final detachRow = const StoredGpsRecordDetachRowRepository._();
 
   /// Returns a list of [StoredGpsRecord]s matching the given query parameters.
   ///
@@ -838,32 +811,6 @@ class StoredGpsRecordAttachRowRepository {
     }
 
     var $storedGpsRecord = storedGpsRecord.copyWith(authUserId: authUser.id);
-    await session.db.updateRow<StoredGpsRecord>(
-      $storedGpsRecord,
-      columns: [StoredGpsRecord.t.authUserId],
-      transaction: transaction,
-    );
-  }
-}
-
-class StoredGpsRecordDetachRowRepository {
-  const StoredGpsRecordDetachRowRepository._();
-
-  /// Detaches the relation between this [StoredGpsRecord] and the [AuthUser] set in `authUser`
-  /// by setting the [StoredGpsRecord]'s foreign key `authUserId` to `null`.
-  ///
-  /// This removes the association between the two models without deleting
-  /// the related record.
-  Future<void> authUser(
-    _is.DatabaseSession session,
-    StoredGpsRecord storedGpsRecord, {
-    _is.Transaction? transaction,
-  }) async {
-    if (storedGpsRecord.id == null) {
-      throw ArgumentError.notNull('storedGpsRecord.id');
-    }
-
-    var $storedGpsRecord = storedGpsRecord.copyWith(authUserId: null);
     await session.db.updateRow<StoredGpsRecord>(
       $storedGpsRecord,
       columns: [StoredGpsRecord.t.authUserId],

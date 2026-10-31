@@ -331,7 +331,10 @@ void main() {
       expect(await send(query), 200);
       expect((await a.client.ads.getIntent(i.id)).status, 'verified');
       expect(
-        await PointEntry.db.count(admin, where: (t) => t.owner.equals(a.owner)),
+        await PointEntry.db.count(
+          admin,
+          where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
+        ),
         0,
       );
     },
@@ -518,7 +521,7 @@ void main() {
       expect(
         await StoredAdIntent.db.count(
           admin,
-          where: (t) => t.owner.equals(a.owner),
+          where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
         ),
         0,
       );
@@ -536,7 +539,7 @@ void main() {
       expect(
         await ProductAccount.db.count(
           admin,
-          where: (t) => t.owner.equals(a.owner),
+          where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
         ),
         0,
       );
@@ -587,14 +590,14 @@ void main() {
       expect(
         await StoredAdIntent.db.count(
           admin,
-          where: (t) => t.owner.equals(a.owner),
+          where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
         ),
         0,
       );
       expect(
         await ProductAccount.db.count(
           admin,
-          where: (t) => t.owner.equals(a.owner),
+          where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
         ),
         0,
       );
@@ -622,7 +625,9 @@ void main() {
       expect(
         await ProductRequest.db.count(
           admin,
-          where: (t) => t.owner.equals(a.owner) & t.requestId.equals('claim'),
+          where: (t) =>
+              t.authUserId.equals(authUserIdOf(a.owner)) &
+              t.requestId.equals('claim'),
         ),
         0,
       );

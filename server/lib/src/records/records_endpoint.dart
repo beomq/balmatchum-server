@@ -36,7 +36,6 @@ class RecordsEndpoint extends Endpoint {
         session,
         [
           StoredGpsRecord(
-            owner: owner,
             authUserId: authUserIdOf(owner),
             clientRecordId: input.clientRecordId,
             persistedAt: DateTime.now().toUtc(),

@@ -115,7 +115,6 @@ extension ProfileService on ProductService {
     final value = await DogProfile.db.insertRow(
       session,
       DogProfile(
-        owner: owner,
         authUserId: authUserIdOf(owner),
         breedId: input.breedId,
         name: name,

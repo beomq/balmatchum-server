@@ -2,14 +2,10 @@ class: BillingAccount
 serverOnly: true
 table: billing_account
 fields:
-  owner: String
-  authUser: module:serverpod_auth_core:AuthUser?, relation(optional, onDelete=Restrict)
+  authUser: module:serverpod_auth_core:AuthUser?, relation(onDelete=Restrict)
   binding: String
   sequence: int, default=0
 indexes:
-  billing_account_owner:
-    fields: owner
-    unique: true
   billing_account_auth_user:
     fields: authUserId
     unique: true

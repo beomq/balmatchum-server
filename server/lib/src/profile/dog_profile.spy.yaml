@@ -2,8 +2,7 @@ class: DogProfile
 serverOnly: true
 table: dog_profile
 fields:
-  owner: String
-  authUser: module:serverpod_auth_core:AuthUser?, relation(optional, onDelete=Cascade)
+  authUser: module:serverpod_auth_core:AuthUser?, relation(onDelete=Cascade)
   breedId: String
   name: String
   sex: String
@@ -11,9 +10,6 @@ fields:
   firstMetAt: DateTime
   revision: int, default=1
 indexes:
-  dog_profile_owner:
-    fields: owner
-    unique: true
   dog_profile_auth_user:
     fields: authUserId
     unique: true

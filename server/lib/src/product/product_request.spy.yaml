@@ -2,16 +2,12 @@ class: ProductRequest
 serverOnly: true
 table: product_request
 fields:
-  owner: String
-  authUser: module:serverpod_auth_core:AuthUser?, relation(optional, onDelete=Cascade)
+  authUser: module:serverpod_auth_core:AuthUser?, relation(onDelete=Cascade)
   requestId: String
   digest: String
   result: String
   createdAt: DateTime, default=now
 indexes:
-  product_request_key:
-    fields: owner, requestId
-    unique: true
   product_request_auth_user_key:
     fields: authUserId, requestId
     unique: true

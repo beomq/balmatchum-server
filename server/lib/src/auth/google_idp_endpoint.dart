@@ -1,6 +1,7 @@
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_idp_server/providers/google.dart';
 
+import '../maintenance/schema_guard.dart';
 import 'social_auth.dart';
 
 class GoogleIdpEndpoint extends GoogleIdpBaseEndpoint {
@@ -14,11 +15,14 @@ class GoogleIdpEndpoint extends GoogleIdpBaseEndpoint {
     Session session, {
     required String idToken,
     required String? accessToken,
-  }) => finishSocialLogin(
-    session,
-    requireSocialAuth(session, apple: false),
-    () => super.login(session, idToken: idToken, accessToken: accessToken),
-  );
+  }) {
+    SchemaGuard.requireLogin();
+    return finishSocialLogin(
+      session,
+      requireSocialAuth(session, apple: false),
+      () => super.login(session, idToken: idToken, accessToken: accessToken),
+    );
+  }
 
   @override
   Future<AuthSuccess> loginWithCode(
@@ -26,16 +30,19 @@ class GoogleIdpEndpoint extends GoogleIdpBaseEndpoint {
     required String code,
     required String codeVerifier,
     required String redirectUri,
-  }) => finishSocialLogin(
-    session,
-    requireSocialAuth(session, apple: false),
-    () => super.loginWithCode(
+  }) {
+    SchemaGuard.requireLogin();
+    return finishSocialLogin(
       session,
-      code: code,
-      codeVerifier: codeVerifier,
-      redirectUri: redirectUri,
-    ),
-  );
+      requireSocialAuth(session, apple: false),
+      () => super.loginWithCode(
+        session,
+        code: code,
+        codeVerifier: codeVerifier,
+        redirectUri: redirectUri,
+      ),
+    );
+  }
 
   @override
   Future<bool> hasAccount(Session session) {

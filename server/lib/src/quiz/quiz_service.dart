@@ -14,11 +14,9 @@ class QuizService {
   final ProductService s;
   final QuizBank? bank;
 
-  /// Rows issued before normalization keep their own copy; newer rows store
-  /// only (questionId, version) and read the immutable content revision.
+  /// Assignments store only (questionId, version); the body is the immutable
+  /// content revision.
   Future<String> body(QuizAssignment a) async {
-    final own = a.snapshot;
-    if (own != null) return own;
     final revision = await QuizContentRevision.db.findFirstRow(
       s.session,
       where: (t) =>
@@ -61,7 +59,7 @@ class QuizService {
       QuizAssignment.db.findFirstRow(
         s.session,
         where: (t) =>
-            t.authUserId.equals(authUserIdOf(s.owner)) &
+            t.authUserId.equals(s.authUserId) &
             t.date.equals(date) &
             t.slot.equals(slot),
         transaction: s.tx,
@@ -70,7 +68,7 @@ class QuizService {
   Future<String?> candidate() async {
     final seen = await QuizAssignment.db.find(
       s.session,
-      where: (t) => t.authUserId.equals(authUserIdOf(s.owner)),
+      where: (t) => t.authUserId.equals(s.authUserId),
       transaction: s.tx,
     );
     final ids = seen.map((a) => a.questionId).toSet();
@@ -104,8 +102,7 @@ class QuizService {
     return QuizAssignment.db.insertRow(
       s.session,
       QuizAssignment(
-        owner: s.owner,
-        authUserId: authUserIdOf(s.owner),
+        authUserId: s.authUserId,
         date: date,
         slot: slot,
         questionId: questionId,
@@ -223,8 +220,7 @@ class QuizService {
   Future<QuizAssignment> owned(int id) async {
     final a = await QuizAssignment.db.findFirstRow(
       s.session,
-      where: (t) =>
-          t.id.equals(id) & t.authUserId.equals(authUserIdOf(s.owner)),
+      where: (t) => t.id.equals(id) & t.authUserId.equals(s.authUserId),
       transaction: s.tx,
     );
     if (a == null) throw ProductException(code: 'quizNotFound');
@@ -265,7 +261,7 @@ class QuizService {
       a.awardedPoints = 2;
       await s.appendPointEntry(
         PointEntry(
-          owner: s.owner,
+          authUserId: s.authUserId,
           entryKey: 'quiz-assignment:${a.id}',
           kind: 'quiz',
           date: a.date,
@@ -294,7 +290,7 @@ class QuizService {
     final rows = await QuizAssignment.db.find(
       s.session,
       where: (t) =>
-          t.authUserId.equals(authUserIdOf(s.owner)) &
+          t.authUserId.equals(s.authUserId) &
           t.answerIndex.notEquals(null) &
           (before == null ? t.id.notEquals(null) : t.id < before),
       orderBy: (t) => t.id.desc(),
@@ -302,14 +298,13 @@ class QuizService {
       transaction: s.tx,
     );
     // One revision query for the whole page instead of one per row.
-    final missing = rows.where((a) => a.snapshot == null).toList();
-    final revisions = missing.isEmpty
+    final revisions = rows.isEmpty
         ? <QuizContentRevision>[]
         : await QuizContentRevision.db.find(
             s.session,
             where: (t) =>
-                t.questionId.inSet(missing.map((a) => a.questionId).toSet()) &
-                t.version.inSet(missing.map((a) => a.version).toSet()),
+                t.questionId.inSet(rows.map((a) => a.questionId).toSet()) &
+                t.version.inSet(rows.map((a) => a.version).toSet()),
             transaction: s.tx,
           );
     final bodies = {
@@ -319,8 +314,7 @@ class QuizService {
       for (final a in rows)
         present(
           a,
-          a.snapshot ??
-              bodies[(a.questionId, a.version)] ??
+          bodies[(a.questionId, a.version)] ??
               (throw ProductException(code: 'contentUnavailable')),
         ),
     ];

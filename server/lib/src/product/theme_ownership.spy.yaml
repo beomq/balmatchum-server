@@ -2,14 +2,10 @@ class: ThemeOwnership
 serverOnly: true
 table: theme_ownership
 fields:
-  owner: String
-  authUser: module:serverpod_auth_core:AuthUser?, relation(optional, onDelete=Cascade)
+  authUser: module:serverpod_auth_core:AuthUser?, relation(onDelete=Cascade)
   themeId: String
   purchasedAt: DateTime
 indexes:
-  theme_ownership_key:
-    fields: owner, themeId
-    unique: true
   theme_ownership_auth_user_key:
     fields: authUserId, themeId
     unique: true

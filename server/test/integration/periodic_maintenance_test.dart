@@ -161,8 +161,7 @@ void main() {
           .convert(utf8.encode(jsonEncode(payload)))
           .toString();
       ProductRequest request(String id, Duration age) => ProductRequest(
-        owner: owner,
-        authUserId: user.id,
+        authUserId: user.id!,
         requestId: id,
         digest: digest,
         result: '$id-result',
@@ -202,7 +201,7 @@ void main() {
           admin,
           owner,
           tx,
-          ProductAccount(owner: owner),
+          ProductAccount(authUserId: user.id!),
         );
         expect(await service.replay('fresh', payload), 'fresh-result');
         expect(await service.replay('stale', payload), isNull);
@@ -214,17 +213,21 @@ void main() {
     'product request purge drains a backlog beyond one 500-row batch',
     () async {
       final now = DateTime.now().toUtc();
+      final backlog = (await AuthUser.db.insertRow(
+        admin,
+        AuthUser(scopeNames: {}),
+      )).id!;
       await ProductRequest.db.insert(admin, [
         for (var i = 0; i < 1201; i++)
           ProductRequest(
-            owner: 'backlog',
+            authUserId: backlog,
             requestId: 'stale-$i',
             digest: 'digest',
             result: 'result',
             createdAt: now.subtract(const Duration(days: 40)),
           ),
         ProductRequest(
-          owner: 'backlog',
+          authUserId: backlog,
           requestId: 'kept',
           digest: 'digest',
           result: 'result',
@@ -234,7 +237,7 @@ void main() {
       expect(await purgeStaleProductRequests(admin), 1201);
       final left = await ProductRequest.db.find(
         admin,
-        where: (t) => t.owner.equals('backlog'),
+        where: (t) => t.authUserId.equals(backlog),
       );
       expect(left.map((r) => r.requestId), ['kept']);
       expect(await purgeStaleProductRequests(admin), 0);

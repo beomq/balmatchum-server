@@ -52,7 +52,7 @@ void main() {
             session,
             (s) => s.appendPointEntry(
               PointEntry(
-                owner: id.uuid,
+                authUserId: id,
                 entryKey: 'victim-credit',
                 kind: 'steps',
                 amount: 31337,
@@ -100,7 +100,6 @@ void main() {
             (tx) => lockProductAccount(session, id.uuid, tx),
           );
           ids.add(account.id!);
-          expect(account.owner, id.uuid);
           expect(account.authUserId, id);
         }
         expect(ids, hasLength(1));
@@ -115,13 +114,13 @@ void main() {
     );
 
     test(
-      'authUserId unique index carries account identity, not owner',
+      'authUserId unique index carries account identity',
       () async {
-        // Deliberately disagree with the legacy key: only the authUserId unique
-        // index can reject the attempted insert and recover this existing row.
+        // Only the authUserId unique index can reject the attempted insert and
+        // recover this existing row.
         final existing = await ProductAccount.db.insertRow(
           session,
-          ProductAccount(owner: const Uuid().v4(), authUserId: id),
+          ProductAccount(authUserId: id),
         );
         for (var i = 0; i < 5; i++) {
           final account = await session.db.transaction(
@@ -188,7 +187,7 @@ void main() {
           ]) {
             await s.appendPointEntry(
               PointEntry(
-                owner: id.uuid,
+                authUserId: authUserIdOf(id.uuid),
                 entryKey: policy,
                 kind: 'test-credit',
                 amount: amount,
@@ -223,7 +222,6 @@ void main() {
         await ProductAccount.db.insert(session, [
           for (final userId in ids)
             ProductAccount(
-              owner: userId.uuid,
               authUserId: userId,
               balance: 80,
             ),
@@ -234,9 +232,9 @@ void main() {
         await session.db.unsafeExecute(
           '''
           INSERT INTO point_entry
-            (owner, "authUserId", "entryKey", kind, date, amount,
+            ("authUserId", "entryKey", kind, date, amount,
              "policyVersion", "createdAt")
-          SELECT u.value, u.value::uuid, 'credit-' || n, 'steps',
+          SELECT u.value::uuid, 'credit-' || n, 'steps',
             to_char(date '2026-01-01' + n, 'YYYY-MM-DD'), 1,
             '$stepPolicyVersion', timestamp '2026-10-31'
           FROM jsonb_array_elements_text(CAST(@users AS jsonb)) u,
@@ -247,9 +245,9 @@ void main() {
         await session.db.unsafeExecute(
           '''
           INSERT INTO gps_record
-            (owner, "authUserId", "clientRecordId", "persistedAt", deleted,
+            ("authUserId", "clientRecordId", "persistedAt", deleted,
              "firstLocalDay", "lastLocalDay")
-          SELECT u.value, u.value::uuid, gen_random_uuid(),
+          SELECT u.value::uuid, gen_random_uuid(),
             timestamp '2026-10-31', false, n, n + 2
           FROM jsonb_array_elements_text(CAST(@users AS jsonb)) u,
             generate_series(1, 80) n
@@ -269,10 +267,10 @@ void main() {
         await session.db.unsafeExecute(
           '''
           INSERT INTO quiz_assignment
-            (owner, "authUserId", date, slot, "questionId", version,
+            ("authUserId", date, slot, "questionId", version,
              "policyVersion", "issuedAt", "answerIndex", "answeredAt",
              "awardedPoints")
-          SELECT u.value, u.value::uuid,
+          SELECT u.value::uuid,
             to_char(date '2026-01-01' + n, 'YYYY-MM-DD'), 'free',
             't14-' || n, 1, '$quizPolicyVersion', timestamp '2026-10-31',
             0, timestamp '2026-10-31', 0

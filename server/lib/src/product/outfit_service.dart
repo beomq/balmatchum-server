@@ -14,12 +14,12 @@ extension OutfitService on ProductService {
   Future<OutfitStore> outfits() async {
     final owned = await OutfitOwnership.db.find(
       session,
-      where: (t) => t.authUserId.equals(authUserIdOf(owner)),
+      where: (t) => t.authUserId.equals(authUserId),
       transaction: tx,
     );
     final dog = await DogProfile.db.findFirstRow(
       session,
-      where: (t) => t.authUserId.equals(authUserIdOf(owner)),
+      where: (t) => t.authUserId.equals(authUserId),
       transaction: tx,
     );
     final fixture = productFixturesEnabled(session);
@@ -69,7 +69,7 @@ extension OutfitService on ProductService {
       }
       await appendPointEntry(
         PointEntry(
-          owner: owner,
+          authUserId: authUserId,
           entryKey: 'outfit:$outfitId',
           kind: 'purchase',
           amount: -item.price,
@@ -82,8 +82,7 @@ extension OutfitService on ProductService {
       await OutfitOwnership.db.insertRow(
         session,
         OutfitOwnership(
-          owner: owner,
-          authUserId: authUserIdOf(owner),
+          authUserId: authUserId,
           outfitId: outfitId,
           purchasedAt: clock.now().toUtc(),
         ),

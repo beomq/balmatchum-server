@@ -9,6 +9,7 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
 import '../generated/protocol.dart';
 import '../ads/ad_service.dart';
 import '../billing/billing_service.dart';
+import '../maintenance/schema_guard.dart';
 import '../quiz/quiz_bank.dart';
 
 /// Legacy quiz/theme fixtures remain isolated from production step balances.
@@ -88,6 +89,7 @@ Future<ProductAccount> lockProductAccount(
   String owner,
   Transaction tx,
 ) async {
+  SchemaGuard.require();
   final user = await AuthUser.db.findFirstRow(
     session,
     where: (t) => t.id.equals(authUserIdOf(owner)),
@@ -101,7 +103,7 @@ Future<ProductAccount> lockProductAccount(
   }
   await ProductAccount.db.insert(
     session,
-    [ProductAccount(owner: owner, authUserId: authUserIdOf(owner))],
+    [ProductAccount(authUserId: authUserIdOf(owner))],
     ignoreConflicts: true,
     transaction: tx,
   );
@@ -119,17 +121,18 @@ Future<List<List<dynamic>>> reconcilePointBalances(Session session) =>
     session.db.unsafeQuery(
       '''
       WITH ledger AS (
-        SELECT owner,
+        SELECT "authUserId",
           COALESCE(SUM(ledger_entry.amount) FILTER (WHERE "policyVersion" IN
             (@steps, @quiz, @theme, @outfit)), 0) AS balance,
           COALESCE(SUM(ledger_entry.amount) FILTER (WHERE "policyVersion" = @fixture), 0)
             AS fixture_balance
-        FROM point_entry ledger_entry GROUP BY owner
+        FROM point_entry ledger_entry GROUP BY "authUserId"
       )
-      SELECT COALESCE(a.owner, l.owner), a.balance,
+      SELECT COALESCE(a."authUserId", l."authUserId")::text, a.balance,
         COALESCE(l.balance, 0)::bigint, a."fixtureBalance",
         COALESCE(l.fixture_balance, 0)::bigint
-      FROM product_account a FULL OUTER JOIN ledger l ON l.owner = a.owner
+      FROM product_account a
+        FULL OUTER JOIN ledger l ON l."authUserId" = a."authUserId"
       WHERE a.id IS NULL OR a.balance <> COALESCE(l.balance, 0)
         OR a."fixtureBalance" <> COALESCE(l.fixture_balance, 0)
       ''',
@@ -143,9 +146,11 @@ Future<List<List<dynamic>>> reconcilePointBalances(Session session) =>
     );
 
 class ProductService {
-  ProductService(this.session, this.owner, this.tx, this.account);
+  ProductService(this.session, this.owner, this.tx, this.account)
+    : authUserId = authUserIdOf(owner);
   final Session session;
   final String owner;
+  final UuidValue authUserId;
   final Transaction tx;
   final ProductAccount account;
 
@@ -173,6 +178,7 @@ class ProductService {
     Session session,
     Future<T> Function(ProductService) action,
   ) async {
+    SchemaGuard.require();
     final owner = session.authenticated?.userIdentifier;
     if (owner == null) throw ProductException(code: 'unauthenticated');
     final result = await session.db.transaction(
@@ -183,7 +189,7 @@ class ProductService {
               where: (t) => t.authUserId.equals(authUserIdOf(owner)),
               transaction: tx,
             ) ??
-            ProductAccount(owner: owner);
+            ProductAccount(authUserId: authUserIdOf(owner));
         return withClock(
           Clock.fixed(clock.now()),
           () => action(ProductService(session, owner, tx, account)),
@@ -211,12 +217,11 @@ class ProductService {
     dayStart(date);
     return await ProductDay.db.findFirstRow(
           session,
-          where: (t) =>
-              t.authUserId.equals(authUserIdOf(owner)) & t.date.equals(date),
+          where: (t) => t.authUserId.equals(authUserId) & t.date.equals(date),
           transaction: tx,
         ) ??
         ProductDay(
-          owner: owner,
+          authUserId: authUserId,
           date: date,
           windows: [],
           policyVersion: stepPolicyVersion,
@@ -225,7 +230,7 @@ class ProductService {
 
   Future<void> saveDay(ProductDay value) async {
     if (value.id == null) {
-      value.authUserId = authUserIdOf(owner);
+      value.authUserId = authUserId;
       await ProductDay.db.insertRow(session, value, transaction: tx);
     } else {
       await ProductDay.db.updateRow(session, value, transaction: tx);
@@ -242,8 +247,7 @@ class ProductService {
     final request = await ProductRequest.db.findFirstRow(
       session,
       where: (t) =>
-          t.authUserId.equals(authUserIdOf(owner)) &
-          t.requestId.equals(requestId),
+          t.authUserId.equals(authUserId) & t.requestId.equals(requestId),
       transaction: tx,
     );
     if (request == null) return null;
@@ -257,8 +261,7 @@ class ProductService {
     await ProductRequest.db.insertRow(
       session,
       ProductRequest(
-        owner: owner,
-        authUserId: authUserIdOf(owner),
+        authUserId: authUserId,
         requestId: requestId,
         digest: digest(payload),
         result: jsonEncode(result),
@@ -273,7 +276,7 @@ class ProductService {
     // Test-only failure injection at the boundary between the two writes.
     Future<void> Function()? afterInsert,
   }) async {
-    entry.authUserId = authUserIdOf(owner);
+    entry.authUserId = authUserId;
     final inserted = await PointEntry.db.insertRow(
       session,
       entry,
@@ -363,7 +366,7 @@ class ProductService {
       PointEntry.db.find(
         session,
         where: (t) =>
-            t.authUserId.equals(authUserIdOf(owner)) &
+            t.authUserId.equals(authUserId) &
             (t.date >= fromDate) &
             (t.date <= toDate) &
             t.kind.equals('steps') &
@@ -454,7 +457,7 @@ class ProductService {
       for (final value in await ProductDay.db.find(
         session,
         where: (t) =>
-            t.authUserId.equals(authUserIdOf(owner)) &
+            t.authUserId.equals(authUserId) &
             (t.date >= fromDate) &
             (t.date <= toDate),
         transaction: tx,
@@ -472,7 +475,7 @@ class ProductService {
         await view(
           stored[date] ??
               ProductDay(
-                owner: owner,
+                authUserId: authUserId,
                 date: date,
                 windows: [],
                 policyVersion: stepPolicyVersion,
@@ -529,7 +532,7 @@ class ProductService {
     final previous = await StepRevision.db.findFirstRow(
       session,
       where: (t) =>
-          t.authUserId.equals(authUserIdOf(owner)) &
+          t.authUserId.equals(authUserId) &
           t.date.equals(input.date) &
           t.generation.equals(input.streamGeneration) &
           t.revision.equals(input.revision),
@@ -544,8 +547,7 @@ class ProductService {
     await StepRevision.db.insertRow(
       session,
       StepRevision(
-        owner: owner,
-        authUserId: authUserIdOf(owner),
+        authUserId: authUserId,
         date: input.date,
         generation: input.streamGeneration,
         revision: input.revision,
@@ -603,8 +605,7 @@ class ProductService {
       await saveDay(value);
       await StepRevision.db.deleteWhere(
         session,
-        where: (t) =>
-            t.authUserId.equals(authUserIdOf(owner)) & t.date.equals(date),
+        where: (t) => t.authUserId.equals(authUserId) & t.date.equals(date),
         transaction: tx,
       );
       await PointEntry.db.updateWhere(
@@ -614,8 +615,7 @@ class ProductService {
           t.throughUnits(null),
           t.slices(null),
         ],
-        where: (t) =>
-            t.authUserId.equals(authUserIdOf(owner)) & t.date.equals(date),
+        where: (t) => t.authUserId.equals(authUserId) & t.date.equals(date),
         transaction: tx,
       );
       // Retry receipts duplicate the same units. Preserve their key, digest,
@@ -653,7 +653,7 @@ class ProductService {
     return StoredGpsRecord.db.find(
       session,
       where: (t) =>
-          t.authUserId.equals(authUserIdOf(owner)) &
+          t.authUserId.equals(authUserId) &
           t.deleted.equals(false) &
           (t.firstLocalDay <= target) &
           (t.lastLocalDay >= target),
@@ -666,7 +666,7 @@ class ProductService {
     final values = await ProductDay.db.find(
       session,
       where: (t) =>
-          t.authUserId.equals(authUserIdOf(owner)) &
+          t.authUserId.equals(authUserId) &
           t.deleted.equals(true) &
           (t.deletionVersion > afterVersion),
       orderBy: (t) => t.deletionVersion,
@@ -740,7 +740,7 @@ class ProductService {
     final through = slices.last.throughUnits;
     final entry = await appendPointEntry(
       PointEntry(
-        owner: owner,
+        authUserId: authUserId,
         entryKey: '$stepPolicyVersion:steps:$date:${value.revision}',
         kind: 'steps',
         date: date,

@@ -43,6 +43,13 @@ Cloud는 배포할 때마다 `migrations/`의 미적용 migration을 자동으�
 2. 실패하면 `scloud log`에서 `Failed to apply database migrations.`를 확인합니다. migration을 고친 뒤 커밋하고 다시 배포합니다.
 3. 이미 적용된 migration은 되돌리지 않습니다. 모델을 되돌린 뒤 `create-migration`으로 forward migration을 만듭니다. 이 방식은 스키마만 되돌리며 데이터는 복원하지 않습니다.
 
+운영 run mode에서는 migration이 실패해도 Serverpod이 `Failed to apply database migrations.`를 남기고 계속 기동합니다. 그래서 서버는 `pod.start()` 직후 스키마 가드(`lib/src/maintenance/schema_guard.dart`)로 정규화 2단계 스키마(14개 테이블 `authUserId` NOT NULL, `product_account.owner`·`quiz_assignment.snapshot` 없음)를 확인하고, 다르면 stderr에 `schema guard:` 목록을 남기고 종료 코드 1로 끝납니다. 확인이 끝나기 전 요청은 `serverStarting`으로 거절합니다.
+
+### 정규화 2단계(normalization-step2) 릴리스 체크리스트
+
+- [ ] 이 릴리스(정규화 2단계 포함) 배포 전 `scloud db backup create --name pre-normalization-step2 --expire-in 7d` 실행. step2는 `owner`·`snapshot` 컬럼과 계정 없는 고아 행을 지우므로 되돌리려면 이 백업이 필요합니다.
+- [ ] 배포 후 `scloud log`에서 `Failed to apply database migrations.`와 `schema guard` 로그를 확인합니다. 있으면 위 2번처럼 migration을 고쳐 커밋한 뒤 다시 배포합니다.
+
 ## 4. 롤백
 
 공식 문서에는 "이전 배포로 되돌리기" 전용 명령이 없습니다(2026-10-27 기준).

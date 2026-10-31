@@ -5,6 +5,7 @@ import '../generated/protocol.dart';
 import '../auth/apple_revocation.dart';
 import '../auth/naver_revocation.dart';
 import '../billing/billing_service.dart';
+import '../maintenance/schema_guard.dart';
 import '../product/product_service.dart';
 
 class AccountEndpoint extends Endpoint {
@@ -13,6 +14,7 @@ class AccountEndpoint extends Endpoint {
 
   /// Deletes only the authenticated account and its locally stored data.
   Future<void> deleteAccount(Session session) async {
+    SchemaGuard.require();
     final owner = session.authenticated?.userIdentifier;
     if (owner == null) {
       throw NotAuthorizedException(

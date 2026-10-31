@@ -170,7 +170,7 @@ void main() {
       final initialCredits = await PointEntry.db.find(session);
       expect(initialCredits.single.amount, 10);
       expect(initialCredits.single.policyVersion, productFixtureLabel);
-      expect(initialCredits.single.owner, first.authUserId.toString());
+      expect(initialCredits.single.authUserId, first.authUserId);
       final account = (await ProductAccount.db.find(session)).single;
       expect(account.balance, 0);
       expect(account.fixtureBalance, 10);

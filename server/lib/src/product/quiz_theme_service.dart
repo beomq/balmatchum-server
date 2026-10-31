@@ -37,8 +37,7 @@ extension QuizThemeService on ProductService {
     requireProductFixtures(session);
     final existing = await QuizState.db.findFirstRow(
       session,
-      where: (t) =>
-          t.authUserId.equals(authUserIdOf(owner)) & t.date.equals(date),
+      where: (t) => t.authUserId.equals(authUserId) & t.date.equals(date),
       transaction: tx,
     );
     if (existing != null) return existing;
@@ -48,8 +47,7 @@ extension QuizThemeService on ProductService {
     return QuizState.db.insertRow(
       session,
       QuizState(
-        owner: owner,
-        authUserId: authUserIdOf(owner),
+        authUserId: authUserId,
         date: date,
         questionId: _questionId,
       ),
@@ -65,7 +63,7 @@ extension QuizThemeService on ProductService {
     final values = await QuizState.db.find(
       session,
       where: (t) =>
-          t.authUserId.equals(authUserIdOf(owner)) &
+          t.authUserId.equals(authUserId) &
           t.answerIndex.notEquals(null) &
           (t.date < beforeDate),
       orderBy: (t) => t.date.desc(),
@@ -103,7 +101,7 @@ extension QuizThemeService on ProductService {
       if (value.awardedPoints > 0) {
         await appendPointEntry(
           PointEntry(
-            owner: owner,
+            authUserId: authUserId,
             entryKey: 'quiz:$date',
             kind: 'quiz',
             date: date,
@@ -123,7 +121,7 @@ extension QuizThemeService on ProductService {
   Future<ThemeStore> themes() async {
     final owned = await ThemeOwnership.db.find(
       session,
-      where: (t) => t.authUserId.equals(authUserIdOf(owner)),
+      where: (t) => t.authUserId.equals(authUserId),
       transaction: tx,
     );
     final fixture = productFixturesEnabled(session);
@@ -162,7 +160,7 @@ extension QuizThemeService on ProductService {
       }
       await appendPointEntry(
         PointEntry(
-          owner: owner,
+          authUserId: authUserId,
           entryKey: 'theme:$themeId',
           kind: 'purchase',
           amount: -item.price!,
@@ -175,8 +173,7 @@ extension QuizThemeService on ProductService {
       await ThemeOwnership.db.insertRow(
         session,
         ThemeOwnership(
-          owner: owner,
-          authUserId: authUserIdOf(owner),
+          authUserId: authUserId,
           themeId: themeId,
           purchasedAt: clock.now().toUtc(),
         ),

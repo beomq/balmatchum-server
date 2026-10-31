@@ -20,8 +20,7 @@ abstract class StoredPurchase
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
   StoredPurchase._({
     this.id,
-    required this.owner,
-    this.authUserId,
+    required this.authUserId,
     this.authUser,
     required this.identityHash,
     required this.store,
@@ -42,8 +41,7 @@ abstract class StoredPurchase
 
   factory StoredPurchase({
     int? id,
-    required String owner,
-    _is.UuidValue? authUserId,
+    required _is.UuidValue authUserId,
     _iacs.AuthUser? authUser,
     required String identityHash,
     required String store,
@@ -65,12 +63,9 @@ abstract class StoredPurchase
   factory StoredPurchase.fromJson(Map<String, dynamic> jsonSerialization) {
     return StoredPurchase(
       id: jsonSerialization['id'] as int?,
-      owner: jsonSerialization['owner'] as String,
-      authUserId: jsonSerialization['authUserId'] == null
-          ? null
-          : _is.UuidValueJsonExtension.fromJson(
-              jsonSerialization['authUserId'],
-            ),
+      authUserId: _is.UuidValueJsonExtension.fromJson(
+        jsonSerialization['authUserId'],
+      ),
       authUser: jsonSerialization['authUser'] == null
           ? null
           : _iu3f2ih9.Protocol().deserialize<_iacs.AuthUser>(
@@ -117,9 +112,7 @@ abstract class StoredPurchase
   @override
   int? id;
 
-  String owner;
-
-  _is.UuidValue? authUserId;
+  _is.UuidValue authUserId;
 
   _iacs.AuthUser? authUser;
 
@@ -161,7 +154,6 @@ abstract class StoredPurchase
   @_is.useResult
   StoredPurchase copyWith({
     int? id,
-    String? owner,
     _is.UuidValue? authUserId,
     _iacs.AuthUser? authUser,
     String? identityHash,
@@ -185,8 +177,7 @@ abstract class StoredPurchase
     return {
       '__className__': 'StoredPurchase',
       if (id != null) 'id': id,
-      'owner': owner,
-      if (authUserId != null) 'authUserId': authUserId?.toJson(),
+      'authUserId': authUserId.toJson(),
       if (authUser != null) 'authUser': authUser?.toJson(),
       'identityHash': identityHash,
       'store': store,
@@ -244,8 +235,7 @@ class _Undefined {}
 class _StoredPurchaseImpl extends StoredPurchase {
   _StoredPurchaseImpl({
     int? id,
-    required String owner,
-    _is.UuidValue? authUserId,
+    required _is.UuidValue authUserId,
     _iacs.AuthUser? authUser,
     required String identityHash,
     required String store,
@@ -264,7 +254,6 @@ class _StoredPurchaseImpl extends StoredPurchase {
     required bool acknowledgementPending,
   }) : super._(
          id: id,
-         owner: owner,
          authUserId: authUserId,
          authUser: authUser,
          identityHash: identityHash,
@@ -290,8 +279,7 @@ class _StoredPurchaseImpl extends StoredPurchase {
   @override
   StoredPurchase copyWith({
     Object? id = _Undefined,
-    String? owner,
-    Object? authUserId = _Undefined,
+    _is.UuidValue? authUserId,
     Object? authUser = _Undefined,
     String? identityHash,
     String? store,
@@ -311,8 +299,7 @@ class _StoredPurchaseImpl extends StoredPurchase {
   }) {
     return StoredPurchase(
       id: id is int? ? id : this.id,
-      owner: owner ?? this.owner,
-      authUserId: authUserId is _is.UuidValue? ? authUserId : this.authUserId,
+      authUserId: authUserId ?? this.authUserId,
       authUser: authUser is _iacs.AuthUser?
           ? authUser
           : this.authUser?.copyWith(),
@@ -343,13 +330,8 @@ class _StoredPurchaseImpl extends StoredPurchase {
 class StoredPurchaseUpdateTable extends _is.UpdateTable<StoredPurchaseTable> {
   StoredPurchaseUpdateTable(super.table);
 
-  _is.ColumnValue<String, String> owner(String value) => _is.ColumnValue(
-    table.owner,
-    value,
-  );
-
   _is.ColumnValue<_is.UuidValue, _is.UuidValue> authUserId(
-    _is.UuidValue? value,
+    _is.UuidValue value,
   ) => _is.ColumnValue(
     table.authUserId,
     value,
@@ -443,10 +425,6 @@ class StoredPurchaseTable extends _is.Table<int?> {
   StoredPurchaseTable({super.tableRelation})
     : super(tableName: 'billing_purchase') {
     updateTable = StoredPurchaseUpdateTable(this);
-    owner = _is.ColumnString(
-      'owner',
-      this,
-    );
     authUserId = _is.ColumnUuid(
       'authUserId',
       this,
@@ -515,8 +493,6 @@ class StoredPurchaseTable extends _is.Table<int?> {
 
   late final StoredPurchaseUpdateTable updateTable;
 
-  late final _is.ColumnString owner;
-
   late final _is.ColumnUuid authUserId;
 
   _iacs.AuthUserTable? _authUser;
@@ -567,7 +543,6 @@ class StoredPurchaseTable extends _is.Table<int?> {
   @override
   List<_is.Column> get columns => [
     id,
-    owner,
     authUserId,
     identityHash,
     store,
@@ -632,8 +607,6 @@ class StoredPurchaseRepository {
   const StoredPurchaseRepository._();
 
   final attachRow = const StoredPurchaseAttachRowRepository._();
-
-  final detachRow = const StoredPurchaseDetachRowRepository._();
 
   /// Returns a list of [StoredPurchase]s matching the given query parameters.
   ///
@@ -1052,32 +1025,6 @@ class StoredPurchaseAttachRowRepository {
     }
 
     var $storedPurchase = storedPurchase.copyWith(authUserId: authUser.id);
-    await session.db.updateRow<StoredPurchase>(
-      $storedPurchase,
-      columns: [StoredPurchase.t.authUserId],
-      transaction: transaction,
-    );
-  }
-}
-
-class StoredPurchaseDetachRowRepository {
-  const StoredPurchaseDetachRowRepository._();
-
-  /// Detaches the relation between this [StoredPurchase] and the [AuthUser] set in `authUser`
-  /// by setting the [StoredPurchase]'s foreign key `authUserId` to `null`.
-  ///
-  /// This removes the association between the two models without deleting
-  /// the related record.
-  Future<void> authUser(
-    _is.DatabaseSession session,
-    StoredPurchase storedPurchase, {
-    _is.Transaction? transaction,
-  }) async {
-    if (storedPurchase.id == null) {
-      throw ArgumentError.notNull('storedPurchase.id');
-    }
-
-    var $storedPurchase = storedPurchase.copyWith(authUserId: null);
     await session.db.updateRow<StoredPurchase>(
       $storedPurchase,
       columns: [StoredPurchase.t.authUserId],

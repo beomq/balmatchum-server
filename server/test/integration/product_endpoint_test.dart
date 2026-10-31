@@ -83,7 +83,6 @@ void main() {
     });
 
     PointEntry entry(String policy, int amount) => PointEntry(
-      owner: owner,
       authUserId: authUserIdOf(owner),
       entryKey: policy,
       kind: 'test-credit',
@@ -113,7 +112,7 @@ void main() {
         }
         final account = (await ProductAccount.db.findFirstRow(
           session,
-          where: (t) => t.owner.equals(owner),
+          where: (t) => t.authUserId.equals(authUserIdOf(owner)),
         ))!;
         expect(account.balance, 3);
         expect(account.fixtureBalance, 10);
@@ -159,7 +158,7 @@ void main() {
         );
         final account = (await ProductAccount.db.findFirstRow(
           session,
-          where: (t) => t.owner.equals(owner),
+          where: (t) => t.authUserId.equals(authUserIdOf(owner)),
         ))!;
         account.fixtureBalance = 1;
         await ProductAccount.db.updateRow(session, account);
@@ -244,7 +243,6 @@ void main() {
           await PointEntry.db.insertRow(
             session,
             PointEntry(
-              owner: session.authenticated!.userIdentifier,
               authUserId: authUserIdOf(session.authenticated!.userIdentifier),
               entryKey: 'legacy-fixture',
               kind: 'quiz',
@@ -293,7 +291,6 @@ void main() {
         session,
         (s) => s.appendPointEntry(
           PointEntry(
-            owner: userId,
             authUserId: authUserIdOf(userId),
             entryKey: 'fund:$policy',
             kind: 'test-credit',
@@ -307,12 +304,13 @@ void main() {
 
     Future<List<PointEntry>> debits() => PointEntry.db.find(
       session,
-      where: (t) => t.owner.equals(userId) & t.kind.equals('purchase'),
+      where: (t) =>
+          t.authUserId.equals(authUserIdOf(userId)) & t.kind.equals('purchase'),
     );
 
     Future<int> ownerships() => ThemeOwnership.db.count(
       session,
-      where: (t) => t.owner.equals(userId),
+      where: (t) => t.authUserId.equals(authUserIdOf(userId)),
     );
 
     test('sufficient balance buys and equips a three point theme', () async {
@@ -382,7 +380,7 @@ void main() {
       expect(
         await ProductRequest.db.count(
           session,
-          where: (t) => t.owner.equals(userId),
+          where: (t) => t.authUserId.equals(authUserIdOf(userId)),
         ),
         0,
       );
@@ -499,7 +497,6 @@ void main() {
             roundSession,
             (s) => s.appendPointEntry(
               PointEntry(
-                owner: roundUser,
                 authUserId: authUserIdOf(roundUser),
                 entryKey: 'fund:round-$round',
                 kind: 'test-credit',
@@ -542,7 +539,9 @@ void main() {
           );
           final roundDebits = await PointEntry.db.find(
             roundSession,
-            where: (t) => t.owner.equals(roundUser) & t.kind.equals('purchase'),
+            where: (t) =>
+                t.authUserId.equals(authUserIdOf(roundUser)) &
+                t.kind.equals('purchase'),
           );
           expect(roundDebits, hasLength(2), reason: reason);
           expect(
@@ -553,7 +552,7 @@ void main() {
           expect(
             await ThemeOwnership.db.count(
               roundSession,
-              where: (t) => t.owner.equals(roundUser),
+              where: (t) => t.authUserId.equals(authUserIdOf(roundUser)),
             ),
             2,
             reason: reason,
@@ -929,7 +928,8 @@ void main() {
       final deadline = dayStart('2026-10-22');
       final value = await ProductDay.db.findFirstRow(
         s,
-        where: (t) => t.owner.equals(s.authenticated!.userIdentifier),
+        where: (t) =>
+            t.authUserId.equals(authUserIdOf(s.authenticated!.userIdentifier)),
       );
       expect(value!.windows.single.freeUntil, deadline);
       await withClock(
@@ -958,7 +958,6 @@ void main() {
       await ProductDay.db.insertRow(
         s,
         ProductDay(
-          owner: id,
           authUserId: authUserIdOf(id),
           date: date,
           steps: 7000,
@@ -980,7 +979,6 @@ void main() {
         s,
         (service) => service.appendPointEntry(
           PointEntry(
-            owner: id,
             authUserId: authUserIdOf(id),
             entryKey: 'steps:$date:7',
             kind: 'steps',
@@ -994,7 +992,6 @@ void main() {
       await ProductDay.db.insertRow(
         s,
         ProductDay(
-          owner: id,
           authUserId: authUserIdOf(id),
           date: '2026-10-13',
           windows: [],
@@ -1019,7 +1016,8 @@ void main() {
         expect((await endpoint.getWallet(s)).balance, 0);
         final row = await ProductDay.db.findFirstRow(
           s,
-          where: (t) => t.owner.equals(id) & t.date.equals(date),
+          where: (t) =>
+              t.authUserId.equals(authUserIdOf(id)) & t.date.equals(date),
         );
         expect(row!.grantedUnits, 7);
         expect(row.confirmedUnits, 7);
@@ -1057,7 +1055,6 @@ void main() {
         s,
         (service) => service.appendPointEntry(
           PointEntry(
-            owner: id,
             authUserId: authUserIdOf(id),
             entryKey: 'fixture-fund',
             kind: 'fixture',
@@ -1070,7 +1067,6 @@ void main() {
       await DogProfile.db.insertRow(
         s,
         DogProfile(
-          owner: id,
           authUserId: authUserIdOf(id),
           breedId: 'shih-tzu',
           name: 'Fixture dog',
@@ -1082,7 +1078,7 @@ void main() {
       Future<void> invariant(int fixture) async {
         final account = (await ProductAccount.db.findFirstRow(
           s,
-          where: (t) => t.owner.equals(id),
+          where: (t) => t.authUserId.equals(authUserIdOf(id)),
         ))!;
         expect(account.balance, 0);
         expect(account.fixtureBalance, fixture);
@@ -1130,13 +1126,13 @@ void main() {
       final id = s.authenticated!.userIdentifier;
       final account = (await ProductAccount.db.findFirstRow(
         s,
-        where: (t) => t.owner.equals(id),
+        where: (t) => t.authUserId.equals(authUserIdOf(id)),
       ))!;
       expect(account.balance, 0);
       expect(
         await PointEntry.db.count(
           s,
-          where: (t) => t.owner.equals(id),
+          where: (t) => t.authUserId.equals(authUserIdOf(id)),
         ),
         0,
       );
@@ -1144,7 +1140,8 @@ void main() {
         await ProductRequest.db.count(
           s,
           where: (t) =>
-              t.owner.equals(id) & t.requestId.equals('rollback-claim'),
+              t.authUserId.equals(authUserIdOf(id)) &
+              t.requestId.equals('rollback-claim'),
         ),
         0,
       );
@@ -1187,7 +1184,9 @@ void main() {
       expect(
         await PointEntry.db.count(
           a,
-          where: (t) => t.owner.equals(a.authenticated!.userIdentifier),
+          where: (t) => t.authUserId.equals(
+            authUserIdOf(a.authenticated!.userIdentifier),
+          ),
         ),
         1,
       );
@@ -1223,13 +1222,15 @@ void main() {
           expect(grants.map((g) => g.amount), [7, 3]);
           final account = (await ProductAccount.db.findFirstRow(
             a,
-            where: (t) => t.owner.equals(a.authenticated!.userIdentifier),
+            where: (t) => t.authUserId.equals(
+              authUserIdOf(a.authenticated!.userIdentifier),
+            ),
           ))!;
           expect(account.balance, 10);
           expect(
             (await reconcilePointBalances(
               a,
-            )).where((row) => row.first == account.owner),
+            )).where((row) => row.first == account.authUserId.uuid),
             isEmpty,
           );
         } finally {
@@ -1294,7 +1295,9 @@ void main() {
         final s = await ready(on: '2026-10-01');
         final original = await ProductDay.db.findFirstRow(
           s,
-          where: (t) => t.owner.equals(s.authenticated!.userIdentifier),
+          where: (t) => t.authUserId.equals(
+            authUserIdOf(s.authenticated!.userIdentifier),
+          ),
         );
         expect(
           original!.windows.single.freeUntil,
@@ -1455,7 +1458,8 @@ void main() {
       });
       final before = await PointEntry.db.find(
         a,
-        where: (t) => t.owner.equals(a.authenticated!.userIdentifier),
+        where: (t) =>
+            t.authUserId.equals(authUserIdOf(a.authenticated!.userIdentifier)),
       );
 
       // When.
@@ -1464,7 +1468,8 @@ void main() {
       // Then: tombstone, identities and amounts survive, unit detail does not.
       final day = (await ProductDay.db.find(
         a,
-        where: (t) => t.owner.equals(a.authenticated!.userIdentifier),
+        where: (t) =>
+            t.authUserId.equals(authUserIdOf(a.authenticated!.userIdentifier)),
       )).single;
       expect(day.deleted, isTrue);
       expect(day.steps, isNull);
@@ -1473,13 +1478,16 @@ void main() {
       expect(
         await StepRevision.db.count(
           a,
-          where: (t) => t.owner.equals(a.authenticated!.userIdentifier),
+          where: (t) => t.authUserId.equals(
+            authUserIdOf(a.authenticated!.userIdentifier),
+          ),
         ),
         0,
       );
       final entries = await PointEntry.db.find(
         a,
-        where: (t) => t.owner.equals(a.authenticated!.userIdentifier),
+        where: (t) =>
+            t.authUserId.equals(authUserIdOf(a.authenticated!.userIdentifier)),
         orderBy: (t) => t.id,
       );
       expect(entries.map((e) => e.amount), [7, 2]);
@@ -1497,7 +1505,8 @@ void main() {
       expect((await endpoint.getWallet(b)).balance, 3);
       final other = (await PointEntry.db.find(
         b,
-        where: (t) => t.owner.equals(b.authenticated!.userIdentifier),
+        where: (t) =>
+            t.authUserId.equals(authUserIdOf(b.authenticated!.userIdentifier)),
       )).single;
       expect(other.throughUnits, 3);
     });
@@ -1529,7 +1538,9 @@ void main() {
         expect(
           await PointEntry.db.count(
             a,
-            where: (t) => t.owner.equals(a.authenticated!.userIdentifier),
+            where: (t) => t.authUserId.equals(
+              authUserIdOf(a.authenticated!.userIdentifier),
+            ),
           ),
           1,
         );
@@ -1586,7 +1597,6 @@ void main() {
         final legacy = await StoredGpsRecord.db.insertRow(
           a,
           StoredGpsRecord(
-            owner: a.authenticated!.userIdentifier,
             authUserId: authUserIdOf(a.authenticated!.userIdentifier),
             clientRecordId: input.clientRecordId,
             persistedAt: fixedNow,
@@ -1629,7 +1639,9 @@ void main() {
         expect(
           await StoredGpsRecord.db.count(
             a,
-            where: (t) => t.owner.equals(a.authenticated!.userIdentifier),
+            where: (t) => t.authUserId.equals(
+              authUserIdOf(a.authenticated!.userIdentifier),
+            ),
           ),
           1,
         );
@@ -1698,7 +1710,7 @@ void main() {
         a,
         (s) => s.appendPointEntry(
           PointEntry(
-            owner: a.authenticated!.userIdentifier,
+            authUserId: authUserIdOf(a.authenticated!.userIdentifier),
             entryKey: 'fixture-test',
             kind: 'fixture',
             amount: 7,
