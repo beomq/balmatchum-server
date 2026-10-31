@@ -121,10 +121,10 @@ class ProductService {
   static Future<T> read<T>(
     Session session,
     Future<T> Function(ProductService) action,
-  ) {
+  ) async {
     final owner = session.authenticated?.userIdentifier;
     if (owner == null) throw ProductException(code: 'unauthenticated');
-    return session.db.transaction(
+    final result = await session.db.transaction(
       (tx) async {
         final account =
             await ProductAccount.db.findFirstRow(
@@ -142,6 +142,18 @@ class ProductService {
         isolationLevel: IsolationLevel.repeatableRead,
       ),
     );
+    // The snapshot cannot see a deletion committed after it began, so recheck
+    // outside the transaction without taking a lock; reads stay read-only.
+    final user = await AuthUser.db.findById(
+      session,
+      UuidValue.fromString(owner),
+    );
+    if (user == null) {
+      throw NotAuthorizedException(
+        reason: AuthenticationFailureReason.unauthenticated,
+      );
+    }
+    return result;
   }
 
   Future<ProductDay> day(String date) async {

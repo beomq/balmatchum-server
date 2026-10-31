@@ -437,6 +437,55 @@ void main() {
         await empty(a.id);
       },
     );
+
+    test(
+      'lock-free read rejects an account deleted after its snapshot',
+      () async {
+        final a = await user();
+        final snapshotTaken = Completer<void>();
+        final release = Completer<void>();
+        final read = ProductService.read(a.session, (s) async {
+          snapshotTaken.complete();
+          await release.future.timeout(_bound);
+          return s.wallet();
+        });
+        await snapshotTaken.future.timeout(_bound);
+        await a.client.account.deleteAccount();
+        release.complete();
+        await expectLater(
+          read.timeout(_bound),
+          throwsA(isA<NotAuthorizedException>()),
+        );
+        await empty(a.id);
+      },
+    );
+
+    test('new user without product account reads an empty wallet', () async {
+      final a = await user();
+      expect((await a.client.product.getWallet()).balance, 0);
+    });
+
+    test('read does not wait for an uncommitted deletion', () async {
+      final a = await user();
+      await seed(a.session, a.id);
+      final purged = Completer<void>();
+      final release = Completer<void>();
+      final deletion = admin.db.transaction((tx) async {
+        await deleteAccountData(a.session, a.id.uuid, tx);
+        purged.complete();
+        await release.future.timeout(_bound);
+      });
+      try {
+        await purged.future.timeout(_bound);
+        await ProductService.read(
+          a.session,
+          (s) => s.wallet(),
+        ).timeout(_bound);
+      } finally {
+        release.complete();
+        await deletion.timeout(_bound);
+      }
+    });
   });
 }
 
