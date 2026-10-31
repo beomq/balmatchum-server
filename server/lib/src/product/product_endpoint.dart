@@ -13,16 +13,16 @@ class ProductEndpoint extends Endpoint {
   bool get requireLogin => true;
 
   Future<DailyRecord> getDay(Session session, String date) =>
-      ProductService.run(session, (s) async => s.view(await s.day(date)));
+      ProductService.read(session, (s) async => s.view(await s.day(date)));
 
   Future<List<DailyRecord>> listDays(
     Session session,
     String fromDate,
     String toDate,
-  ) => ProductService.run(session, (s) => s.listDays(fromDate, toDate));
+  ) => ProductService.read(session, (s) => s.listDays(fromDate, toDate));
 
   Future<WalletView> getWallet(Session session) =>
-      ProductService.run(session, (s) => s.wallet());
+      ProductService.read(session, (s) => s.wallet());
 
   Future<int> registerStepStream(
     Session session,
@@ -43,7 +43,7 @@ class ProductEndpoint extends Endpoint {
   ) => ProductService.run(session, (s) => s.deleteDay(date, requestId));
 
   Future<List<DailyRecord>> listDeletions(Session session, int afterVersion) =>
-      ProductService.run(session, (s) => s.deletions(afterVersion));
+      ProductService.read(session, (s) => s.deletions(afterVersion));
 
   Future<RewardGrant> claimDay(
     Session session,
@@ -93,7 +93,7 @@ class ProductEndpoint extends Endpoint {
   }
 
   Future<List<DailyQuiz>> listQuizHistory(Session session, String beforeDate) =>
-      ProductService.run(session, (s) => s.quizHistory(beforeDate));
+      ProductService.read(session, (s) => s.quizHistory(beforeDate));
 
   Future<DailyQuiz> answerQuiz(
     Session session,
@@ -106,7 +106,7 @@ class ProductEndpoint extends Endpoint {
   );
 
   Future<ThemeStore> listThemes(Session session) =>
-      ProductService.run(session, (s) => s.themes());
+      ProductService.read(session, (s) => s.themes());
 
   Future<ThemeStore> purchaseTheme(
     Session session,
@@ -121,7 +121,7 @@ class ProductEndpoint extends Endpoint {
   ) => ProductService.run(session, (s) => s.equip(themeId, requestId));
 
   Future<OutfitStore> listOutfits(Session session) =>
-      ProductService.run(session, (s) => s.outfits());
+      ProductService.read(session, (s) => s.outfits());
 
   Future<OutfitStore> purchaseOutfit(
     Session session,

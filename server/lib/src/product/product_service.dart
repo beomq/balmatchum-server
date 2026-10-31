@@ -115,6 +115,35 @@ class ProductService {
     });
   }
 
+  /// Reads take no row locks, so one user's parallel reads overlap instead of
+  /// queueing behind each other. One repeatable-read snapshot keeps a view's
+  /// day, grants and balance consistent; every write still goes through [run].
+  static Future<T> read<T>(
+    Session session,
+    Future<T> Function(ProductService) action,
+  ) {
+    final owner = session.authenticated?.userIdentifier;
+    if (owner == null) throw ProductException(code: 'unauthenticated');
+    return session.db.transaction(
+      (tx) async {
+        final account =
+            await ProductAccount.db.findFirstRow(
+              session,
+              where: (t) => t.owner.equals(owner),
+              transaction: tx,
+            ) ??
+            ProductAccount(owner: owner);
+        return withClock(
+          Clock.fixed(clock.now()),
+          () => action(ProductService(session, owner, tx, account)),
+        );
+      },
+      settings: const TransactionSettings(
+        isolationLevel: IsolationLevel.repeatableRead,
+      ),
+    );
+  }
+
   Future<ProductDay> day(String date) async {
     dayStart(date);
     return await ProductDay.db.findFirstRow(

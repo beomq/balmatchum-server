@@ -1092,6 +1092,36 @@ void main() {
       },
     );
 
+    test('reads finish while a write holds the account lock', () async {
+      final a = await ready();
+      final b = await owner(a.authenticated!.userIdentifier);
+      final locked = Completer<void>();
+      final release = Completer<void>();
+      final write = ProductService.run(a, (s) async {
+        locked.complete();
+        await release.future.timeout(const Duration(seconds: 10));
+        return s.wallet();
+      });
+      try {
+        await locked.future.timeout(const Duration(seconds: 10));
+        final reads = await at(
+          () => Future.wait<Object>([
+            endpoint.getWallet(b),
+            endpoint.getDay(b, date),
+            endpoint.listDays(b, date, date),
+            endpoint.listDeletions(b, 0),
+            endpoint.listThemes(b),
+            endpoint.listOutfits(b),
+          ]).timeout(const Duration(seconds: 5)),
+        );
+        expect((reads[0] as WalletView).balance, 0);
+        expect((reads[1] as DailyRecord).steps, 7000);
+      } finally {
+        release.complete();
+        await write;
+      }
+    });
+
     test('day deletion clears units while preserving ledger amounts', () async {
       // Given: two paid tranches and an unrelated owner's same date.
       final a = await ready(steps: 700);
