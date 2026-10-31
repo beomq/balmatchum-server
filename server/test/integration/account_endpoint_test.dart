@@ -81,7 +81,7 @@ void main() {
       for (final table in _ownedTables) {
         result[table] = (await admin.db.unsafeQuery(
           'SELECT row_to_json(t)::text FROM "$table" t '
-          'WHERE owner = @owner ORDER BY id',
+          'WHERE "authUserId" = CAST(@owner AS uuid) ORDER BY id',
           parameters: parameters,
         )).map((r) => r[0]).toList();
       }
@@ -93,9 +93,9 @@ void main() {
       );
       for (final row in tables) {
         final table = row[0] as String;
-        // App tables carry both owner and authUserId; keep both views.
-        final key = result.containsKey(table) ? '$table.authUserId' : table;
-        result[key] = (await admin.db.unsafeQuery(
+        // App tables listed above were already read by the same key.
+        if (result.containsKey(table)) continue;
+        result[table] = (await admin.db.unsafeQuery(
           'SELECT row_to_json(t)::text FROM "$table" t '
           'WHERE "authUserId" = CAST(@owner AS uuid) ORDER BY id',
           parameters: parameters,
@@ -145,7 +145,6 @@ void main() {
         await PointEntry.db.insertRow(
           session,
           PointEntry(
-            owner: owner,
             authUserId: authUserIdOf(owner),
             entryKey: 'seed',
             kind: 'quiz',
@@ -158,7 +157,6 @@ void main() {
         await QuizState.db.insertRow(
           session,
           QuizState(
-            owner: owner,
             authUserId: authUserIdOf(owner),
             date: '2026-10-14',
             questionId: 'test',
@@ -168,7 +166,6 @@ void main() {
         await ThemeOwnership.db.insertRow(
           session,
           ThemeOwnership(
-            owner: owner,
             authUserId: authUserIdOf(owner),
             themeId: 'cloudy',
             purchasedAt: DateTime.utc(2026),
@@ -178,7 +175,6 @@ void main() {
         await OutfitOwnership.db.insertRow(
           session,
           OutfitOwnership(
-            owner: owner,
             authUserId: authUserIdOf(owner),
             outfitId: 'vest-low-v',
             purchasedAt: DateTime.utc(2026),

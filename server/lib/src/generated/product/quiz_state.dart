@@ -20,8 +20,7 @@ abstract class QuizState
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
   QuizState._({
     this.id,
-    required this.owner,
-    this.authUserId,
+    required this.authUserId,
     this.authUser,
     required this.date,
     required this.questionId,
@@ -32,8 +31,7 @@ abstract class QuizState
 
   factory QuizState({
     int? id,
-    required String owner,
-    _is.UuidValue? authUserId,
+    required _is.UuidValue authUserId,
     _iacs.AuthUser? authUser,
     required String date,
     required String questionId,
@@ -45,12 +43,9 @@ abstract class QuizState
   factory QuizState.fromJson(Map<String, dynamic> jsonSerialization) {
     return QuizState(
       id: jsonSerialization['id'] as int?,
-      owner: jsonSerialization['owner'] as String,
-      authUserId: jsonSerialization['authUserId'] == null
-          ? null
-          : _is.UuidValueJsonExtension.fromJson(
-              jsonSerialization['authUserId'],
-            ),
+      authUserId: _is.UuidValueJsonExtension.fromJson(
+        jsonSerialization['authUserId'],
+      ),
       authUser: jsonSerialization['authUser'] == null
           ? null
           : _iu3f2ih9.Protocol().deserialize<_iacs.AuthUser>(
@@ -73,9 +68,7 @@ abstract class QuizState
   @override
   int? id;
 
-  String owner;
-
-  _is.UuidValue? authUserId;
+  _is.UuidValue authUserId;
 
   _iacs.AuthUser? authUser;
 
@@ -97,7 +90,6 @@ abstract class QuizState
   @_is.useResult
   QuizState copyWith({
     int? id,
-    String? owner,
     _is.UuidValue? authUserId,
     _iacs.AuthUser? authUser,
     String? date,
@@ -111,8 +103,7 @@ abstract class QuizState
     return {
       '__className__': 'QuizState',
       if (id != null) 'id': id,
-      'owner': owner,
-      if (authUserId != null) 'authUserId': authUserId?.toJson(),
+      'authUserId': authUserId.toJson(),
       if (authUser != null) 'authUser': authUser?.toJson(),
       'date': date,
       'questionId': questionId,
@@ -160,8 +151,7 @@ class _Undefined {}
 class _QuizStateImpl extends QuizState {
   _QuizStateImpl({
     int? id,
-    required String owner,
-    _is.UuidValue? authUserId,
+    required _is.UuidValue authUserId,
     _iacs.AuthUser? authUser,
     required String date,
     required String questionId,
@@ -170,7 +160,6 @@ class _QuizStateImpl extends QuizState {
     int? awardedPoints,
   }) : super._(
          id: id,
-         owner: owner,
          authUserId: authUserId,
          authUser: authUser,
          date: date,
@@ -186,8 +175,7 @@ class _QuizStateImpl extends QuizState {
   @override
   QuizState copyWith({
     Object? id = _Undefined,
-    String? owner,
-    Object? authUserId = _Undefined,
+    _is.UuidValue? authUserId,
     Object? authUser = _Undefined,
     String? date,
     String? questionId,
@@ -197,8 +185,7 @@ class _QuizStateImpl extends QuizState {
   }) {
     return QuizState(
       id: id is int? ? id : this.id,
-      owner: owner ?? this.owner,
-      authUserId: authUserId is _is.UuidValue? ? authUserId : this.authUserId,
+      authUserId: authUserId ?? this.authUserId,
       authUser: authUser is _iacs.AuthUser?
           ? authUser
           : this.authUser?.copyWith(),
@@ -214,13 +201,8 @@ class _QuizStateImpl extends QuizState {
 class QuizStateUpdateTable extends _is.UpdateTable<QuizStateTable> {
   QuizStateUpdateTable(super.table);
 
-  _is.ColumnValue<String, String> owner(String value) => _is.ColumnValue(
-    table.owner,
-    value,
-  );
-
   _is.ColumnValue<_is.UuidValue, _is.UuidValue> authUserId(
-    _is.UuidValue? value,
+    _is.UuidValue value,
   ) => _is.ColumnValue(
     table.authUserId,
     value,
@@ -256,10 +238,6 @@ class QuizStateUpdateTable extends _is.UpdateTable<QuizStateTable> {
 class QuizStateTable extends _is.Table<int?> {
   QuizStateTable({super.tableRelation}) : super(tableName: 'quiz_state') {
     updateTable = QuizStateUpdateTable(this);
-    owner = _is.ColumnString(
-      'owner',
-      this,
-    );
     authUserId = _is.ColumnUuid(
       'authUserId',
       this,
@@ -288,8 +266,6 @@ class QuizStateTable extends _is.Table<int?> {
   }
 
   late final QuizStateUpdateTable updateTable;
-
-  late final _is.ColumnString owner;
 
   late final _is.ColumnUuid authUserId;
 
@@ -321,7 +297,6 @@ class QuizStateTable extends _is.Table<int?> {
   @override
   List<_is.Column> get columns => [
     id,
-    owner,
     authUserId,
     date,
     questionId,
@@ -376,8 +351,6 @@ class QuizStateRepository {
   const QuizStateRepository._();
 
   final attachRow = const QuizStateAttachRowRepository._();
-
-  final detachRow = const QuizStateDetachRowRepository._();
 
   /// Returns a list of [QuizState]s matching the given query parameters.
   ///
@@ -796,32 +769,6 @@ class QuizStateAttachRowRepository {
     }
 
     var $quizState = quizState.copyWith(authUserId: authUser.id);
-    await session.db.updateRow<QuizState>(
-      $quizState,
-      columns: [QuizState.t.authUserId],
-      transaction: transaction,
-    );
-  }
-}
-
-class QuizStateDetachRowRepository {
-  const QuizStateDetachRowRepository._();
-
-  /// Detaches the relation between this [QuizState] and the [AuthUser] set in `authUser`
-  /// by setting the [QuizState]'s foreign key `authUserId` to `null`.
-  ///
-  /// This removes the association between the two models without deleting
-  /// the related record.
-  Future<void> authUser(
-    _is.DatabaseSession session,
-    QuizState quizState, {
-    _is.Transaction? transaction,
-  }) async {
-    if (quizState.id == null) {
-      throw ArgumentError.notNull('quizState.id');
-    }
-
-    var $quizState = quizState.copyWith(authUserId: null);
     await session.db.updateRow<QuizState>(
       $quizState,
       columns: [QuizState.t.authUserId],

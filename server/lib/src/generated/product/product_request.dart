@@ -20,8 +20,7 @@ abstract class ProductRequest
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
   ProductRequest._({
     this.id,
-    required this.owner,
-    this.authUserId,
+    required this.authUserId,
     this.authUser,
     required this.requestId,
     required this.digest,
@@ -31,8 +30,7 @@ abstract class ProductRequest
 
   factory ProductRequest({
     int? id,
-    required String owner,
-    _is.UuidValue? authUserId,
+    required _is.UuidValue authUserId,
     _iacs.AuthUser? authUser,
     required String requestId,
     required String digest,
@@ -43,12 +41,9 @@ abstract class ProductRequest
   factory ProductRequest.fromJson(Map<String, dynamic> jsonSerialization) {
     return ProductRequest(
       id: jsonSerialization['id'] as int?,
-      owner: jsonSerialization['owner'] as String,
-      authUserId: jsonSerialization['authUserId'] == null
-          ? null
-          : _is.UuidValueJsonExtension.fromJson(
-              jsonSerialization['authUserId'],
-            ),
+      authUserId: _is.UuidValueJsonExtension.fromJson(
+        jsonSerialization['authUserId'],
+      ),
       authUser: jsonSerialization['authUser'] == null
           ? null
           : _iu3f2ih9.Protocol().deserialize<_iacs.AuthUser>(
@@ -70,9 +65,7 @@ abstract class ProductRequest
   @override
   int? id;
 
-  String owner;
-
-  _is.UuidValue? authUserId;
+  _is.UuidValue authUserId;
 
   _iacs.AuthUser? authUser;
 
@@ -92,7 +85,6 @@ abstract class ProductRequest
   @_is.useResult
   ProductRequest copyWith({
     int? id,
-    String? owner,
     _is.UuidValue? authUserId,
     _iacs.AuthUser? authUser,
     String? requestId,
@@ -105,8 +97,7 @@ abstract class ProductRequest
     return {
       '__className__': 'ProductRequest',
       if (id != null) 'id': id,
-      'owner': owner,
-      if (authUserId != null) 'authUserId': authUserId?.toJson(),
+      'authUserId': authUserId.toJson(),
       if (authUser != null) 'authUser': authUser?.toJson(),
       'requestId': requestId,
       'digest': digest,
@@ -153,8 +144,7 @@ class _Undefined {}
 class _ProductRequestImpl extends ProductRequest {
   _ProductRequestImpl({
     int? id,
-    required String owner,
-    _is.UuidValue? authUserId,
+    required _is.UuidValue authUserId,
     _iacs.AuthUser? authUser,
     required String requestId,
     required String digest,
@@ -162,7 +152,6 @@ class _ProductRequestImpl extends ProductRequest {
     DateTime? createdAt,
   }) : super._(
          id: id,
-         owner: owner,
          authUserId: authUserId,
          authUser: authUser,
          requestId: requestId,
@@ -177,8 +166,7 @@ class _ProductRequestImpl extends ProductRequest {
   @override
   ProductRequest copyWith({
     Object? id = _Undefined,
-    String? owner,
-    Object? authUserId = _Undefined,
+    _is.UuidValue? authUserId,
     Object? authUser = _Undefined,
     String? requestId,
     String? digest,
@@ -187,8 +175,7 @@ class _ProductRequestImpl extends ProductRequest {
   }) {
     return ProductRequest(
       id: id is int? ? id : this.id,
-      owner: owner ?? this.owner,
-      authUserId: authUserId is _is.UuidValue? ? authUserId : this.authUserId,
+      authUserId: authUserId ?? this.authUserId,
       authUser: authUser is _iacs.AuthUser?
           ? authUser
           : this.authUser?.copyWith(),
@@ -203,13 +190,8 @@ class _ProductRequestImpl extends ProductRequest {
 class ProductRequestUpdateTable extends _is.UpdateTable<ProductRequestTable> {
   ProductRequestUpdateTable(super.table);
 
-  _is.ColumnValue<String, String> owner(String value) => _is.ColumnValue(
-    table.owner,
-    value,
-  );
-
   _is.ColumnValue<_is.UuidValue, _is.UuidValue> authUserId(
-    _is.UuidValue? value,
+    _is.UuidValue value,
   ) => _is.ColumnValue(
     table.authUserId,
     value,
@@ -241,10 +223,6 @@ class ProductRequestTable extends _is.Table<int?> {
   ProductRequestTable({super.tableRelation})
     : super(tableName: 'product_request') {
     updateTable = ProductRequestUpdateTable(this);
-    owner = _is.ColumnString(
-      'owner',
-      this,
-    );
     authUserId = _is.ColumnUuid(
       'authUserId',
       this,
@@ -269,8 +247,6 @@ class ProductRequestTable extends _is.Table<int?> {
   }
 
   late final ProductRequestUpdateTable updateTable;
-
-  late final _is.ColumnString owner;
 
   late final _is.ColumnUuid authUserId;
 
@@ -300,7 +276,6 @@ class ProductRequestTable extends _is.Table<int?> {
   @override
   List<_is.Column> get columns => [
     id,
-    owner,
     authUserId,
     requestId,
     digest,
@@ -354,8 +329,6 @@ class ProductRequestRepository {
   const ProductRequestRepository._();
 
   final attachRow = const ProductRequestAttachRowRepository._();
-
-  final detachRow = const ProductRequestDetachRowRepository._();
 
   /// Returns a list of [ProductRequest]s matching the given query parameters.
   ///
@@ -774,32 +747,6 @@ class ProductRequestAttachRowRepository {
     }
 
     var $productRequest = productRequest.copyWith(authUserId: authUser.id);
-    await session.db.updateRow<ProductRequest>(
-      $productRequest,
-      columns: [ProductRequest.t.authUserId],
-      transaction: transaction,
-    );
-  }
-}
-
-class ProductRequestDetachRowRepository {
-  const ProductRequestDetachRowRepository._();
-
-  /// Detaches the relation between this [ProductRequest] and the [AuthUser] set in `authUser`
-  /// by setting the [ProductRequest]'s foreign key `authUserId` to `null`.
-  ///
-  /// This removes the association between the two models without deleting
-  /// the related record.
-  Future<void> authUser(
-    _is.DatabaseSession session,
-    ProductRequest productRequest, {
-    _is.Transaction? transaction,
-  }) async {
-    if (productRequest.id == null) {
-      throw ArgumentError.notNull('productRequest.id');
-    }
-
-    var $productRequest = productRequest.copyWith(authUserId: null);
     await session.db.updateRow<ProductRequest>(
       $productRequest,
       columns: [ProductRequest.t.authUserId],

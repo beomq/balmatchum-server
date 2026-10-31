@@ -20,8 +20,7 @@ abstract class BillingAccount
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
   BillingAccount._({
     this.id,
-    required this.owner,
-    this.authUserId,
+    required this.authUserId,
     this.authUser,
     required this.binding,
     int? sequence,
@@ -29,8 +28,7 @@ abstract class BillingAccount
 
   factory BillingAccount({
     int? id,
-    required String owner,
-    _is.UuidValue? authUserId,
+    required _is.UuidValue authUserId,
     _iacs.AuthUser? authUser,
     required String binding,
     int? sequence,
@@ -39,12 +37,9 @@ abstract class BillingAccount
   factory BillingAccount.fromJson(Map<String, dynamic> jsonSerialization) {
     return BillingAccount(
       id: jsonSerialization['id'] as int?,
-      owner: jsonSerialization['owner'] as String,
-      authUserId: jsonSerialization['authUserId'] == null
-          ? null
-          : _is.UuidValueJsonExtension.fromJson(
-              jsonSerialization['authUserId'],
-            ),
+      authUserId: _is.UuidValueJsonExtension.fromJson(
+        jsonSerialization['authUserId'],
+      ),
       authUser: jsonSerialization['authUser'] == null
           ? null
           : _iu3f2ih9.Protocol().deserialize<_iacs.AuthUser>(
@@ -62,9 +57,7 @@ abstract class BillingAccount
   @override
   int? id;
 
-  String owner;
-
-  _is.UuidValue? authUserId;
+  _is.UuidValue authUserId;
 
   _iacs.AuthUser? authUser;
 
@@ -80,7 +73,6 @@ abstract class BillingAccount
   @_is.useResult
   BillingAccount copyWith({
     int? id,
-    String? owner,
     _is.UuidValue? authUserId,
     _iacs.AuthUser? authUser,
     String? binding,
@@ -91,8 +83,7 @@ abstract class BillingAccount
     return {
       '__className__': 'BillingAccount',
       if (id != null) 'id': id,
-      'owner': owner,
-      if (authUserId != null) 'authUserId': authUserId?.toJson(),
+      'authUserId': authUserId.toJson(),
       if (authUser != null) 'authUser': authUser?.toJson(),
       'binding': binding,
       'sequence': sequence,
@@ -137,14 +128,12 @@ class _Undefined {}
 class _BillingAccountImpl extends BillingAccount {
   _BillingAccountImpl({
     int? id,
-    required String owner,
-    _is.UuidValue? authUserId,
+    required _is.UuidValue authUserId,
     _iacs.AuthUser? authUser,
     required String binding,
     int? sequence,
   }) : super._(
          id: id,
-         owner: owner,
          authUserId: authUserId,
          authUser: authUser,
          binding: binding,
@@ -157,16 +146,14 @@ class _BillingAccountImpl extends BillingAccount {
   @override
   BillingAccount copyWith({
     Object? id = _Undefined,
-    String? owner,
-    Object? authUserId = _Undefined,
+    _is.UuidValue? authUserId,
     Object? authUser = _Undefined,
     String? binding,
     int? sequence,
   }) {
     return BillingAccount(
       id: id is int? ? id : this.id,
-      owner: owner ?? this.owner,
-      authUserId: authUserId is _is.UuidValue? ? authUserId : this.authUserId,
+      authUserId: authUserId ?? this.authUserId,
       authUser: authUser is _iacs.AuthUser?
           ? authUser
           : this.authUser?.copyWith(),
@@ -179,13 +166,8 @@ class _BillingAccountImpl extends BillingAccount {
 class BillingAccountUpdateTable extends _is.UpdateTable<BillingAccountTable> {
   BillingAccountUpdateTable(super.table);
 
-  _is.ColumnValue<String, String> owner(String value) => _is.ColumnValue(
-    table.owner,
-    value,
-  );
-
   _is.ColumnValue<_is.UuidValue, _is.UuidValue> authUserId(
-    _is.UuidValue? value,
+    _is.UuidValue value,
   ) => _is.ColumnValue(
     table.authUserId,
     value,
@@ -206,10 +188,6 @@ class BillingAccountTable extends _is.Table<int?> {
   BillingAccountTable({super.tableRelation})
     : super(tableName: 'billing_account') {
     updateTable = BillingAccountUpdateTable(this);
-    owner = _is.ColumnString(
-      'owner',
-      this,
-    );
     authUserId = _is.ColumnUuid(
       'authUserId',
       this,
@@ -226,8 +204,6 @@ class BillingAccountTable extends _is.Table<int?> {
   }
 
   late final BillingAccountUpdateTable updateTable;
-
-  late final _is.ColumnString owner;
 
   late final _is.ColumnUuid authUserId;
 
@@ -253,7 +229,6 @@ class BillingAccountTable extends _is.Table<int?> {
   @override
   List<_is.Column> get columns => [
     id,
-    owner,
     authUserId,
     binding,
     sequence,
@@ -305,8 +280,6 @@ class BillingAccountRepository {
   const BillingAccountRepository._();
 
   final attachRow = const BillingAccountAttachRowRepository._();
-
-  final detachRow = const BillingAccountDetachRowRepository._();
 
   /// Returns a list of [BillingAccount]s matching the given query parameters.
   ///
@@ -725,32 +698,6 @@ class BillingAccountAttachRowRepository {
     }
 
     var $billingAccount = billingAccount.copyWith(authUserId: authUser.id);
-    await session.db.updateRow<BillingAccount>(
-      $billingAccount,
-      columns: [BillingAccount.t.authUserId],
-      transaction: transaction,
-    );
-  }
-}
-
-class BillingAccountDetachRowRepository {
-  const BillingAccountDetachRowRepository._();
-
-  /// Detaches the relation between this [BillingAccount] and the [AuthUser] set in `authUser`
-  /// by setting the [BillingAccount]'s foreign key `authUserId` to `null`.
-  ///
-  /// This removes the association between the two models without deleting
-  /// the related record.
-  Future<void> authUser(
-    _is.DatabaseSession session,
-    BillingAccount billingAccount, {
-    _is.Transaction? transaction,
-  }) async {
-    if (billingAccount.id == null) {
-      throw ArgumentError.notNull('billingAccount.id');
-    }
-
-    var $billingAccount = billingAccount.copyWith(authUserId: null);
     await session.db.updateRow<BillingAccount>(
       $billingAccount,
       columns: [BillingAccount.t.authUserId],

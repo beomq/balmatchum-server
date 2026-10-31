@@ -75,7 +75,7 @@ Future<AuthSuccess> bootstrapDevTestUser(Session session) async {
         account,
       ).appendPointEntry(
         PointEntry(
-          owner: owner,
+          authUserId: authUserIdOf(owner),
           entryKey: 'dev-harness-starter-v1',
           kind: 'fixture-starter',
           amount: 10,

@@ -20,8 +20,7 @@ abstract class StepRevision
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
   StepRevision._({
     this.id,
-    required this.owner,
-    this.authUserId,
+    required this.authUserId,
     this.authUser,
     required this.date,
     required this.generation,
@@ -31,8 +30,7 @@ abstract class StepRevision
 
   factory StepRevision({
     int? id,
-    required String owner,
-    _is.UuidValue? authUserId,
+    required _is.UuidValue authUserId,
     _iacs.AuthUser? authUser,
     required String date,
     required int generation,
@@ -43,12 +41,9 @@ abstract class StepRevision
   factory StepRevision.fromJson(Map<String, dynamic> jsonSerialization) {
     return StepRevision(
       id: jsonSerialization['id'] as int?,
-      owner: jsonSerialization['owner'] as String,
-      authUserId: jsonSerialization['authUserId'] == null
-          ? null
-          : _is.UuidValueJsonExtension.fromJson(
-              jsonSerialization['authUserId'],
-            ),
+      authUserId: _is.UuidValueJsonExtension.fromJson(
+        jsonSerialization['authUserId'],
+      ),
       authUser: jsonSerialization['authUser'] == null
           ? null
           : _iu3f2ih9.Protocol().deserialize<_iacs.AuthUser>(
@@ -68,9 +63,7 @@ abstract class StepRevision
   @override
   int? id;
 
-  String owner;
-
-  _is.UuidValue? authUserId;
+  _is.UuidValue authUserId;
 
   _iacs.AuthUser? authUser;
 
@@ -90,7 +83,6 @@ abstract class StepRevision
   @_is.useResult
   StepRevision copyWith({
     int? id,
-    String? owner,
     _is.UuidValue? authUserId,
     _iacs.AuthUser? authUser,
     String? date,
@@ -103,8 +95,7 @@ abstract class StepRevision
     return {
       '__className__': 'StepRevision',
       if (id != null) 'id': id,
-      'owner': owner,
-      if (authUserId != null) 'authUserId': authUserId?.toJson(),
+      'authUserId': authUserId.toJson(),
       if (authUser != null) 'authUser': authUser?.toJson(),
       'date': date,
       'generation': generation,
@@ -151,8 +142,7 @@ class _Undefined {}
 class _StepRevisionImpl extends StepRevision {
   _StepRevisionImpl({
     int? id,
-    required String owner,
-    _is.UuidValue? authUserId,
+    required _is.UuidValue authUserId,
     _iacs.AuthUser? authUser,
     required String date,
     required int generation,
@@ -160,7 +150,6 @@ class _StepRevisionImpl extends StepRevision {
     required String digest,
   }) : super._(
          id: id,
-         owner: owner,
          authUserId: authUserId,
          authUser: authUser,
          date: date,
@@ -175,8 +164,7 @@ class _StepRevisionImpl extends StepRevision {
   @override
   StepRevision copyWith({
     Object? id = _Undefined,
-    String? owner,
-    Object? authUserId = _Undefined,
+    _is.UuidValue? authUserId,
     Object? authUser = _Undefined,
     String? date,
     int? generation,
@@ -185,8 +173,7 @@ class _StepRevisionImpl extends StepRevision {
   }) {
     return StepRevision(
       id: id is int? ? id : this.id,
-      owner: owner ?? this.owner,
-      authUserId: authUserId is _is.UuidValue? ? authUserId : this.authUserId,
+      authUserId: authUserId ?? this.authUserId,
       authUser: authUser is _iacs.AuthUser?
           ? authUser
           : this.authUser?.copyWith(),
@@ -201,13 +188,8 @@ class _StepRevisionImpl extends StepRevision {
 class StepRevisionUpdateTable extends _is.UpdateTable<StepRevisionTable> {
   StepRevisionUpdateTable(super.table);
 
-  _is.ColumnValue<String, String> owner(String value) => _is.ColumnValue(
-    table.owner,
-    value,
-  );
-
   _is.ColumnValue<_is.UuidValue, _is.UuidValue> authUserId(
-    _is.UuidValue? value,
+    _is.UuidValue value,
   ) => _is.ColumnValue(
     table.authUserId,
     value,
@@ -237,10 +219,6 @@ class StepRevisionUpdateTable extends _is.UpdateTable<StepRevisionTable> {
 class StepRevisionTable extends _is.Table<int?> {
   StepRevisionTable({super.tableRelation}) : super(tableName: 'step_revision') {
     updateTable = StepRevisionUpdateTable(this);
-    owner = _is.ColumnString(
-      'owner',
-      this,
-    );
     authUserId = _is.ColumnUuid(
       'authUserId',
       this,
@@ -264,8 +242,6 @@ class StepRevisionTable extends _is.Table<int?> {
   }
 
   late final StepRevisionUpdateTable updateTable;
-
-  late final _is.ColumnString owner;
 
   late final _is.ColumnUuid authUserId;
 
@@ -295,7 +271,6 @@ class StepRevisionTable extends _is.Table<int?> {
   @override
   List<_is.Column> get columns => [
     id,
-    owner,
     authUserId,
     date,
     generation,
@@ -349,8 +324,6 @@ class StepRevisionRepository {
   const StepRevisionRepository._();
 
   final attachRow = const StepRevisionAttachRowRepository._();
-
-  final detachRow = const StepRevisionDetachRowRepository._();
 
   /// Returns a list of [StepRevision]s matching the given query parameters.
   ///
@@ -769,32 +742,6 @@ class StepRevisionAttachRowRepository {
     }
 
     var $stepRevision = stepRevision.copyWith(authUserId: authUser.id);
-    await session.db.updateRow<StepRevision>(
-      $stepRevision,
-      columns: [StepRevision.t.authUserId],
-      transaction: transaction,
-    );
-  }
-}
-
-class StepRevisionDetachRowRepository {
-  const StepRevisionDetachRowRepository._();
-
-  /// Detaches the relation between this [StepRevision] and the [AuthUser] set in `authUser`
-  /// by setting the [StepRevision]'s foreign key `authUserId` to `null`.
-  ///
-  /// This removes the association between the two models without deleting
-  /// the related record.
-  Future<void> authUser(
-    _is.DatabaseSession session,
-    StepRevision stepRevision, {
-    _is.Transaction? transaction,
-  }) async {
-    if (stepRevision.id == null) {
-      throw ArgumentError.notNull('stepRevision.id');
-    }
-
-    var $stepRevision = stepRevision.copyWith(authUserId: null);
     await session.db.updateRow<StepRevision>(
       $stepRevision,
       columns: [StepRevision.t.authUserId],

@@ -20,8 +20,7 @@ abstract class DogProfile
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
   DogProfile._({
     this.id,
-    required this.owner,
-    this.authUserId,
+    required this.authUserId,
     this.authUser,
     required this.breedId,
     required this.name,
@@ -33,8 +32,7 @@ abstract class DogProfile
 
   factory DogProfile({
     int? id,
-    required String owner,
-    _is.UuidValue? authUserId,
+    required _is.UuidValue authUserId,
     _iacs.AuthUser? authUser,
     required String breedId,
     required String name,
@@ -47,12 +45,9 @@ abstract class DogProfile
   factory DogProfile.fromJson(Map<String, dynamic> jsonSerialization) {
     return DogProfile(
       id: jsonSerialization['id'] as int?,
-      owner: jsonSerialization['owner'] as String,
-      authUserId: jsonSerialization['authUserId'] == null
-          ? null
-          : _is.UuidValueJsonExtension.fromJson(
-              jsonSerialization['authUserId'],
-            ),
+      authUserId: _is.UuidValueJsonExtension.fromJson(
+        jsonSerialization['authUserId'],
+      ),
       authUser: jsonSerialization['authUser'] == null
           ? null
           : _iu3f2ih9.Protocol().deserialize<_iacs.AuthUser>(
@@ -76,9 +71,7 @@ abstract class DogProfile
   @override
   int? id;
 
-  String owner;
-
-  _is.UuidValue? authUserId;
+  _is.UuidValue authUserId;
 
   _iacs.AuthUser? authUser;
 
@@ -102,7 +95,6 @@ abstract class DogProfile
   @_is.useResult
   DogProfile copyWith({
     int? id,
-    String? owner,
     _is.UuidValue? authUserId,
     _iacs.AuthUser? authUser,
     String? breedId,
@@ -117,8 +109,7 @@ abstract class DogProfile
     return {
       '__className__': 'DogProfile',
       if (id != null) 'id': id,
-      'owner': owner,
-      if (authUserId != null) 'authUserId': authUserId?.toJson(),
+      'authUserId': authUserId.toJson(),
       if (authUser != null) 'authUser': authUser?.toJson(),
       'breedId': breedId,
       'name': name,
@@ -167,8 +158,7 @@ class _Undefined {}
 class _DogProfileImpl extends DogProfile {
   _DogProfileImpl({
     int? id,
-    required String owner,
-    _is.UuidValue? authUserId,
+    required _is.UuidValue authUserId,
     _iacs.AuthUser? authUser,
     required String breedId,
     required String name,
@@ -178,7 +168,6 @@ class _DogProfileImpl extends DogProfile {
     int? revision,
   }) : super._(
          id: id,
-         owner: owner,
          authUserId: authUserId,
          authUser: authUser,
          breedId: breedId,
@@ -195,8 +184,7 @@ class _DogProfileImpl extends DogProfile {
   @override
   DogProfile copyWith({
     Object? id = _Undefined,
-    String? owner,
-    Object? authUserId = _Undefined,
+    _is.UuidValue? authUserId,
     Object? authUser = _Undefined,
     String? breedId,
     String? name,
@@ -207,8 +195,7 @@ class _DogProfileImpl extends DogProfile {
   }) {
     return DogProfile(
       id: id is int? ? id : this.id,
-      owner: owner ?? this.owner,
-      authUserId: authUserId is _is.UuidValue? ? authUserId : this.authUserId,
+      authUserId: authUserId ?? this.authUserId,
       authUser: authUser is _iacs.AuthUser?
           ? authUser
           : this.authUser?.copyWith(),
@@ -225,13 +212,8 @@ class _DogProfileImpl extends DogProfile {
 class DogProfileUpdateTable extends _is.UpdateTable<DogProfileTable> {
   DogProfileUpdateTable(super.table);
 
-  _is.ColumnValue<String, String> owner(String value) => _is.ColumnValue(
-    table.owner,
-    value,
-  );
-
   _is.ColumnValue<_is.UuidValue, _is.UuidValue> authUserId(
-    _is.UuidValue? value,
+    _is.UuidValue value,
   ) => _is.ColumnValue(
     table.authUserId,
     value,
@@ -272,10 +254,6 @@ class DogProfileUpdateTable extends _is.UpdateTable<DogProfileTable> {
 class DogProfileTable extends _is.Table<int?> {
   DogProfileTable({super.tableRelation}) : super(tableName: 'dog_profile') {
     updateTable = DogProfileUpdateTable(this);
-    owner = _is.ColumnString(
-      'owner',
-      this,
-    );
     authUserId = _is.ColumnUuid(
       'authUserId',
       this,
@@ -309,8 +287,6 @@ class DogProfileTable extends _is.Table<int?> {
 
   late final DogProfileUpdateTable updateTable;
 
-  late final _is.ColumnString owner;
-
   late final _is.ColumnUuid authUserId;
 
   _iacs.AuthUserTable? _authUser;
@@ -343,7 +319,6 @@ class DogProfileTable extends _is.Table<int?> {
   @override
   List<_is.Column> get columns => [
     id,
-    owner,
     authUserId,
     breedId,
     name,
@@ -399,8 +374,6 @@ class DogProfileRepository {
   const DogProfileRepository._();
 
   final attachRow = const DogProfileAttachRowRepository._();
-
-  final detachRow = const DogProfileDetachRowRepository._();
 
   /// Returns a list of [DogProfile]s matching the given query parameters.
   ///
@@ -819,32 +792,6 @@ class DogProfileAttachRowRepository {
     }
 
     var $dogProfile = dogProfile.copyWith(authUserId: authUser.id);
-    await session.db.updateRow<DogProfile>(
-      $dogProfile,
-      columns: [DogProfile.t.authUserId],
-      transaction: transaction,
-    );
-  }
-}
-
-class DogProfileDetachRowRepository {
-  const DogProfileDetachRowRepository._();
-
-  /// Detaches the relation between this [DogProfile] and the [AuthUser] set in `authUser`
-  /// by setting the [DogProfile]'s foreign key `authUserId` to `null`.
-  ///
-  /// This removes the association between the two models without deleting
-  /// the related record.
-  Future<void> authUser(
-    _is.DatabaseSession session,
-    DogProfile dogProfile, {
-    _is.Transaction? transaction,
-  }) async {
-    if (dogProfile.id == null) {
-      throw ArgumentError.notNull('dogProfile.id');
-    }
-
-    var $dogProfile = dogProfile.copyWith(authUserId: null);
     await session.db.updateRow<DogProfile>(
       $dogProfile,
       columns: [DogProfile.t.authUserId],

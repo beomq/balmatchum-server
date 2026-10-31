@@ -114,7 +114,8 @@ void main() {
 
   Future<int> points(String owner) async => (await PointEntry.db.find(
     admin,
-    where: (t) => t.owner.equals(owner) & t.kind.equals('quiz'),
+    where: (t) =>
+        t.authUserId.equals(authUserIdOf(owner)) & t.kind.equals('quiz'),
   )).fold<int>(0, (sum, p) => sum + p.amount);
 
   setUpAll(() async {
@@ -271,7 +272,7 @@ void main() {
       expect(await points(a.owner), 4);
       final account = (await ProductAccount.db.findFirstRow(
         admin,
-        where: (t) => t.owner.equals(a.owner),
+        where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
       ))!;
       expect(account.balance, 0);
       expect(account.fixtureBalance, 0);
@@ -394,7 +395,7 @@ void main() {
           a.session,
           (s) => s.appendPointEntry(
             PointEntry(
-              owner: a.owner,
+              authUserId: authUserIdOf(a.owner),
               entryKey: entry.$1,
               kind: entry.$1,
               amount: entry.$3,
@@ -710,7 +711,7 @@ void main() {
         expect(
           (await QuizAssignment.db.find(
             admin,
-            where: (q) => q.owner.equals(a.owner),
+            where: (q) => q.authUserId.equals(authUserIdOf(a.owner)),
           )),
           hasLength(1),
         );
@@ -858,7 +859,8 @@ void main() {
     expect(
       await QuizAssignment.db.count(
         admin,
-        where: (t) => t.owner.equals(a.owner) & t.slot.equals('free'),
+        where: (t) =>
+            t.authUserId.equals(authUserIdOf(a.owner)) & t.slot.equals('free'),
       ),
       1,
     );
@@ -875,7 +877,7 @@ void main() {
     expect(
       await QuizAssignment.db.count(
         admin,
-        where: (t) => t.owner.equals(a.owner),
+        where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
       ),
       0,
     );
@@ -912,21 +914,21 @@ void main() {
       expect(
         await QuizAssignment.db.find(
           admin,
-          where: (q) => q.owner.equals(a.owner),
+          where: (q) => q.authUserId.equals(authUserIdOf(a.owner)),
         ),
         isEmpty,
       );
       expect(
         await StoredAdIntent.db.find(
           admin,
-          where: (q) => q.owner.equals(a.owner),
+          where: (q) => q.authUserId.equals(authUserIdOf(a.owner)),
         ),
         isEmpty,
       );
       expect(
         await ProductRequest.db.find(
           admin,
-          where: (q) => q.owner.equals(a.owner),
+          where: (q) => q.authUserId.equals(authUserIdOf(a.owner)),
         ),
         isEmpty,
       );
@@ -953,7 +955,6 @@ void main() {
 
     QuizAssignment answered(String owner, int question, String date) =>
         QuizAssignment(
-          owner: owner,
           authUserId: authUserIdOf(owner),
           date: date,
           slot: 'free',
@@ -982,10 +983,9 @@ void main() {
         );
         final rows = await QuizAssignment.db.find(
           admin,
-          where: (q) => q.owner.equals(a.owner),
+          where: (q) => q.authUserId.equals(authUserIdOf(a.owner)),
         );
         expect(rows, hasLength(2));
-        expect(rows.map((r) => r.snapshot), everyElement(isNull));
         final graded = await answer(a.session, extra);
         final today = await at(() => quiz.getToday(a.session));
         final history = await quiz.listHistory(a.session, null);
@@ -1013,29 +1013,6 @@ void main() {
       },
     );
 
-    test('rows that still carry a snapshot read back identically', () async {
-      final a = await user();
-      final body = await revision('test-question-2', 1);
-      final legacy = await QuizAssignment.db.insertRow(
-        admin,
-        answered(a.owner, 2, '2026-10-18').copyWith(snapshot: jsonEncode(body)),
-      );
-      final withCopy = await quiz.review(a.session, legacy.id!);
-      final historyWithCopy = await quiz.listHistory(a.session, null);
-      await QuizAssignment.db.updateRow(admin, legacy.copyWith(snapshot: null));
-      expect(
-        (await QuizAssignment.db.findById(admin, legacy.id!))!.snapshot,
-        isNull,
-      );
-      final fromRevision = await quiz.review(a.session, legacy.id!);
-      expect(withCopy.toJson(), fromRevision.toJson());
-      expect(
-        historyWithCopy.single.toJson(),
-        (await quiz.listHistory(a.session, null)).single.toJson(),
-      );
-      expect(withCopy.question, body['question']);
-    });
-
     test(
       'issuing a question without a content revision is contentUnavailable',
       () async {
@@ -1051,7 +1028,7 @@ void main() {
         expect(
           await QuizAssignment.db.count(
             admin,
-            where: (t) => t.owner.equals(a.owner),
+            where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
           ),
           0,
         );
@@ -1117,7 +1094,7 @@ void main() {
                 logged,
                 a.owner,
                 tx,
-                ProductAccount(owner: a.owner),
+                ProductAccount(authUserId: authUserIdOf(a.owner)),
               ),
             ).history(null),
           );

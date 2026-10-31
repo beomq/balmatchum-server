@@ -1,0 +1,1010 @@
+{
+  "__className__": "serverpod.DatabaseMigration",
+  "actions": [
+    {
+      "__className__": "serverpod.DatabaseMigrationAction",
+      "type": "alterTable",
+      "alterTable": {
+        "__className__": "serverpod.TableMigration",
+        "name": "ad_intent",
+        "schema": "public",
+        "addColumns": [],
+        "deleteColumns": [
+          "owner"
+        ],
+        "modifyColumns": [
+          {
+            "__className__": "serverpod.ColumnMigration",
+            "columnName": "authUserId",
+            "addNullable": false,
+            "removeNullable": true,
+            "changeDefault": false
+          }
+        ],
+        "addIndexes": [],
+        "deleteIndexes": [
+          "ad_intent_target"
+        ],
+        "addForeignKeys": [],
+        "deleteForeignKeys": [],
+        "warnings": [
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "columnDropped",
+            "message": "Column \"owner\" of table \"ad_intent\" will be dropped.",
+            "table": "ad_intent",
+            "columns": [
+              "owner"
+            ],
+            "destrucive": true
+          },
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "notNullAdded",
+            "message": "Column \"authUserId\" of table \"ad_intent\" is modified to be not null. If there are existing rows with null values, this migration will fail.",
+            "table": "ad_intent",
+            "columns": [
+              "authUserId"
+            ],
+            "destrucive": false
+          }
+        ]
+      }
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationAction",
+      "type": "alterTable",
+      "alterTable": {
+        "__className__": "serverpod.TableMigration",
+        "name": "billing_account",
+        "schema": "public",
+        "addColumns": [],
+        "deleteColumns": [
+          "owner"
+        ],
+        "modifyColumns": [
+          {
+            "__className__": "serverpod.ColumnMigration",
+            "columnName": "authUserId",
+            "addNullable": false,
+            "removeNullable": true,
+            "changeDefault": false
+          }
+        ],
+        "addIndexes": [],
+        "deleteIndexes": [
+          "billing_account_owner"
+        ],
+        "addForeignKeys": [],
+        "deleteForeignKeys": [],
+        "warnings": [
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "columnDropped",
+            "message": "Column \"owner\" of table \"billing_account\" will be dropped.",
+            "table": "billing_account",
+            "columns": [
+              "owner"
+            ],
+            "destrucive": true
+          },
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "notNullAdded",
+            "message": "Column \"authUserId\" of table \"billing_account\" is modified to be not null. If there are existing rows with null values, this migration will fail.",
+            "table": "billing_account",
+            "columns": [
+              "authUserId"
+            ],
+            "destrucive": false
+          }
+        ]
+      }
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationAction",
+      "type": "alterTable",
+      "alterTable": {
+        "__className__": "serverpod.TableMigration",
+        "name": "billing_purchase",
+        "schema": "public",
+        "addColumns": [],
+        "deleteColumns": [
+          "owner"
+        ],
+        "modifyColumns": [
+          {
+            "__className__": "serverpod.ColumnMigration",
+            "columnName": "authUserId",
+            "addNullable": false,
+            "removeNullable": true,
+            "changeDefault": false
+          }
+        ],
+        "addIndexes": [],
+        "deleteIndexes": [
+          "billing_purchase_owner"
+        ],
+        "addForeignKeys": [],
+        "deleteForeignKeys": [],
+        "warnings": [
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "columnDropped",
+            "message": "Column \"owner\" of table \"billing_purchase\" will be dropped.",
+            "table": "billing_purchase",
+            "columns": [
+              "owner"
+            ],
+            "destrucive": true
+          },
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "notNullAdded",
+            "message": "Column \"authUserId\" of table \"billing_purchase\" is modified to be not null. If there are existing rows with null values, this migration will fail.",
+            "table": "billing_purchase",
+            "columns": [
+              "authUserId"
+            ],
+            "destrucive": false
+          }
+        ]
+      }
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationAction",
+      "type": "alterTable",
+      "alterTable": {
+        "__className__": "serverpod.TableMigration",
+        "name": "dog_profile",
+        "schema": "public",
+        "addColumns": [],
+        "deleteColumns": [
+          "owner"
+        ],
+        "modifyColumns": [
+          {
+            "__className__": "serverpod.ColumnMigration",
+            "columnName": "authUserId",
+            "addNullable": false,
+            "removeNullable": true,
+            "changeDefault": false
+          }
+        ],
+        "addIndexes": [],
+        "deleteIndexes": [
+          "dog_profile_owner"
+        ],
+        "addForeignKeys": [],
+        "deleteForeignKeys": [],
+        "warnings": [
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "columnDropped",
+            "message": "Column \"owner\" of table \"dog_profile\" will be dropped.",
+            "table": "dog_profile",
+            "columns": [
+              "owner"
+            ],
+            "destrucive": true
+          },
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "notNullAdded",
+            "message": "Column \"authUserId\" of table \"dog_profile\" is modified to be not null. If there are existing rows with null values, this migration will fail.",
+            "table": "dog_profile",
+            "columns": [
+              "authUserId"
+            ],
+            "destrucive": false
+          }
+        ]
+      }
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationAction",
+      "type": "alterTable",
+      "alterTable": {
+        "__className__": "serverpod.TableMigration",
+        "name": "gps_record",
+        "schema": "public",
+        "addColumns": [],
+        "deleteColumns": [
+          "owner"
+        ],
+        "modifyColumns": [
+          {
+            "__className__": "serverpod.ColumnMigration",
+            "columnName": "authUserId",
+            "addNullable": false,
+            "removeNullable": true,
+            "changeDefault": false
+          }
+        ],
+        "addIndexes": [],
+        "deleteIndexes": [
+          "gps_record_owner_client_unique"
+        ],
+        "addForeignKeys": [],
+        "deleteForeignKeys": [],
+        "warnings": [
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "columnDropped",
+            "message": "Column \"owner\" of table \"gps_record\" will be dropped.",
+            "table": "gps_record",
+            "columns": [
+              "owner"
+            ],
+            "destrucive": true
+          },
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "notNullAdded",
+            "message": "Column \"authUserId\" of table \"gps_record\" is modified to be not null. If there are existing rows with null values, this migration will fail.",
+            "table": "gps_record",
+            "columns": [
+              "authUserId"
+            ],
+            "destrucive": false
+          }
+        ]
+      }
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationAction",
+      "type": "alterTable",
+      "alterTable": {
+        "__className__": "serverpod.TableMigration",
+        "name": "outfit_ownership",
+        "schema": "public",
+        "addColumns": [],
+        "deleteColumns": [
+          "owner"
+        ],
+        "modifyColumns": [
+          {
+            "__className__": "serverpod.ColumnMigration",
+            "columnName": "authUserId",
+            "addNullable": false,
+            "removeNullable": true,
+            "changeDefault": false
+          }
+        ],
+        "addIndexes": [],
+        "deleteIndexes": [
+          "outfit_ownership_key"
+        ],
+        "addForeignKeys": [],
+        "deleteForeignKeys": [],
+        "warnings": [
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "columnDropped",
+            "message": "Column \"owner\" of table \"outfit_ownership\" will be dropped.",
+            "table": "outfit_ownership",
+            "columns": [
+              "owner"
+            ],
+            "destrucive": true
+          },
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "notNullAdded",
+            "message": "Column \"authUserId\" of table \"outfit_ownership\" is modified to be not null. If there are existing rows with null values, this migration will fail.",
+            "table": "outfit_ownership",
+            "columns": [
+              "authUserId"
+            ],
+            "destrucive": false
+          }
+        ]
+      }
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationAction",
+      "type": "alterTable",
+      "alterTable": {
+        "__className__": "serverpod.TableMigration",
+        "name": "point_entry",
+        "schema": "public",
+        "addColumns": [],
+        "deleteColumns": [
+          "owner"
+        ],
+        "modifyColumns": [
+          {
+            "__className__": "serverpod.ColumnMigration",
+            "columnName": "authUserId",
+            "addNullable": false,
+            "removeNullable": true,
+            "changeDefault": false
+          }
+        ],
+        "addIndexes": [],
+        "deleteIndexes": [
+          "point_entry_key"
+        ],
+        "addForeignKeys": [],
+        "deleteForeignKeys": [],
+        "warnings": [
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "columnDropped",
+            "message": "Column \"owner\" of table \"point_entry\" will be dropped.",
+            "table": "point_entry",
+            "columns": [
+              "owner"
+            ],
+            "destrucive": true
+          },
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "notNullAdded",
+            "message": "Column \"authUserId\" of table \"point_entry\" is modified to be not null. If there are existing rows with null values, this migration will fail.",
+            "table": "point_entry",
+            "columns": [
+              "authUserId"
+            ],
+            "destrucive": false
+          }
+        ]
+      }
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationAction",
+      "type": "alterTable",
+      "alterTable": {
+        "__className__": "serverpod.TableMigration",
+        "name": "product_account",
+        "schema": "public",
+        "addColumns": [],
+        "deleteColumns": [
+          "owner"
+        ],
+        "modifyColumns": [
+          {
+            "__className__": "serverpod.ColumnMigration",
+            "columnName": "authUserId",
+            "addNullable": false,
+            "removeNullable": true,
+            "changeDefault": false
+          }
+        ],
+        "addIndexes": [],
+        "deleteIndexes": [
+          "product_account_owner"
+        ],
+        "addForeignKeys": [],
+        "deleteForeignKeys": [],
+        "warnings": [
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "columnDropped",
+            "message": "Column \"owner\" of table \"product_account\" will be dropped.",
+            "table": "product_account",
+            "columns": [
+              "owner"
+            ],
+            "destrucive": true
+          },
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "notNullAdded",
+            "message": "Column \"authUserId\" of table \"product_account\" is modified to be not null. If there are existing rows with null values, this migration will fail.",
+            "table": "product_account",
+            "columns": [
+              "authUserId"
+            ],
+            "destrucive": false
+          }
+        ]
+      }
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationAction",
+      "type": "alterTable",
+      "alterTable": {
+        "__className__": "serverpod.TableMigration",
+        "name": "product_day",
+        "schema": "public",
+        "addColumns": [],
+        "deleteColumns": [
+          "owner"
+        ],
+        "modifyColumns": [
+          {
+            "__className__": "serverpod.ColumnMigration",
+            "columnName": "authUserId",
+            "addNullable": false,
+            "removeNullable": true,
+            "changeDefault": false
+          }
+        ],
+        "addIndexes": [],
+        "deleteIndexes": [
+          "product_day_owner_date"
+        ],
+        "addForeignKeys": [],
+        "deleteForeignKeys": [],
+        "warnings": [
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "columnDropped",
+            "message": "Column \"owner\" of table \"product_day\" will be dropped.",
+            "table": "product_day",
+            "columns": [
+              "owner"
+            ],
+            "destrucive": true
+          },
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "notNullAdded",
+            "message": "Column \"authUserId\" of table \"product_day\" is modified to be not null. If there are existing rows with null values, this migration will fail.",
+            "table": "product_day",
+            "columns": [
+              "authUserId"
+            ],
+            "destrucive": false
+          }
+        ]
+      }
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationAction",
+      "type": "alterTable",
+      "alterTable": {
+        "__className__": "serverpod.TableMigration",
+        "name": "product_request",
+        "schema": "public",
+        "addColumns": [],
+        "deleteColumns": [
+          "owner"
+        ],
+        "modifyColumns": [
+          {
+            "__className__": "serverpod.ColumnMigration",
+            "columnName": "authUserId",
+            "addNullable": false,
+            "removeNullable": true,
+            "changeDefault": false
+          }
+        ],
+        "addIndexes": [],
+        "deleteIndexes": [
+          "product_request_key"
+        ],
+        "addForeignKeys": [],
+        "deleteForeignKeys": [],
+        "warnings": [
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "columnDropped",
+            "message": "Column \"owner\" of table \"product_request\" will be dropped.",
+            "table": "product_request",
+            "columns": [
+              "owner"
+            ],
+            "destrucive": true
+          },
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "notNullAdded",
+            "message": "Column \"authUserId\" of table \"product_request\" is modified to be not null. If there are existing rows with null values, this migration will fail.",
+            "table": "product_request",
+            "columns": [
+              "authUserId"
+            ],
+            "destrucive": false
+          }
+        ]
+      }
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationAction",
+      "type": "alterTable",
+      "alterTable": {
+        "__className__": "serverpod.TableMigration",
+        "name": "quiz_assignment",
+        "schema": "public",
+        "addColumns": [],
+        "deleteColumns": [
+          "owner",
+          "snapshot"
+        ],
+        "modifyColumns": [
+          {
+            "__className__": "serverpod.ColumnMigration",
+            "columnName": "authUserId",
+            "addNullable": false,
+            "removeNullable": true,
+            "changeDefault": false
+          }
+        ],
+        "addIndexes": [],
+        "deleteIndexes": [
+          "quiz_assignment_slot",
+          "quiz_assignment_seen_question"
+        ],
+        "addForeignKeys": [],
+        "deleteForeignKeys": [],
+        "warnings": [
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "columnDropped",
+            "message": "Column \"owner\" of table \"quiz_assignment\" will be dropped.",
+            "table": "quiz_assignment",
+            "columns": [
+              "owner"
+            ],
+            "destrucive": true
+          },
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "columnDropped",
+            "message": "Column \"snapshot\" of table \"quiz_assignment\" will be dropped.",
+            "table": "quiz_assignment",
+            "columns": [
+              "snapshot"
+            ],
+            "destrucive": true
+          },
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "notNullAdded",
+            "message": "Column \"authUserId\" of table \"quiz_assignment\" is modified to be not null. If there are existing rows with null values, this migration will fail.",
+            "table": "quiz_assignment",
+            "columns": [
+              "authUserId"
+            ],
+            "destrucive": false
+          }
+        ]
+      }
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationAction",
+      "type": "alterTable",
+      "alterTable": {
+        "__className__": "serverpod.TableMigration",
+        "name": "quiz_state",
+        "schema": "public",
+        "addColumns": [],
+        "deleteColumns": [
+          "owner"
+        ],
+        "modifyColumns": [
+          {
+            "__className__": "serverpod.ColumnMigration",
+            "columnName": "authUserId",
+            "addNullable": false,
+            "removeNullable": true,
+            "changeDefault": false
+          }
+        ],
+        "addIndexes": [],
+        "deleteIndexes": [
+          "quiz_state_key"
+        ],
+        "addForeignKeys": [],
+        "deleteForeignKeys": [],
+        "warnings": [
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "columnDropped",
+            "message": "Column \"owner\" of table \"quiz_state\" will be dropped.",
+            "table": "quiz_state",
+            "columns": [
+              "owner"
+            ],
+            "destrucive": true
+          },
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "notNullAdded",
+            "message": "Column \"authUserId\" of table \"quiz_state\" is modified to be not null. If there are existing rows with null values, this migration will fail.",
+            "table": "quiz_state",
+            "columns": [
+              "authUserId"
+            ],
+            "destrucive": false
+          }
+        ]
+      }
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationAction",
+      "type": "alterTable",
+      "alterTable": {
+        "__className__": "serverpod.TableMigration",
+        "name": "step_revision",
+        "schema": "public",
+        "addColumns": [],
+        "deleteColumns": [
+          "owner"
+        ],
+        "modifyColumns": [
+          {
+            "__className__": "serverpod.ColumnMigration",
+            "columnName": "authUserId",
+            "addNullable": false,
+            "removeNullable": true,
+            "changeDefault": false
+          }
+        ],
+        "addIndexes": [],
+        "deleteIndexes": [
+          "step_revision_key"
+        ],
+        "addForeignKeys": [],
+        "deleteForeignKeys": [],
+        "warnings": [
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "columnDropped",
+            "message": "Column \"owner\" of table \"step_revision\" will be dropped.",
+            "table": "step_revision",
+            "columns": [
+              "owner"
+            ],
+            "destrucive": true
+          },
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "notNullAdded",
+            "message": "Column \"authUserId\" of table \"step_revision\" is modified to be not null. If there are existing rows with null values, this migration will fail.",
+            "table": "step_revision",
+            "columns": [
+              "authUserId"
+            ],
+            "destrucive": false
+          }
+        ]
+      }
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationAction",
+      "type": "alterTable",
+      "alterTable": {
+        "__className__": "serverpod.TableMigration",
+        "name": "theme_ownership",
+        "schema": "public",
+        "addColumns": [],
+        "deleteColumns": [
+          "owner"
+        ],
+        "modifyColumns": [
+          {
+            "__className__": "serverpod.ColumnMigration",
+            "columnName": "authUserId",
+            "addNullable": false,
+            "removeNullable": true,
+            "changeDefault": false
+          }
+        ],
+        "addIndexes": [],
+        "deleteIndexes": [
+          "theme_ownership_key"
+        ],
+        "addForeignKeys": [],
+        "deleteForeignKeys": [],
+        "warnings": [
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "columnDropped",
+            "message": "Column \"owner\" of table \"theme_ownership\" will be dropped.",
+            "table": "theme_ownership",
+            "columns": [
+              "owner"
+            ],
+            "destrucive": true
+          },
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "notNullAdded",
+            "message": "Column \"authUserId\" of table \"theme_ownership\" is modified to be not null. If there are existing rows with null values, this migration will fail.",
+            "table": "theme_ownership",
+            "columns": [
+              "authUserId"
+            ],
+            "destrucive": false
+          }
+        ]
+      }
+    }
+  ],
+  "warnings": [
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "columnDropped",
+      "message": "Column \"owner\" of table \"ad_intent\" will be dropped.",
+      "table": "ad_intent",
+      "columns": [
+        "owner"
+      ],
+      "destrucive": true
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "notNullAdded",
+      "message": "Column \"authUserId\" of table \"ad_intent\" is modified to be not null. If there are existing rows with null values, this migration will fail.",
+      "table": "ad_intent",
+      "columns": [
+        "authUserId"
+      ],
+      "destrucive": false
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "columnDropped",
+      "message": "Column \"owner\" of table \"billing_account\" will be dropped.",
+      "table": "billing_account",
+      "columns": [
+        "owner"
+      ],
+      "destrucive": true
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "notNullAdded",
+      "message": "Column \"authUserId\" of table \"billing_account\" is modified to be not null. If there are existing rows with null values, this migration will fail.",
+      "table": "billing_account",
+      "columns": [
+        "authUserId"
+      ],
+      "destrucive": false
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "columnDropped",
+      "message": "Column \"owner\" of table \"billing_purchase\" will be dropped.",
+      "table": "billing_purchase",
+      "columns": [
+        "owner"
+      ],
+      "destrucive": true
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "notNullAdded",
+      "message": "Column \"authUserId\" of table \"billing_purchase\" is modified to be not null. If there are existing rows with null values, this migration will fail.",
+      "table": "billing_purchase",
+      "columns": [
+        "authUserId"
+      ],
+      "destrucive": false
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "columnDropped",
+      "message": "Column \"owner\" of table \"dog_profile\" will be dropped.",
+      "table": "dog_profile",
+      "columns": [
+        "owner"
+      ],
+      "destrucive": true
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "notNullAdded",
+      "message": "Column \"authUserId\" of table \"dog_profile\" is modified to be not null. If there are existing rows with null values, this migration will fail.",
+      "table": "dog_profile",
+      "columns": [
+        "authUserId"
+      ],
+      "destrucive": false
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "columnDropped",
+      "message": "Column \"owner\" of table \"gps_record\" will be dropped.",
+      "table": "gps_record",
+      "columns": [
+        "owner"
+      ],
+      "destrucive": true
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "notNullAdded",
+      "message": "Column \"authUserId\" of table \"gps_record\" is modified to be not null. If there are existing rows with null values, this migration will fail.",
+      "table": "gps_record",
+      "columns": [
+        "authUserId"
+      ],
+      "destrucive": false
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "columnDropped",
+      "message": "Column \"owner\" of table \"outfit_ownership\" will be dropped.",
+      "table": "outfit_ownership",
+      "columns": [
+        "owner"
+      ],
+      "destrucive": true
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "notNullAdded",
+      "message": "Column \"authUserId\" of table \"outfit_ownership\" is modified to be not null. If there are existing rows with null values, this migration will fail.",
+      "table": "outfit_ownership",
+      "columns": [
+        "authUserId"
+      ],
+      "destrucive": false
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "columnDropped",
+      "message": "Column \"owner\" of table \"point_entry\" will be dropped.",
+      "table": "point_entry",
+      "columns": [
+        "owner"
+      ],
+      "destrucive": true
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "notNullAdded",
+      "message": "Column \"authUserId\" of table \"point_entry\" is modified to be not null. If there are existing rows with null values, this migration will fail.",
+      "table": "point_entry",
+      "columns": [
+        "authUserId"
+      ],
+      "destrucive": false
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "columnDropped",
+      "message": "Column \"owner\" of table \"product_account\" will be dropped.",
+      "table": "product_account",
+      "columns": [
+        "owner"
+      ],
+      "destrucive": true
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "notNullAdded",
+      "message": "Column \"authUserId\" of table \"product_account\" is modified to be not null. If there are existing rows with null values, this migration will fail.",
+      "table": "product_account",
+      "columns": [
+        "authUserId"
+      ],
+      "destrucive": false
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "columnDropped",
+      "message": "Column \"owner\" of table \"product_day\" will be dropped.",
+      "table": "product_day",
+      "columns": [
+        "owner"
+      ],
+      "destrucive": true
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "notNullAdded",
+      "message": "Column \"authUserId\" of table \"product_day\" is modified to be not null. If there are existing rows with null values, this migration will fail.",
+      "table": "product_day",
+      "columns": [
+        "authUserId"
+      ],
+      "destrucive": false
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "columnDropped",
+      "message": "Column \"owner\" of table \"product_request\" will be dropped.",
+      "table": "product_request",
+      "columns": [
+        "owner"
+      ],
+      "destrucive": true
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "notNullAdded",
+      "message": "Column \"authUserId\" of table \"product_request\" is modified to be not null. If there are existing rows with null values, this migration will fail.",
+      "table": "product_request",
+      "columns": [
+        "authUserId"
+      ],
+      "destrucive": false
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "columnDropped",
+      "message": "Column \"owner\" of table \"quiz_assignment\" will be dropped.",
+      "table": "quiz_assignment",
+      "columns": [
+        "owner"
+      ],
+      "destrucive": true
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "columnDropped",
+      "message": "Column \"snapshot\" of table \"quiz_assignment\" will be dropped.",
+      "table": "quiz_assignment",
+      "columns": [
+        "snapshot"
+      ],
+      "destrucive": true
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "notNullAdded",
+      "message": "Column \"authUserId\" of table \"quiz_assignment\" is modified to be not null. If there are existing rows with null values, this migration will fail.",
+      "table": "quiz_assignment",
+      "columns": [
+        "authUserId"
+      ],
+      "destrucive": false
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "columnDropped",
+      "message": "Column \"owner\" of table \"quiz_state\" will be dropped.",
+      "table": "quiz_state",
+      "columns": [
+        "owner"
+      ],
+      "destrucive": true
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "notNullAdded",
+      "message": "Column \"authUserId\" of table \"quiz_state\" is modified to be not null. If there are existing rows with null values, this migration will fail.",
+      "table": "quiz_state",
+      "columns": [
+        "authUserId"
+      ],
+      "destrucive": false
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "columnDropped",
+      "message": "Column \"owner\" of table \"step_revision\" will be dropped.",
+      "table": "step_revision",
+      "columns": [
+        "owner"
+      ],
+      "destrucive": true
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "notNullAdded",
+      "message": "Column \"authUserId\" of table \"step_revision\" is modified to be not null. If there are existing rows with null values, this migration will fail.",
+      "table": "step_revision",
+      "columns": [
+        "authUserId"
+      ],
+      "destrucive": false
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "columnDropped",
+      "message": "Column \"owner\" of table \"theme_ownership\" will be dropped.",
+      "table": "theme_ownership",
+      "columns": [
+        "owner"
+      ],
+      "destrucive": true
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "notNullAdded",
+      "message": "Column \"authUserId\" of table \"theme_ownership\" is modified to be not null. If there are existing rows with null values, this migration will fail.",
+      "table": "theme_ownership",
+      "columns": [
+        "authUserId"
+      ],
+      "destrucive": false
+    }
+  ],
+  "migrationApiVersion": 1
+}

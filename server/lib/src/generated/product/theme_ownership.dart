@@ -20,8 +20,7 @@ abstract class ThemeOwnership
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
   ThemeOwnership._({
     this.id,
-    required this.owner,
-    this.authUserId,
+    required this.authUserId,
     this.authUser,
     required this.themeId,
     required this.purchasedAt,
@@ -29,8 +28,7 @@ abstract class ThemeOwnership
 
   factory ThemeOwnership({
     int? id,
-    required String owner,
-    _is.UuidValue? authUserId,
+    required _is.UuidValue authUserId,
     _iacs.AuthUser? authUser,
     required String themeId,
     required DateTime purchasedAt,
@@ -39,12 +37,9 @@ abstract class ThemeOwnership
   factory ThemeOwnership.fromJson(Map<String, dynamic> jsonSerialization) {
     return ThemeOwnership(
       id: jsonSerialization['id'] as int?,
-      owner: jsonSerialization['owner'] as String,
-      authUserId: jsonSerialization['authUserId'] == null
-          ? null
-          : _is.UuidValueJsonExtension.fromJson(
-              jsonSerialization['authUserId'],
-            ),
+      authUserId: _is.UuidValueJsonExtension.fromJson(
+        jsonSerialization['authUserId'],
+      ),
       authUser: jsonSerialization['authUser'] == null
           ? null
           : _iu3f2ih9.Protocol().deserialize<_iacs.AuthUser>(
@@ -64,9 +59,7 @@ abstract class ThemeOwnership
   @override
   int? id;
 
-  String owner;
-
-  _is.UuidValue? authUserId;
+  _is.UuidValue authUserId;
 
   _iacs.AuthUser? authUser;
 
@@ -82,7 +75,6 @@ abstract class ThemeOwnership
   @_is.useResult
   ThemeOwnership copyWith({
     int? id,
-    String? owner,
     _is.UuidValue? authUserId,
     _iacs.AuthUser? authUser,
     String? themeId,
@@ -93,8 +85,7 @@ abstract class ThemeOwnership
     return {
       '__className__': 'ThemeOwnership',
       if (id != null) 'id': id,
-      'owner': owner,
-      if (authUserId != null) 'authUserId': authUserId?.toJson(),
+      'authUserId': authUserId.toJson(),
       if (authUser != null) 'authUser': authUser?.toJson(),
       'themeId': themeId,
       'purchasedAt': purchasedAt.toJson(),
@@ -139,14 +130,12 @@ class _Undefined {}
 class _ThemeOwnershipImpl extends ThemeOwnership {
   _ThemeOwnershipImpl({
     int? id,
-    required String owner,
-    _is.UuidValue? authUserId,
+    required _is.UuidValue authUserId,
     _iacs.AuthUser? authUser,
     required String themeId,
     required DateTime purchasedAt,
   }) : super._(
          id: id,
-         owner: owner,
          authUserId: authUserId,
          authUser: authUser,
          themeId: themeId,
@@ -159,16 +148,14 @@ class _ThemeOwnershipImpl extends ThemeOwnership {
   @override
   ThemeOwnership copyWith({
     Object? id = _Undefined,
-    String? owner,
-    Object? authUserId = _Undefined,
+    _is.UuidValue? authUserId,
     Object? authUser = _Undefined,
     String? themeId,
     DateTime? purchasedAt,
   }) {
     return ThemeOwnership(
       id: id is int? ? id : this.id,
-      owner: owner ?? this.owner,
-      authUserId: authUserId is _is.UuidValue? ? authUserId : this.authUserId,
+      authUserId: authUserId ?? this.authUserId,
       authUser: authUser is _iacs.AuthUser?
           ? authUser
           : this.authUser?.copyWith(),
@@ -181,13 +168,8 @@ class _ThemeOwnershipImpl extends ThemeOwnership {
 class ThemeOwnershipUpdateTable extends _is.UpdateTable<ThemeOwnershipTable> {
   ThemeOwnershipUpdateTable(super.table);
 
-  _is.ColumnValue<String, String> owner(String value) => _is.ColumnValue(
-    table.owner,
-    value,
-  );
-
   _is.ColumnValue<_is.UuidValue, _is.UuidValue> authUserId(
-    _is.UuidValue? value,
+    _is.UuidValue value,
   ) => _is.ColumnValue(
     table.authUserId,
     value,
@@ -209,10 +191,6 @@ class ThemeOwnershipTable extends _is.Table<int?> {
   ThemeOwnershipTable({super.tableRelation})
     : super(tableName: 'theme_ownership') {
     updateTable = ThemeOwnershipUpdateTable(this);
-    owner = _is.ColumnString(
-      'owner',
-      this,
-    );
     authUserId = _is.ColumnUuid(
       'authUserId',
       this,
@@ -228,8 +206,6 @@ class ThemeOwnershipTable extends _is.Table<int?> {
   }
 
   late final ThemeOwnershipUpdateTable updateTable;
-
-  late final _is.ColumnString owner;
 
   late final _is.ColumnUuid authUserId;
 
@@ -255,7 +231,6 @@ class ThemeOwnershipTable extends _is.Table<int?> {
   @override
   List<_is.Column> get columns => [
     id,
-    owner,
     authUserId,
     themeId,
     purchasedAt,
@@ -307,8 +282,6 @@ class ThemeOwnershipRepository {
   const ThemeOwnershipRepository._();
 
   final attachRow = const ThemeOwnershipAttachRowRepository._();
-
-  final detachRow = const ThemeOwnershipDetachRowRepository._();
 
   /// Returns a list of [ThemeOwnership]s matching the given query parameters.
   ///
@@ -727,32 +700,6 @@ class ThemeOwnershipAttachRowRepository {
     }
 
     var $themeOwnership = themeOwnership.copyWith(authUserId: authUser.id);
-    await session.db.updateRow<ThemeOwnership>(
-      $themeOwnership,
-      columns: [ThemeOwnership.t.authUserId],
-      transaction: transaction,
-    );
-  }
-}
-
-class ThemeOwnershipDetachRowRepository {
-  const ThemeOwnershipDetachRowRepository._();
-
-  /// Detaches the relation between this [ThemeOwnership] and the [AuthUser] set in `authUser`
-  /// by setting the [ThemeOwnership]'s foreign key `authUserId` to `null`.
-  ///
-  /// This removes the association between the two models without deleting
-  /// the related record.
-  Future<void> authUser(
-    _is.DatabaseSession session,
-    ThemeOwnership themeOwnership, {
-    _is.Transaction? transaction,
-  }) async {
-    if (themeOwnership.id == null) {
-      throw ArgumentError.notNull('themeOwnership.id');
-    }
-
-    var $themeOwnership = themeOwnership.copyWith(authUserId: null);
     await session.db.updateRow<ThemeOwnership>(
       $themeOwnership,
       columns: [ThemeOwnership.t.authUserId],

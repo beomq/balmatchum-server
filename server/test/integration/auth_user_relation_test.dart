@@ -10,6 +10,7 @@ import 'package:balmatchum_server/src/billing/billing_service.dart';
 import 'package:balmatchum_server/src/billing/billing_verifier.dart';
 import 'package:balmatchum_server/src/generated/protocol.dart';
 import 'package:balmatchum_server/src/generated/serverpod.dart' as generated;
+import 'package:balmatchum_server/src/maintenance/schema_guard.dart';
 import 'package:balmatchum_server/src/product/outfit_service.dart';
 import 'package:balmatchum_server/src/product/product_service.dart';
 import 'package:balmatchum_server/src/product/quiz_theme_service.dart';
@@ -28,10 +29,7 @@ import 'package:test/test.dart';
 import '../test_utils/quiz_fixture.dart';
 import '../unit/billing/billing_fixture.dart' as billing;
 
-final _ownerTables = [
-  for (final table in Protocol().getTargetTableDefinitions())
-    if (table.columns.any((c) => c.name == 'owner')) table.name,
-];
+const _ownerTables = normalizedTables;
 const _restrict = ['billing_account', 'billing_purchase', 'external_identity'];
 
 void main() {
@@ -93,6 +91,39 @@ void main() {
       ),
     );
     expect(await ProductAccount.db.count(session), 0);
+  });
+
+  test('five concurrent lockProductAccount calls create one row', () async {
+    final id = (await AuthUser.db.insertRow(
+      session,
+      AuthUser(scopeNames: {}),
+    )).id!;
+    final sessions = [
+      for (var i = 0; i < 5; i++) await pod.createSession(enableLogging: false),
+    ];
+    try {
+      final accounts = await Future.wait([
+        for (final s in sessions)
+          s.db.transaction((tx) => lockProductAccount(s, id.uuid, tx)),
+      ]);
+      expect(accounts.map((a) => a.id).toSet(), hasLength(1));
+      expect(
+        await ProductAccount.db.count(
+          session,
+          where: (t) => t.authUserId.equals(id),
+        ),
+        1,
+      );
+    } finally {
+      for (final s in sessions) {
+        await s.close();
+      }
+      await ProductAccount.db.deleteWhere(
+        session,
+        where: (t) => t.authUserId.equals(id),
+      );
+      await AuthUser.db.deleteWhere(session, where: (t) => t.id.equals(id));
+    }
   });
 
   test('every write path stores the owner FK with no NULL rows', () async {
@@ -222,12 +253,11 @@ void main() {
 
     for (final table in _ownerTables) {
       final rows = await session.db.unsafeQuery(
-        'SELECT owner, "authUserId" FROM "$table"',
+        'SELECT "authUserId" FROM "$table"',
       );
       expect(rows, isNotEmpty, reason: 'unexercised $table write path');
       for (final row in rows) {
-        expect(row[0], owner, reason: table);
-        expect(row[1].toString(), id.toString(), reason: '$table.authUserId');
+        expect(row[0].toString(), id.toString(), reason: '$table.authUserId');
       }
       final nulls = await session.db.unsafeQuery(
         'SELECT count(*) FROM "$table" WHERE "authUserId" IS NULL',
@@ -282,7 +312,6 @@ void main() {
         await StoredPurchase.db.insertRow(
           session,
           StoredPurchase(
-            owner: id.uuid,
             authUserId: id,
             identityHash: id.uuid,
             store: 'google',

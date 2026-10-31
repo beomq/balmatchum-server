@@ -33,7 +33,6 @@ void main() {
         await DogProfile.db.insertRow(
           s,
           DogProfile(
-            owner: id,
             authUserId: authUserIdOf(id),
             breedId: breed,
             name: 'Dog',
@@ -52,7 +51,7 @@ void main() {
           final account = await lockProductAccount(session, target, tx);
           await ProductService(session, target, tx, account).appendPointEntry(
             PointEntry(
-              owner: target,
+              authUserId: authUserIdOf(target),
               entryKey: 'fund:$amount',
               kind: 'test-credit',
               amount: amount,
@@ -64,12 +63,14 @@ void main() {
 
     Future<List<PointEntry>> debits([String? of]) => PointEntry.db.find(
       session,
-      where: (t) => t.owner.equals(of ?? userId) & t.kind.equals('purchase'),
+      where: (t) =>
+          t.authUserId.equals(authUserIdOf(of ?? userId)) &
+          t.kind.equals('purchase'),
     );
 
     Future<int> ownerships([String? of]) => OutfitOwnership.db.count(
       session,
-      where: (t) => t.owner.equals(of ?? userId),
+      where: (t) => t.authUserId.equals(authUserIdOf(of ?? userId)),
     );
 
     Future<void> as(String breed) async {
@@ -138,7 +139,6 @@ void main() {
       await PointEntry.db.insertRow(
         session,
         PointEntry(
-          owner: userId,
           authUserId: authUserIdOf(userId),
           entryKey: 'fixture',
           kind: 'test-credit',
@@ -280,7 +280,6 @@ void main() {
       await OutfitOwnership.db.insertRow(
         session,
         OutfitOwnership(
-          owner: userId,
           authUserId: authUserIdOf(userId),
           outfitId: vest,
           purchasedAt: createdAt,

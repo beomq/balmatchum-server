@@ -21,8 +21,7 @@ abstract class PointEntry
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
   PointEntry._({
     this.id,
-    required this.owner,
-    this.authUserId,
+    required this.authUserId,
     this.authUser,
     required this.entryKey,
     required this.kind,
@@ -37,8 +36,7 @@ abstract class PointEntry
 
   factory PointEntry({
     int? id,
-    required String owner,
-    _is.UuidValue? authUserId,
+    required _is.UuidValue authUserId,
     _iacs.AuthUser? authUser,
     required String entryKey,
     required String kind,
@@ -54,12 +52,9 @@ abstract class PointEntry
   factory PointEntry.fromJson(Map<String, dynamic> jsonSerialization) {
     return PointEntry(
       id: jsonSerialization['id'] as int?,
-      owner: jsonSerialization['owner'] as String,
-      authUserId: jsonSerialization['authUserId'] == null
-          ? null
-          : _is.UuidValueJsonExtension.fromJson(
-              jsonSerialization['authUserId'],
-            ),
+      authUserId: _is.UuidValueJsonExtension.fromJson(
+        jsonSerialization['authUserId'],
+      ),
       authUser: jsonSerialization['authUser'] == null
           ? null
           : _iu3f2ih9.Protocol().deserialize<_iacs.AuthUser>(
@@ -90,9 +85,7 @@ abstract class PointEntry
   @override
   int? id;
 
-  String owner;
-
-  _is.UuidValue? authUserId;
+  _is.UuidValue authUserId;
 
   _iacs.AuthUser? authUser;
 
@@ -122,7 +115,6 @@ abstract class PointEntry
   @_is.useResult
   PointEntry copyWith({
     int? id,
-    String? owner,
     _is.UuidValue? authUserId,
     _iacs.AuthUser? authUser,
     String? entryKey,
@@ -140,8 +132,7 @@ abstract class PointEntry
     return {
       '__className__': 'PointEntry',
       if (id != null) 'id': id,
-      'owner': owner,
-      if (authUserId != null) 'authUserId': authUserId?.toJson(),
+      'authUserId': authUserId.toJson(),
       if (authUser != null) 'authUser': authUser?.toJson(),
       'entryKey': entryKey,
       'kind': kind,
@@ -194,8 +185,7 @@ class _Undefined {}
 class _PointEntryImpl extends PointEntry {
   _PointEntryImpl({
     int? id,
-    required String owner,
-    _is.UuidValue? authUserId,
+    required _is.UuidValue authUserId,
     _iacs.AuthUser? authUser,
     required String entryKey,
     required String kind,
@@ -208,7 +198,6 @@ class _PointEntryImpl extends PointEntry {
     List<_i03s1ada.RewardSlice>? slices,
   }) : super._(
          id: id,
-         owner: owner,
          authUserId: authUserId,
          authUser: authUser,
          entryKey: entryKey,
@@ -228,8 +217,7 @@ class _PointEntryImpl extends PointEntry {
   @override
   PointEntry copyWith({
     Object? id = _Undefined,
-    String? owner,
-    Object? authUserId = _Undefined,
+    _is.UuidValue? authUserId,
     Object? authUser = _Undefined,
     String? entryKey,
     String? kind,
@@ -243,8 +231,7 @@ class _PointEntryImpl extends PointEntry {
   }) {
     return PointEntry(
       id: id is int? ? id : this.id,
-      owner: owner ?? this.owner,
-      authUserId: authUserId is _is.UuidValue? ? authUserId : this.authUserId,
+      authUserId: authUserId ?? this.authUserId,
       authUser: authUser is _iacs.AuthUser?
           ? authUser
           : this.authUser?.copyWith(),
@@ -266,13 +253,8 @@ class _PointEntryImpl extends PointEntry {
 class PointEntryUpdateTable extends _is.UpdateTable<PointEntryTable> {
   PointEntryUpdateTable(super.table);
 
-  _is.ColumnValue<String, String> owner(String value) => _is.ColumnValue(
-    table.owner,
-    value,
-  );
-
   _is.ColumnValue<_is.UuidValue, _is.UuidValue> authUserId(
-    _is.UuidValue? value,
+    _is.UuidValue value,
   ) => _is.ColumnValue(
     table.authUserId,
     value,
@@ -330,10 +312,6 @@ class PointEntryUpdateTable extends _is.UpdateTable<PointEntryTable> {
 class PointEntryTable extends _is.Table<int?> {
   PointEntryTable({super.tableRelation}) : super(tableName: 'point_entry') {
     updateTable = PointEntryUpdateTable(this);
-    owner = _is.ColumnString(
-      'owner',
-      this,
-    );
     authUserId = _is.ColumnUuid(
       'authUserId',
       this,
@@ -378,8 +356,6 @@ class PointEntryTable extends _is.Table<int?> {
 
   late final PointEntryUpdateTable updateTable;
 
-  late final _is.ColumnString owner;
-
   late final _is.ColumnUuid authUserId;
 
   _iacs.AuthUserTable? _authUser;
@@ -418,7 +394,6 @@ class PointEntryTable extends _is.Table<int?> {
   @override
   List<_is.Column> get columns => [
     id,
-    owner,
     authUserId,
     entryKey,
     kind,
@@ -477,8 +452,6 @@ class PointEntryRepository {
   const PointEntryRepository._();
 
   final attachRow = const PointEntryAttachRowRepository._();
-
-  final detachRow = const PointEntryDetachRowRepository._();
 
   /// Returns a list of [PointEntry]s matching the given query parameters.
   ///
@@ -897,32 +870,6 @@ class PointEntryAttachRowRepository {
     }
 
     var $pointEntry = pointEntry.copyWith(authUserId: authUser.id);
-    await session.db.updateRow<PointEntry>(
-      $pointEntry,
-      columns: [PointEntry.t.authUserId],
-      transaction: transaction,
-    );
-  }
-}
-
-class PointEntryDetachRowRepository {
-  const PointEntryDetachRowRepository._();
-
-  /// Detaches the relation between this [PointEntry] and the [AuthUser] set in `authUser`
-  /// by setting the [PointEntry]'s foreign key `authUserId` to `null`.
-  ///
-  /// This removes the association between the two models without deleting
-  /// the related record.
-  Future<void> authUser(
-    _is.DatabaseSession session,
-    PointEntry pointEntry, {
-    _is.Transaction? transaction,
-  }) async {
-    if (pointEntry.id == null) {
-      throw ArgumentError.notNull('pointEntry.id');
-    }
-
-    var $pointEntry = pointEntry.copyWith(authUserId: null);
     await session.db.updateRow<PointEntry>(
       $pointEntry,
       columns: [PointEntry.t.authUserId],

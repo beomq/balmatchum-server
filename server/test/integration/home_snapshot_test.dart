@@ -357,7 +357,7 @@ void main() {
           victim.session,
           (s) => s.appendPointEntry(
             PointEntry(
-              owner: victimId,
+              authUserId: authUserIdOf(victimId),
               entryKey: 'victim-credit',
               kind: 'steps',
               amount: 31337,

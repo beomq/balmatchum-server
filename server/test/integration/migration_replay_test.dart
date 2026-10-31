@@ -1,23 +1,21 @@
 @Timeout(Duration(minutes: 3))
 library;
 
-import 'dart:io';
-
+import 'package:balmatchum_server/src/billing/billing_retention.dart';
+import 'package:balmatchum_server/src/generated/protocol.dart'
+    show StoredPurchase;
+import 'package:balmatchum_server/src/maintenance/schema_guard.dart';
 import 'package:balmatchum_server/src/product/product_service.dart';
 import 'package:postgres/postgres.dart' as pg;
-import 'package:serverpod/serverpod.dart'
-    show PostgresDatabaseConfig, ServerpodRunMode;
-import 'package:serverpod_database/embedded.dart';
-import 'package:serverpod_test/serverpod_test.dart' show EphemeralTestDatabase;
+import 'package:serverpod/serverpod.dart' show UuidValue;
 import 'package:test/test.dart';
 
+import 'support/scratch_database.dart';
+
 // Fresh test databases are created from the latest definition.sql, so the
-// normal suite never runs the step-1 backfill. This test replays it on the
-// pre-normalization schema in a scratch database it owns.
+// normal suite never runs the migration.sql backfills. This test replays the
+// pre-normalization schema -> step1 -> step2 in a scratch database it owns.
 const _scratch = 'balmatchum_migration_replay';
-const _oldDefinition = 'migrations/20261027051944103/definition.sql';
-const _step1Migration =
-    'migrations/20261031074250432-normalization-step1/migration.sql';
 
 const _userA = '0190a000-0000-7000-8000-00000000000a';
 const _userB = '0190a000-0000-7000-8000-00000000000b';
@@ -139,7 +137,20 @@ const _balancePolicies = {
   outfitPurchasePolicyVersion,
 };
 
-void _log(String line) => stdout.writeln('[migration-replay] $line');
+void _log(String line) => scratchLog('migration-replay', line);
+
+// Orphan billing rows (their AuthUser is gone) that step2 must retain as a
+// tombstone and an anonymous payment record before deleting them.
+final _orphanObserved = DateTime.utc(2026, 10, 1, 12);
+final _orphanPurchased = DateTime.utc(2025, 10, 1, 12);
+final _orphanExpires = DateTime.utc(2026, 9, 1, 12);
+
+/// Rows each table must lose in step2: exactly the AuthUser-less orphans.
+const _orphanRows = {
+  'gps_record': 1,
+  'billing_account': 1,
+  'billing_purchase': 1,
+};
 
 String _fixtureSql() {
   final b = StringBuffer();
@@ -175,12 +186,22 @@ INSERT INTO "ad_intent" ("owner", "nonce", "purpose", "targetDate",
   "eventExpiresAt", "acceptUntil")
   VALUES ('$_userA', 'n1', 'steps', '2026-10-30', 1, 'unit', 'item', '1',
   now(), now(), now());
-INSERT INTO "billing_account" ("owner", "binding") VALUES ('$_userA', 'b1');
+INSERT INTO "billing_account" ("owner", "binding") VALUES ('$_userA', 'b1'),
+  ('$_orphan', 'b-orphan');
 INSERT INTO "billing_purchase" ("owner", "identityHash", "store",
   "environment", "productId", "kind", "purchaseReference", "state",
   "sequence", "observedAt", "acknowledgementPending")
   VALUES ('$_userA', 'h1', 'apple', 'sandbox', 'p1', 'subscription', 'r1',
   'active', 1, now(), false);
+INSERT INTO "billing_purchase" ("owner", "identityHash", "store",
+  "environment", "productId", "kind", "purchaseReference", "transactionId",
+  "state", "sequence", "observedAt", "purchasedAt", "expiresAt",
+  "acknowledgementPending")
+  VALUES ('$_orphan', 'h-orphan', 'apple', 'production', 'p1', 'subscription',
+  'orig-orphan', 'tx-orphan', 'expired', 1,
+  '${_orphanObserved.toIso8601String()}',
+  '${_orphanPurchased.toIso8601String()}',
+  '${_orphanExpires.toIso8601String()}', false);
 INSERT INTO "dog_profile" ("owner", "breedId", "name", "sex", "dailyGoal",
   "firstMetAt") VALUES ('$_userA', 'maltese', 'Bori', 'female', 5000, now());
 INSERT INTO "outfit_ownership" ("owner", "outfitId", "purchasedAt")
@@ -207,80 +228,30 @@ String _inList(Iterable<String> names) =>
     names.map((name) => "'$name'").join(', ');
 
 void main() {
+  late ScratchDatabase scratch;
   late pg.Connection db;
-  pg.Connection? admin;
-  Future<void> Function()? stopLaunchedPostgres;
-  var useSchema = false;
 
-  Future<int> count(String sql) async {
-    final rows = await db.execute(sql);
-    return rows.first[0] as int;
-  }
+  Future<int> count(String sql) => scratch.count(sql);
+
+  Future<Map<String, int>> tableCounts() async => {
+    for (final table in _ownerTables)
+      table: await count('SELECT count(*)::int FROM "$table"'),
+  };
+
+  Future<String?> balmatchumVersion() async =>
+      (await db.execute(
+            "SELECT version FROM serverpod_migrations WHERE module = 'balmatchum'",
+          )).first[0]
+          as String?;
+
+  Future<List<String>> mismatches() async =>
+      schemaMismatchesFrom(await db.execute(schemaGuardQuery));
 
   setUpAll(() async {
-    final project =
-        EphemeralTestDatabase.resolveProjectDatabaseConfig(
-              runMode: ServerpodRunMode.test,
-              serverDirectory: Directory.current.path,
-            )!.withResolvedLocalPath(Directory.current.path)
-            as PostgresDatabaseConfig;
-    final embedded = await startOrAttachEmbeddedPostgres(project);
-    stopLaunchedPostgres = embedded?.stop;
-    final target = embedded?.connectivity ?? project;
+    scratch = await ScratchDatabase.create(_scratch, 'migration-replay');
+    db = scratch.db;
 
-    Future<pg.Connection> open(String database) => pg.Connection.open(
-      pg.Endpoint(
-        host: target.host,
-        port: target.port,
-        database: database,
-        username: target.user,
-        password: target.password,
-        isUnixSocket: target.isUnixSocket,
-      ),
-      settings: const pg.ConnectionSettings(
-        sslMode: pg.SslMode.disable,
-        queryTimeout: Duration(seconds: 60),
-      ),
-    );
-
-    final adminConnection = await open('postgres');
-    admin = adminConnection;
-    final privileges = await adminConnection.execute(
-      'SELECT rolsuper OR rolcreatedb FROM pg_roles '
-      'WHERE rolname = current_user',
-    );
-    useSchema = privileges.first[0] != true;
-    _log(
-      'scratch=${useSchema ? 'schema' : 'database'} "$_scratch" '
-      'on ${target.isUnixSocket ? 'unix socket' : 'tcp'} ${target.host}',
-    );
-
-    if (useSchema) {
-      await adminConnection.close();
-      admin = null;
-      db = await open(project.name);
-      await db.execute('DROP SCHEMA IF EXISTS "$_scratch" CASCADE');
-      await db.execute('CREATE SCHEMA "$_scratch"');
-      await db.execute('SET search_path TO "$_scratch"');
-    } else {
-      await adminConnection.execute(
-        'DROP DATABASE IF EXISTS "$_scratch" WITH (FORCE)',
-      );
-      await adminConnection.execute('CREATE DATABASE "$_scratch"');
-      db = await open(_scratch);
-    }
-
-    final staleTables = await count(
-      'SELECT count(*)::int FROM information_schema.tables '
-      'WHERE table_schema = current_schema()',
-    );
-    _log('tables before old schema load: $staleTables');
-    expect(staleTables, 0, reason: 'scratch target must start empty');
-
-    await db.execute(
-      File(_oldDefinition).readAsStringSync(),
-      queryMode: pg.QueryMode.simple,
-    );
+    await scratch.runFile(oldDefinitionSql);
     final seenVersionBefore = await count(
       "SELECT count(*)::int FROM pg_indexes WHERE schemaname = "
       "current_schema() AND indexname = 'quiz_assignment_seen_version'",
@@ -288,44 +259,20 @@ void main() {
     _log('old schema quiz_assignment_seen_version present: $seenVersionBefore');
     expect(seenVersionBefore, 1, reason: 'old schema must be loaded');
 
-    await db.execute(_fixtureSql(), queryMode: pg.QueryMode.simple);
+    await scratch.runSql(_fixtureSql());
     for (final table in _ownerTables) {
       final rows = await count('SELECT count(*)::int FROM "$table"');
       _log('fixture rows $table=$rows');
       expect(rows, greaterThanOrEqualTo(1), reason: table);
     }
 
-    await db.execute(
-      File(_step1Migration).readAsStringSync(),
-      queryMode: pg.QueryMode.simple,
-    );
-    final version = await db.execute(
-      "SELECT version FROM serverpod_migrations WHERE module = 'balmatchum'",
-    );
-    _log('serverpod_migrations balmatchum=${version.first[0]}');
-    expect(version.first[0], '20261031074250432-normalization-step1');
+    await scratch.runFile(step1MigrationSql);
+    final version = await balmatchumVersion();
+    _log('serverpod_migrations balmatchum=$version');
+    expect(version, step1Id);
   });
 
-  tearDownAll(() async {
-    if (useSchema) {
-      await db.execute('DROP SCHEMA IF EXISTS "$_scratch" CASCADE');
-      final left = await count(
-        "SELECT count(*)::int FROM pg_namespace WHERE nspname = '$_scratch'",
-      );
-      _log('cleanup: scratch schema remaining=$left');
-      await db.close();
-    } else {
-      await db.close();
-      final a = admin!;
-      await a.execute('DROP DATABASE IF EXISTS "$_scratch" WITH (FORCE)');
-      final left = await a.execute(
-        "SELECT count(*)::int FROM pg_database WHERE datname = '$_scratch'",
-      );
-      _log('cleanup: scratch database remaining=${left.first[0]}');
-      await a.close();
-    }
-    await stopLaunchedPostgres?.call();
-  });
+  tearDownAll(() => scratch.dispose('migration-replay'));
 
   test(
     '(a) live gps_record rows all have payload and ordered day numbers',
@@ -361,7 +308,7 @@ void main() {
       _log('(b) $table missingWithUser=$missing null=$nulls mismatched=$wrong');
       expect(missing, 0, reason: table);
       expect(wrong, 0, reason: table);
-      expect(nulls, table == 'gps_record' ? 1 : 0, reason: table);
+      expect(nulls, _orphanRows[table] ?? 0, reason: table);
     }
     final orphan = await db.execute(
       'SELECT owner FROM gps_record WHERE "authUserId" IS NULL',
@@ -452,5 +399,183 @@ void main() {
     _log('(f) $nullable');
     expect(nullable.keys.toSet(), _ownerTables.toSet());
     expect(nullable.values.toSet(), {'YES'});
+  });
+
+  test('(g) the schema guard reports all three step1 mismatches', () async {
+    final found = await mismatches();
+    _log('(g) step1 mismatches=${found.length} $found');
+    expect(found, [
+      for (final table in normalizedTables) '$table.authUserId is nullable',
+      'product_account.owner still exists',
+      'quiz_assignment.snapshot still exists',
+    ]);
+  });
+
+  group('step2 replay', () {
+    late Map<String, int> before;
+    late Object variantError;
+    late List<int> afterVariant;
+
+    setUpAll(() async {
+      // A server still writing only owner between the two rollouts.
+      await db.execute(
+        'INSERT INTO "product_request" ("owner", "requestId", "digest", '
+        "\"result\") VALUES ('$_userB', 'req-between', 'd2', '{}')",
+      );
+      before = await tableCounts();
+      _log('step2 before counts=$before');
+
+      try {
+        await scratch.runSql(step2WithoutDeletes());
+        fail('step2 without orphan DELETEs must abort');
+      } on pg.ServerException catch (e) {
+        variantError = e;
+      }
+      // The aborted simple query leaves its explicit transaction open.
+      await db.execute('ROLLBACK');
+      _log('variant without DELETE aborted: $variantError');
+      afterVariant = [
+        await count(
+          'SELECT count(*)::int FROM information_schema.columns WHERE '
+          "table_schema = current_schema() AND column_name = 'owner'",
+        ),
+        await count(
+          'SELECT count(*)::int FROM billing_purchase_tombstone',
+        ),
+        await count(
+          'SELECT count(*)::int FROM gps_record WHERE "authUserId" IS NULL',
+        ),
+      ];
+      _log(
+        'after aborted variant: version=${await balmatchumVersion()} '
+        'ownerColumns=${afterVariant[0]} tombstones=${afterVariant[1]} '
+        'gpsNulls=${afterVariant[2]}',
+      );
+      expect(await balmatchumVersion(), step1Id);
+
+      await scratch.runFile(step2MigrationSql);
+      _log('serverpod_migrations balmatchum=${await balmatchumVersion()}');
+    });
+
+    test('(h) without the orphan DELETEs the NULL check aborts and rolls '
+        'back', () {
+      expect(
+        variantError.toString(),
+        contains('normalization-step2: billing_account has NULL authUserId'),
+      );
+      // Every owner column survives and nothing was retained or deleted.
+      expect(afterVariant, [_ownerTables.length, 0, 1]);
+    });
+
+    test('(i) step2 leaves NOT NULL keys and no owner or snapshot', () async {
+      expect(await balmatchumVersion(), step2Id);
+      final rows = await db.execute(
+        'SELECT table_name, is_nullable FROM information_schema.columns '
+        "WHERE table_schema = current_schema() AND column_name = 'authUserId' "
+        'AND table_name IN (${_inList(_ownerTables)}) ORDER BY table_name',
+      );
+      final nullable = {for (final r in rows) r[0] as String: r[1] as String};
+      final dropped = await count(
+        'SELECT count(*)::int FROM information_schema.columns WHERE '
+        "table_schema = current_schema() AND (column_name = 'owner' OR "
+        "(table_name = 'quiz_assignment' AND column_name = 'snapshot'))",
+      );
+      final guard = await mismatches();
+      _log(
+        '(i) nullable=$nullable ownerOrSnapshotColumns=$dropped guard=$guard',
+      );
+      expect(nullable.keys.toSet(), _ownerTables.toSet());
+      expect(nullable.values.toSet(), {'NO'});
+      expect(dropped, 0);
+      expect(guard, isEmpty);
+    });
+
+    test('(j) the orphan purchase is retained by the Dart rules', () async {
+      final tombstone = await db.execute(
+        'SELECT "retainUntil" FROM billing_purchase_tombstone '
+        "WHERE \"identityHash\" = 'h-orphan'",
+      );
+      final records = await db.execute(
+        'SELECT store, environment, "productId", kind, "storeTransactionId", '
+        '"originalTransactionId", state, "purchasedAt", "expiresAt", '
+        '"revokedAt", "recordedAt", "purgeAfter" FROM billing_payment_record',
+      );
+      final row = StoredPurchase(
+        authUserId: UuidValue.fromString(_orphan),
+        identityHash: 'h-orphan',
+        store: 'apple',
+        environment: 'production',
+        productId: 'p1',
+        kind: 'subscription',
+        purchaseReference: 'orig-orphan',
+        transactionId: 'tx-orphan',
+        state: 'expired',
+        sequence: 1,
+        observedAt: _orphanObserved,
+        purchasedAt: _orphanPurchased,
+        expiresAt: _orphanExpires,
+        acknowledgementPending: false,
+      );
+      final retain = identityRetainUntil('subscription', [
+        _orphanExpires,
+        null,
+      ], _orphanObserved);
+      final record = paymentRecordOf(row, DateTime.now().toUtc());
+      _log('(j) tombstone=$tombstone expected=$retain');
+      _log('(j) records=$records expectedPurge=${record.purgeAfter}');
+      expect(tombstone, hasLength(1));
+      expect(tombstone.first[0], retain);
+      expect(records, hasLength(1));
+      final r = records.first;
+      expect(r.sublist(0, 10), [
+        record.store,
+        record.environment,
+        record.productId,
+        record.kind,
+        record.storeTransactionId,
+        record.originalTransactionId,
+        record.state,
+        record.purchasedAt,
+        record.expiresAt,
+        record.revokedAt,
+      ]);
+      expect(
+        (r[10] as DateTime).difference(record.recordedAt).inSeconds.abs(),
+        lessThan(120),
+      );
+      expect(r[11], record.purgeAfter);
+    });
+
+    test('(k) only orphans are deleted and late owner rows are kept', () async {
+      final after = await tableCounts();
+      _log('(k) after counts=$after orphans=$_orphanRows');
+      for (final table in _ownerTables) {
+        expect(
+          after[table],
+          before[table]! - (_orphanRows[table] ?? 0),
+          reason: table,
+        );
+      }
+      final late = await db.execute(
+        'SELECT "authUserId"::text FROM product_request '
+        "WHERE \"requestId\" = 'req-between'",
+      );
+      _log('(k) req-between authUserId=${late.first[0]}');
+      expect(late.first[0], _userB);
+    });
+
+    test('(l) balances still equal the ledger after step2', () async {
+      final rows = await db.execute(
+        'SELECT a."authUserId"::text, a.balance, COALESCE((SELECT SUM(amount) '
+        'FROM point_entry e WHERE e."authUserId" = a."authUserId" AND '
+        'e."policyVersion" IN (${_inList(_balancePolicies)})), 0)::bigint '
+        'FROM product_account a ORDER BY 1',
+      );
+      _log('(l) $rows');
+      expect(rows, hasLength(2));
+      for (final r in rows) {
+        expect(r[1], r[2], reason: r[0] as String);
+      }
+    });
   });
 }

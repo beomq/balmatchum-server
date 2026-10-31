@@ -20,14 +20,12 @@ abstract class QuizAssignment
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
   QuizAssignment._({
     this.id,
-    required this.owner,
-    this.authUserId,
+    required this.authUserId,
     this.authUser,
     required this.date,
     required this.slot,
     required this.questionId,
     required this.version,
-    this.snapshot,
     required this.policyVersion,
     required this.issuedAt,
     this.answerIndex,
@@ -37,14 +35,12 @@ abstract class QuizAssignment
 
   factory QuizAssignment({
     int? id,
-    required String owner,
-    _is.UuidValue? authUserId,
+    required _is.UuidValue authUserId,
     _iacs.AuthUser? authUser,
     required String date,
     required String slot,
     required String questionId,
     required int version,
-    String? snapshot,
     required String policyVersion,
     required DateTime issuedAt,
     int? answerIndex,
@@ -55,12 +51,9 @@ abstract class QuizAssignment
   factory QuizAssignment.fromJson(Map<String, dynamic> jsonSerialization) {
     return QuizAssignment(
       id: jsonSerialization['id'] as int?,
-      owner: jsonSerialization['owner'] as String,
-      authUserId: jsonSerialization['authUserId'] == null
-          ? null
-          : _is.UuidValueJsonExtension.fromJson(
-              jsonSerialization['authUserId'],
-            ),
+      authUserId: _is.UuidValueJsonExtension.fromJson(
+        jsonSerialization['authUserId'],
+      ),
       authUser: jsonSerialization['authUser'] == null
           ? null
           : _iu3f2ih9.Protocol().deserialize<_iacs.AuthUser>(
@@ -70,7 +63,6 @@ abstract class QuizAssignment
       slot: jsonSerialization['slot'] as String,
       questionId: jsonSerialization['questionId'] as String,
       version: jsonSerialization['version'] as int,
-      snapshot: jsonSerialization['snapshot'] as String?,
       policyVersion: jsonSerialization['policyVersion'] as String,
       issuedAt: _is.DateTimeJsonExtension.fromJson(
         jsonSerialization['issuedAt'],
@@ -90,9 +82,7 @@ abstract class QuizAssignment
   @override
   int? id;
 
-  String owner;
-
-  _is.UuidValue? authUserId;
+  _is.UuidValue authUserId;
 
   _iacs.AuthUser? authUser;
 
@@ -103,8 +93,6 @@ abstract class QuizAssignment
   String questionId;
 
   int version;
-
-  String? snapshot;
 
   String policyVersion;
 
@@ -124,14 +112,12 @@ abstract class QuizAssignment
   @_is.useResult
   QuizAssignment copyWith({
     int? id,
-    String? owner,
     _is.UuidValue? authUserId,
     _iacs.AuthUser? authUser,
     String? date,
     String? slot,
     String? questionId,
     int? version,
-    String? snapshot,
     String? policyVersion,
     DateTime? issuedAt,
     int? answerIndex,
@@ -143,14 +129,12 @@ abstract class QuizAssignment
     return {
       '__className__': 'QuizAssignment',
       if (id != null) 'id': id,
-      'owner': owner,
-      if (authUserId != null) 'authUserId': authUserId?.toJson(),
+      'authUserId': authUserId.toJson(),
       if (authUser != null) 'authUser': authUser?.toJson(),
       'date': date,
       'slot': slot,
       'questionId': questionId,
       'version': version,
-      if (snapshot != null) 'snapshot': snapshot,
       'policyVersion': policyVersion,
       'issuedAt': issuedAt.toJson(),
       if (answerIndex != null) 'answerIndex': answerIndex,
@@ -197,14 +181,12 @@ class _Undefined {}
 class _QuizAssignmentImpl extends QuizAssignment {
   _QuizAssignmentImpl({
     int? id,
-    required String owner,
-    _is.UuidValue? authUserId,
+    required _is.UuidValue authUserId,
     _iacs.AuthUser? authUser,
     required String date,
     required String slot,
     required String questionId,
     required int version,
-    String? snapshot,
     required String policyVersion,
     required DateTime issuedAt,
     int? answerIndex,
@@ -212,14 +194,12 @@ class _QuizAssignmentImpl extends QuizAssignment {
     int? awardedPoints,
   }) : super._(
          id: id,
-         owner: owner,
          authUserId: authUserId,
          authUser: authUser,
          date: date,
          slot: slot,
          questionId: questionId,
          version: version,
-         snapshot: snapshot,
          policyVersion: policyVersion,
          issuedAt: issuedAt,
          answerIndex: answerIndex,
@@ -233,14 +213,12 @@ class _QuizAssignmentImpl extends QuizAssignment {
   @override
   QuizAssignment copyWith({
     Object? id = _Undefined,
-    String? owner,
-    Object? authUserId = _Undefined,
+    _is.UuidValue? authUserId,
     Object? authUser = _Undefined,
     String? date,
     String? slot,
     String? questionId,
     int? version,
-    Object? snapshot = _Undefined,
     String? policyVersion,
     DateTime? issuedAt,
     Object? answerIndex = _Undefined,
@@ -249,8 +227,7 @@ class _QuizAssignmentImpl extends QuizAssignment {
   }) {
     return QuizAssignment(
       id: id is int? ? id : this.id,
-      owner: owner ?? this.owner,
-      authUserId: authUserId is _is.UuidValue? ? authUserId : this.authUserId,
+      authUserId: authUserId ?? this.authUserId,
       authUser: authUser is _iacs.AuthUser?
           ? authUser
           : this.authUser?.copyWith(),
@@ -258,7 +235,6 @@ class _QuizAssignmentImpl extends QuizAssignment {
       slot: slot ?? this.slot,
       questionId: questionId ?? this.questionId,
       version: version ?? this.version,
-      snapshot: snapshot is String? ? snapshot : this.snapshot,
       policyVersion: policyVersion ?? this.policyVersion,
       issuedAt: issuedAt ?? this.issuedAt,
       answerIndex: answerIndex is int? ? answerIndex : this.answerIndex,
@@ -271,13 +247,8 @@ class _QuizAssignmentImpl extends QuizAssignment {
 class QuizAssignmentUpdateTable extends _is.UpdateTable<QuizAssignmentTable> {
   QuizAssignmentUpdateTable(super.table);
 
-  _is.ColumnValue<String, String> owner(String value) => _is.ColumnValue(
-    table.owner,
-    value,
-  );
-
   _is.ColumnValue<_is.UuidValue, _is.UuidValue> authUserId(
-    _is.UuidValue? value,
+    _is.UuidValue value,
   ) => _is.ColumnValue(
     table.authUserId,
     value,
@@ -300,11 +271,6 @@ class QuizAssignmentUpdateTable extends _is.UpdateTable<QuizAssignmentTable> {
 
   _is.ColumnValue<int, int> version(int value) => _is.ColumnValue(
     table.version,
-    value,
-  );
-
-  _is.ColumnValue<String, String> snapshot(String? value) => _is.ColumnValue(
-    table.snapshot,
     value,
   );
 
@@ -341,10 +307,6 @@ class QuizAssignmentTable extends _is.Table<int?> {
   QuizAssignmentTable({super.tableRelation})
     : super(tableName: 'quiz_assignment') {
     updateTable = QuizAssignmentUpdateTable(this);
-    owner = _is.ColumnString(
-      'owner',
-      this,
-    );
     authUserId = _is.ColumnUuid(
       'authUserId',
       this,
@@ -363,10 +325,6 @@ class QuizAssignmentTable extends _is.Table<int?> {
     );
     version = _is.ColumnInt(
       'version',
-      this,
-    );
-    snapshot = _is.ColumnString(
-      'snapshot',
       this,
     );
     policyVersion = _is.ColumnString(
@@ -394,8 +352,6 @@ class QuizAssignmentTable extends _is.Table<int?> {
 
   late final QuizAssignmentUpdateTable updateTable;
 
-  late final _is.ColumnString owner;
-
   late final _is.ColumnUuid authUserId;
 
   _iacs.AuthUserTable? _authUser;
@@ -407,8 +363,6 @@ class QuizAssignmentTable extends _is.Table<int?> {
   late final _is.ColumnString questionId;
 
   late final _is.ColumnInt version;
-
-  late final _is.ColumnString snapshot;
 
   late final _is.ColumnString policyVersion;
 
@@ -436,13 +390,11 @@ class QuizAssignmentTable extends _is.Table<int?> {
   @override
   List<_is.Column> get columns => [
     id,
-    owner,
     authUserId,
     date,
     slot,
     questionId,
     version,
-    snapshot,
     policyVersion,
     issuedAt,
     answerIndex,
@@ -496,8 +448,6 @@ class QuizAssignmentRepository {
   const QuizAssignmentRepository._();
 
   final attachRow = const QuizAssignmentAttachRowRepository._();
-
-  final detachRow = const QuizAssignmentDetachRowRepository._();
 
   /// Returns a list of [QuizAssignment]s matching the given query parameters.
   ///
@@ -916,32 +866,6 @@ class QuizAssignmentAttachRowRepository {
     }
 
     var $quizAssignment = quizAssignment.copyWith(authUserId: authUser.id);
-    await session.db.updateRow<QuizAssignment>(
-      $quizAssignment,
-      columns: [QuizAssignment.t.authUserId],
-      transaction: transaction,
-    );
-  }
-}
-
-class QuizAssignmentDetachRowRepository {
-  const QuizAssignmentDetachRowRepository._();
-
-  /// Detaches the relation between this [QuizAssignment] and the [AuthUser] set in `authUser`
-  /// by setting the [QuizAssignment]'s foreign key `authUserId` to `null`.
-  ///
-  /// This removes the association between the two models without deleting
-  /// the related record.
-  Future<void> authUser(
-    _is.DatabaseSession session,
-    QuizAssignment quizAssignment, {
-    _is.Transaction? transaction,
-  }) async {
-    if (quizAssignment.id == null) {
-      throw ArgumentError.notNull('quizAssignment.id');
-    }
-
-    var $quizAssignment = quizAssignment.copyWith(authUserId: null);
     await session.db.updateRow<QuizAssignment>(
       $quizAssignment,
       columns: [QuizAssignment.t.authUserId],

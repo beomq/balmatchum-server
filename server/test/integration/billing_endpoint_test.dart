@@ -150,7 +150,7 @@ void main() {
       await admin.db.transaction(
         (tx) => admin.db.unsafeQuery(
           'SELECT id FROM serverpod_auth_core_user WHERE id = CAST(@owner AS uuid) FOR UPDATE NOWAIT',
-          parameters: QueryParameters.named({'owner': row.owner}),
+          parameters: QueryParameters.named({'owner': row.authUserId.uuid}),
           transaction: tx,
         ),
       );
@@ -175,7 +175,9 @@ void main() {
       await admin.db.transaction(
         (tx) => admin.db.unsafeQuery(
           'SELECT id FROM serverpod_auth_core_user WHERE id = CAST(@owner AS uuid) FOR UPDATE NOWAIT',
-          parameters: QueryParameters.named({'owner': persisted.owner}),
+          parameters: QueryParameters.named({
+            'owner': persisted.authUserId.uuid,
+          }),
           transaction: tx,
         ),
       );
@@ -227,11 +229,17 @@ void main() {
 
   Future<void> noOwner(String owner) async {
     expect(
-      await StoredPurchase.db.count(admin, where: (t) => t.owner.equals(owner)),
+      await StoredPurchase.db.count(
+        admin,
+        where: (t) => t.authUserId.equals(authUserIdOf(owner)),
+      ),
       0,
     );
     expect(
-      await BillingAccount.db.count(admin, where: (t) => t.owner.equals(owner)),
+      await BillingAccount.db.count(
+        admin,
+        where: (t) => t.authUserId.equals(authUserIdOf(owner)),
+      ),
       0,
     );
     expect(
@@ -345,7 +353,7 @@ void main() {
                   expect(await check(), hasActive);
                   final rows = await StoredPurchase.db.find(
                     admin,
-                    where: (t) => t.owner.equals(a.owner),
+                    where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
                   );
                   expect(rows, hasLength(hasActive ? 2 : 1));
                   if (status == 410) {
@@ -384,7 +392,8 @@ void main() {
       (await StoredPurchase.db.findFirstRow(
         admin,
         where: (t) =>
-            t.owner.equals(owner) & t.purchaseReference.equals(reference),
+            t.authUserId.equals(authUserIdOf(owner)) &
+            t.purchaseReference.equals(reference),
       ))!.state;
 
   test(
@@ -442,7 +451,7 @@ void main() {
         await a.client.billing.verifyPurchase(input(token));
         Future<StoredPurchase> row() async => (await StoredPurchase.db.find(
           admin,
-          where: (t) => t.owner.equals(a.owner),
+          where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
         )).single;
         final before = await row();
         oauthStatus = status;
@@ -539,7 +548,6 @@ void main() {
       await DogProfile.db.insertRow(
         admin,
         DogProfile(
-          owner: a.owner,
           authUserId: authUserIdOf(a.owner),
           breedId: 'shih-tzu',
           name: 'Balance dog',
@@ -552,13 +560,13 @@ void main() {
       Future<void> invariant(int expected) async {
         final account = (await ProductAccount.db.findFirstRow(
           admin,
-          where: (t) => t.owner.equals(a.owner),
+          where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
         ))!;
         expect(account.balance, expected);
         expect(account.fixtureBalance, 0);
         final entries = await PointEntry.db.find(
           admin,
-          where: (t) => t.owner.equals(a.owner),
+          where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
         );
         expect(entries.fold<int>(0, (sum, e) => sum + e.amount), expected);
         expect(await reconcilePointBalances(admin), isEmpty);
@@ -628,7 +636,7 @@ void main() {
         expect(
           await PointEntry.db.count(
             admin,
-            where: (t) => t.owner.equals(a.owner),
+            where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
           ),
           6,
         );
@@ -662,7 +670,7 @@ void main() {
         expect(
           await PointEntry.db.count(
             admin,
-            where: (t) => t.owner.equals(a.owner),
+            where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
           ),
           6,
         );
@@ -694,7 +702,7 @@ void main() {
       expect(queryCount, before + 2);
       final rows = await StoredPurchase.db.find(
         admin,
-        where: (t) => t.owner.equals(a.owner),
+        where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
       );
       expect(rows.map((r) => r.sequence).toSet(), hasLength(1));
       expect(rows.map((r) => r.state), contains('revoked'));
@@ -1081,7 +1089,7 @@ void main() {
       expect((await a.client.ads.getIntent(intent.id)).status, 'verified');
       final entries = await PointEntry.db.find(
         admin,
-        where: (e) => e.owner.equals(a.owner),
+        where: (e) => e.authUserId.equals(authUserIdOf(a.owner)),
       );
       expect(entries, hasLength(2));
       expect(entries.fold<int>(0, (n, e) => n + e.amount), 4);
@@ -1276,7 +1284,10 @@ void main() {
         winner.ledgerId,
       );
       expect(
-        await PointEntry.db.count(admin, where: (t) => t.owner.equals(a.owner)),
+        await PointEntry.db.count(
+          admin,
+          where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
+        ),
         1,
       );
     },
@@ -1322,7 +1333,7 @@ void main() {
         expect(
           await PointEntry.db.count(
             admin,
-            where: (t) => t.owner.equals(a.owner),
+            where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
           ),
           1,
         );
@@ -1378,7 +1389,9 @@ void main() {
         expect(
           await QuizAssignment.db.count(
             admin,
-            where: (r) => r.owner.equals(a.owner) & r.slot.equals('extra'),
+            where: (r) =>
+                r.authUserId.equals(authUserIdOf(a.owner)) &
+                r.slot.equals('extra'),
           ),
           1,
         );
@@ -1422,21 +1435,21 @@ void main() {
         expect(
           await ProductAccount.db.count(
             admin,
-            where: (r) => r.owner.equals(a.owner),
+            where: (r) => r.authUserId.equals(authUserIdOf(a.owner)),
           ),
           0,
         );
         expect(
           await PointEntry.db.count(
             admin,
-            where: (r) => r.owner.equals(a.owner),
+            where: (r) => r.authUserId.equals(authUserIdOf(a.owner)),
           ),
           0,
         );
         expect(
           await QuizAssignment.db.count(
             admin,
-            where: (r) => r.owner.equals(a.owner),
+            where: (r) => r.authUserId.equals(authUserIdOf(a.owner)),
           ),
           0,
         );
@@ -1503,7 +1516,7 @@ void main() {
     expect(
       await StoredPurchase.db.count(
         admin,
-        where: (t) => t.owner.equals(a.owner),
+        where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
       ),
       1,
     );
@@ -1521,7 +1534,7 @@ void main() {
     expect(
       await StoredPurchase.db.count(
         admin,
-        where: (t) => t.owner.equals(b.owner),
+        where: (t) => t.authUserId.equals(authUserIdOf(b.owner)),
       ),
       0,
     );
@@ -1558,7 +1571,7 @@ void main() {
         where: (t) => t.identityHash.equals(hash('google', token)),
       );
       expect(rows, hasLength(1));
-      expect(rows.single.owner, b.owner);
+      expect(rows.single.authUserId.uuid, b.owner);
     },
   );
 
@@ -1586,7 +1599,7 @@ void main() {
       );
       final row = (await StoredPurchase.db.find(
         admin,
-        where: (t) => t.owner.equals(a.owner),
+        where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
       )).single;
       expect(row.purchaseReference, '700');
       expect(row.identityHash, hash('apple', '700'));
@@ -1681,7 +1694,7 @@ void main() {
       await older.timeout(bound);
       final row = (await StoredPurchase.db.find(
         admin,
-        where: (t) => t.owner.equals(a.owner),
+        where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
       )).single;
       expect(row.state, 'revoked');
       expect(row.sequence, 2);
@@ -1842,7 +1855,7 @@ void main() {
         expect(
           (await StoredPurchase.db.find(
             admin,
-            where: (t) => t.owner.equals(a.owner),
+            where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
           )).single.acknowledgementPending,
           true,
         );

@@ -2,8 +2,7 @@ class: StoredAdIntent
 serverOnly: true
 table: ad_intent
 fields:
-  owner: String
-  authUser: module:serverpod_auth_core:AuthUser?, relation(optional, onDelete=Cascade)
+  authUser: module:serverpod_auth_core:AuthUser?, relation(onDelete=Cascade)
   nonce: String
   purpose: String
   targetDate: String
@@ -23,9 +22,6 @@ fields:
 indexes:
   ad_intent_nonce:
     fields: nonce
-    unique: true
-  ad_intent_target:
-    fields: owner, purpose, targetDate, targetRevision
     unique: true
   ad_intent_auth_user_target:
     fields: authUserId, purpose, targetDate, targetRevision

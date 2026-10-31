@@ -7,6 +7,7 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
 
 import '../config_password.dart';
 import '../generated/protocol.dart';
+import '../maintenance/schema_guard.dart';
 import '../product/product_service.dart';
 import 'billing_retention.dart';
 import 'billing_verifier.dart';
@@ -55,6 +56,7 @@ class BillingService {
     Session caller,
     Future<T> Function(BillingService, Session) action,
   ) async {
+    SchemaGuard.require();
     final service = instances[caller.serverpod];
     if (service == null) throw BillingException(code: 'configurationMissing');
     if (caller.authenticated == null) {
@@ -109,7 +111,6 @@ class BillingService {
         await BillingAccount.db.insertRow(
           s,
           BillingAccount(
-            owner: owner,
             authUserId: authUserIdOf(owner),
             binding: const Uuid().v4(),
           ),
@@ -197,7 +198,7 @@ class BillingService {
         where: (t) => t.identityHash.equals(hash),
         transaction: tx,
       );
-      if (previous != null && previous.owner != owner) {
+      if (previous != null && previous.authUserId != authUserIdOf(owner)) {
         return 'purchaseUnavailable';
       }
       // A store subscription outlives account deletion; a later observation
@@ -235,7 +236,6 @@ class BillingService {
       }
       final row = StoredPurchase(
         id: previous?.id,
-        owner: owner,
         authUserId: authUserIdOf(owner),
         identityHash: hash,
         store: facts.store.name,
@@ -451,7 +451,7 @@ class BillingBenefit {
   Future<bool> isActive(ProductService s) async {
     final account = await BillingAccount.db.findFirstRow(
       s.session,
-      where: (t) => t.authUserId.equals(authUserIdOf(s.owner)),
+      where: (t) => t.authUserId.equals(s.authUserId),
       transaction: s.tx,
     );
     if (s.owner != _owner ||
@@ -462,7 +462,7 @@ class BillingBenefit {
     }
     final rows = await StoredPurchase.db.find(
       s.session,
-      where: (t) => t.authUserId.equals(authUserIdOf(s.owner)),
+      where: (t) => t.authUserId.equals(s.authUserId),
       transaction: s.tx,
     );
     final now = _service.clock.now().toUtc();

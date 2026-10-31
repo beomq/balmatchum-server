@@ -3,8 +3,7 @@ serverOnly: true
 table: gps_record
 fields:
   id: UuidValue?, defaultPersist=random_v7
-  owner: String
-  authUser: module:serverpod_auth_core:AuthUser?, relation(optional, onDelete=Cascade)
+  authUser: module:serverpod_auth_core:AuthUser?, relation(onDelete=Cascade)
   clientRecordId: UuidValue
   persistedAt: DateTime
   payload: GpsRecordInput?
@@ -12,9 +11,6 @@ fields:
   firstLocalDay: int?
   lastLocalDay: int?
 indexes:
-  gps_record_owner_client_unique:
-    fields: owner, clientRecordId
-    unique: true
   gps_record_auth_user_client:
     fields: authUserId, clientRecordId
     unique: true

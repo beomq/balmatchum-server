@@ -2,8 +2,7 @@ class: ProductDay
 serverOnly: true
 table: product_day
 fields:
-  owner: String
-  authUser: module:serverpod_auth_core:AuthUser?, relation(optional, onDelete=Cascade)
+  authUser: module:serverpod_auth_core:AuthUser?, relation(onDelete=Cascade)
   date: String
   revision: int, default=0
   deleted: bool, default=false
@@ -17,9 +16,6 @@ fields:
   policyVersion: String?
   windows: List<RewardWindow>
 indexes:
-  product_day_owner_date:
-    fields: owner, date
-    unique: true
   product_day_auth_user_date:
     fields: authUserId, date
     unique: true

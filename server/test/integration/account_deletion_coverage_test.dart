@@ -24,7 +24,7 @@ class _Token implements api.ClientAuthKeyProvider {
   Future<String?> get authHeaderValue async => 'Bearer $value';
 }
 
-const _userColumns = {'owner', 'authUserId'};
+const _userColumns = {'authUserId'};
 const _naver = {
   'naverClientId': 'test-naver-client',
   'naverClientSecret': 'public-test-secret',
@@ -199,7 +199,6 @@ void main() {
       await PointEntry.db.insertRow(
         admin,
         PointEntry(
-          owner: owner,
           authUserId: id,
           entryKey: 'seed',
           kind: 'quiz',
@@ -211,7 +210,6 @@ void main() {
       await QuizState.db.insertRow(
         admin,
         QuizState(
-          owner: owner,
           authUserId: id,
           date: '2026-10-14',
           questionId: 'test',
@@ -220,13 +218,11 @@ void main() {
       await QuizAssignment.db.insertRow(
         admin,
         QuizAssignment(
-          owner: owner,
           authUserId: id,
           date: '2026-10-14',
           slot: 'daily',
           questionId: 'test',
           version: 1,
-          snapshot: '{}',
           policyVersion: 'test',
           issuedAt: at,
         ),
@@ -234,7 +230,6 @@ void main() {
       await ThemeOwnership.db.insertRow(
         admin,
         ThemeOwnership(
-          owner: owner,
           authUserId: id,
           themeId: 'cloudy',
           purchasedAt: at,
@@ -243,7 +238,6 @@ void main() {
       await OutfitOwnership.db.insertRow(
         admin,
         OutfitOwnership(
-          owner: owner,
           authUserId: id,
           outfitId: 'vest-low-v',
           purchasedAt: at,
@@ -252,7 +246,6 @@ void main() {
       await StoredAdIntent.db.insertRow(
         admin,
         StoredAdIntent(
-          owner: owner,
           authUserId: id,
           nonce: 'coverage-nonce',
           purpose: 'test',
@@ -269,7 +262,6 @@ void main() {
       await BillingAccount.db.insertRow(
         admin,
         BillingAccount(
-          owner: owner,
           authUserId: id,
           binding: 'coverage-binding',
         ),
@@ -277,7 +269,6 @@ void main() {
       await StoredPurchase.db.insertRow(
         admin,
         StoredPurchase(
-          owner: owner,
           authUserId: id,
           identityHash: 'coverage-identity',
           store: 'google',
@@ -300,8 +291,6 @@ void main() {
         ),
       );
 
-      // Transition until todo 16 drops owner: a row is the user's under owner
-      // or authUserId, whichever columns the table has.
       Future<Map<String, Map<String, int>>> counts() async {
         final parameters = QueryParameters.named({'o': owner});
         return {
@@ -310,10 +299,8 @@ void main() {
               for (final column in columns)
                 column:
                     (await admin.db.unsafeQuery(
-                          column == 'owner'
-                              ? 'SELECT count(*) FROM "$table" WHERE owner = @o'
-                              : 'SELECT count(*) FROM "$table" '
-                                    'WHERE "authUserId" = CAST(@o AS uuid)',
+                          'SELECT count(*) FROM "$table" '
+                          'WHERE "$column" = CAST(@o AS uuid)',
                           parameters: parameters,
                         )).single[0]
                         as int,
@@ -329,13 +316,6 @@ void main() {
           greaterThan(0),
           reason: 'unseeded $table $byColumn',
         );
-        if (byColumn.containsKey('owner')) {
-          expect(
-            byColumn['authUserId'],
-            byColumn['owner'],
-            reason: 'missing or mismatched foreign key in $table',
-          );
-        }
       }
 
       await client.account.deleteAccount();
