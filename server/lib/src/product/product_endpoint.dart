@@ -1,9 +1,11 @@
 import 'dart:convert';
 
+import 'package:clock/clock.dart';
 import 'package:serverpod/serverpod.dart';
 
 import '../billing/billing_service.dart';
 import '../generated/protocol.dart';
+import '../profile/profile_service.dart';
 import 'outfit_service.dart';
 import 'product_service.dart';
 import 'quiz_theme_service.dart';
@@ -14,6 +16,10 @@ class ProductEndpoint extends Endpoint {
 
   Future<DailyRecord> getDay(Session session, String date) =>
       ProductService.read(session, (s) async => s.view(await s.day(date)));
+
+  /// Whole home screen from ONE read snapshot; see [homeSnapshot].
+  Future<HomeSnapshot> getHomeSnapshot(Session session) =>
+      ProductService.read(session, homeSnapshot);
 
   Future<List<DailyRecord>> listDays(
     Session session,
@@ -140,4 +146,33 @@ class ProductEndpoint extends Endpoint {
 
   Future<OutfitStore> unequipOutfit(Session session, String requestId) =>
       ProductService.run(session, (s) => s.unequipOutfit(requestId));
+}
+
+/// Builds every section inside the caller's single [ProductService.read]
+/// transaction, so a write committed meanwhile is either wholly visible or
+/// wholly absent. Routes are excluded (home never draws them), so no GPS
+/// record is read. The quiz is left out because issuing it may write.
+Future<HomeSnapshot> homeSnapshot(
+  ProductService s, {
+  // Test-only pause after day and wallet are read, before later sections.
+  Future<void> Function()? afterWallet,
+}) async {
+  final today = localDate(clock.now());
+  final profile = await s.getProfile();
+  final day = await s.view(await s.day(today), routes: false);
+  final wallet = await s.wallet();
+  await afterWallet?.call();
+  return HomeSnapshot(
+    date: today,
+    profile: profile,
+    day: day,
+    wallet: wallet,
+    themes: await s.themes(),
+    outfits: await s.outfits(),
+    // Same window as the app's StepStreak.window: today and 30 days before.
+    recentDays: await s.listDays(
+      localDate(dayStart(today).subtract(const Duration(days: 30))),
+      today,
+    ),
+  );
 }

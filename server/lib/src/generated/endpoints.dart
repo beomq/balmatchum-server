@@ -589,6 +589,16 @@ class Endpoints extends _is.EndpointDispatch {
                     params['date'],
                   ),
         ),
+        'getHomeSnapshot': _is.MethodConnector(
+          name: 'getHomeSnapshot',
+          params: {},
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['product'] as _itexbxyn.ProductEndpoint)
+                  .getHomeSnapshot(session),
+        ),
         'listDays': _is.MethodConnector(
           name: 'listDays',
           params: {

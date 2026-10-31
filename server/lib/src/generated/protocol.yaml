@@ -28,6 +28,7 @@ greeting:
   - hello:
 product:
   - getDay:
+  - getHomeSnapshot:
   - listDays:
   - getWallet:
   - registerStepStream:
