@@ -36,6 +36,8 @@ import 'package:balmatchum_server/src/generated/product/daily_record.dart'
     as _iny5mdqa;
 import 'package:balmatchum_server/src/generated/product/daily_step_input.dart'
     as _if016xvg;
+import 'package:balmatchum_server/src/generated/product/home_snapshot.dart'
+    as _iy2d8zjo;
 import 'package:balmatchum_server/src/generated/product/outfit_store.dart'
     as _iqtb11z9;
 import 'package:balmatchum_server/src/generated/product/reward_grant.dart'
@@ -1049,6 +1051,36 @@ class _ProductEndpoint {
                   _localCallContext.arguments,
                 )
                 as _ida.Future<_iny5mdqa.DailyRecord>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_iy2d8zjo.HomeSnapshot> getHomeSnapshot(
+    _ist.TestSessionBuilder sessionBuilder,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'product',
+            method: 'getHomeSnapshot',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'product',
+          methodName: 'getHomeSnapshot',
+          parameters: _ist.testObjectToJson({}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_iy2d8zjo.HomeSnapshot>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

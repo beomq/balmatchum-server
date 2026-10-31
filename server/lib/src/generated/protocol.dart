@@ -49,6 +49,7 @@ import 'product/daily_quiz.dart' as _i94q6xjz;
 import 'product/daily_record.dart' as _ie37ihl8;
 import 'product/daily_step_input.dart' as _i4z7ptb2;
 import 'product/day_route.dart' as _i7moag3o;
+import 'product/home_snapshot.dart' as _ikgur1h0;
 import 'product/outfit_item.dart' as _ilwrhsef;
 import 'product/outfit_ownership.dart' as _itwveuom;
 import 'product/outfit_store.dart' as _i7c03me4;
@@ -106,6 +107,7 @@ export 'product/daily_quiz.dart';
 export 'product/daily_record.dart';
 export 'product/daily_step_input.dart';
 export 'product/day_route.dart';
+export 'product/home_snapshot.dart';
 export 'product/outfit_item.dart';
 export 'product/outfit_ownership.dart';
 export 'product/outfit_store.dart';
@@ -2654,6 +2656,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _i7moag3o.DayRoute) {
       return _i7moag3o.DayRoute.fromJson(data) as T;
     }
+    if (t == _ikgur1h0.HomeSnapshot) {
+      return _ikgur1h0.HomeSnapshot.fromJson(data) as T;
+    }
     if (t == _ilwrhsef.OutfitItem) {
       return _ilwrhsef.OutfitItem.fromJson(data) as T;
     }
@@ -2847,6 +2852,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _is.getType<_i7moag3o.DayRoute?>()) {
       return (data != null ? _i7moag3o.DayRoute.fromJson(data) : null) as T;
     }
+    if (t == _is.getType<_ikgur1h0.HomeSnapshot?>()) {
+      return (data != null ? _ikgur1h0.HomeSnapshot.fromJson(data) : null) as T;
+    }
     if (t == _is.getType<_ilwrhsef.OutfitItem?>()) {
       return (data != null ? _ilwrhsef.OutfitItem.fromJson(data) : null) as T;
     }
@@ -2981,6 +2989,12 @@ class Protocol extends _is.DatabaseSerializationManager {
               .toList()
           as T;
     }
+    if (t == List<_ie37ihl8.DailyRecord>) {
+      return (data as List)
+              .map((e) => deserialize<_ie37ihl8.DailyRecord>(e))
+              .toList()
+          as T;
+    }
     if (t == List<_ilwrhsef.OutfitItem>) {
       return (data as List)
               .map((e) => deserialize<_ilwrhsef.OutfitItem>(e))
@@ -3071,6 +3085,7 @@ class Protocol extends _is.DatabaseSerializationManager {
       _ie37ihl8.DailyRecord => 'DailyRecord',
       _i4z7ptb2.DailyStepInput => 'DailyStepInput',
       _i7moag3o.DayRoute => 'DayRoute',
+      _ikgur1h0.HomeSnapshot => 'HomeSnapshot',
       _ilwrhsef.OutfitItem => 'OutfitItem',
       _itwveuom.OutfitOwnership => 'OutfitOwnership',
       _i7c03me4.OutfitStore => 'OutfitStore',
@@ -3168,6 +3183,8 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'DailyStepInput';
       case _i7moag3o.DayRoute():
         return 'DayRoute';
+      case _ikgur1h0.HomeSnapshot():
+        return 'HomeSnapshot';
       case _ilwrhsef.OutfitItem():
         return 'OutfitItem';
       case _itwveuom.OutfitOwnership():
@@ -3333,6 +3350,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (dataClassName == 'DayRoute') {
       return deserialize<_i7moag3o.DayRoute>(data['data']);
+    }
+    if (dataClassName == 'HomeSnapshot') {
+      return deserialize<_ikgur1h0.HomeSnapshot>(data['data']);
     }
     if (dataClassName == 'OutfitItem') {
       return deserialize<_ilwrhsef.OutfitItem>(data['data']);

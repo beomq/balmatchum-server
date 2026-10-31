@@ -32,6 +32,8 @@ import 'package:balmatchum_client/src/protocol/product/daily_record.dart'
     as _i6924b5v;
 import 'package:balmatchum_client/src/protocol/product/daily_step_input.dart'
     as _ijhmyv9t;
+import 'package:balmatchum_client/src/protocol/product/home_snapshot.dart'
+    as _irq256te;
 import 'package:balmatchum_client/src/protocol/product/outfit_store.dart'
     as _idav388q;
 import 'package:balmatchum_client/src/protocol/product/reward_grant.dart'
@@ -332,6 +334,14 @@ class EndpointProduct extends _isc.EndpointRef {
         'product',
         'getDay',
         {'date': date},
+      );
+
+  /// Whole home screen from ONE read snapshot; see [homeSnapshot].
+  _ida.Future<_irq256te.HomeSnapshot> getHomeSnapshot() =>
+      caller.callServerEndpoint<_irq256te.HomeSnapshot>(
+        'product',
+        'getHomeSnapshot',
+        {},
       );
 
   _ida.Future<List<_i6924b5v.DailyRecord>> listDays(
