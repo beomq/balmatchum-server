@@ -409,7 +409,7 @@ packages:
     source: hosted
     version: "6.5.2"
   postgres:
-    dependency: transitive
+    dependency: "direct dev"
     description:
       name: postgres
       sha256: ff617b500da893a7bd66977b2185dc0ee52057aa9ddf1e225a37d67350a899e5
@@ -537,7 +537,7 @@ packages:
     source: hosted
     version: "4.0.3"
   serverpod_database:
-    dependency: transitive
+    dependency: "direct dev"
     description:
       name: serverpod_database
       sha256: "761463ecb24201fa5743f9938e4bc20b0c29a35c0a03d1ee36085f6f57a76eb5"
