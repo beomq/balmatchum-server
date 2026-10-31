@@ -7,6 +7,7 @@ import 'package:balmatchum_server/src/product/product_endpoint.dart';
 import 'package:balmatchum_server/src/product/product_service.dart';
 import 'package:balmatchum_server/src/quiz/quiz_bank.dart';
 import 'package:balmatchum_server/src/quiz/quiz_service.dart';
+import 'package:balmatchum_server/src/records/records_endpoint.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
 import 'package:test/test.dart';
@@ -19,6 +20,22 @@ Iterable<Map<String, dynamic>> _nodes(Map<String, dynamic> node) sync* {
   for (final child in (node['Plans'] as List?) ?? const []) {
     yield* _nodes((child as Map).cast<String, dynamic>());
   }
+}
+
+class _QuerySession extends InternalSession {
+  _QuerySession({required super.server}) : super(enableLogging: false);
+
+  final queries = <String>[];
+
+  @override
+  get logQuery =>
+      ({
+        required String query,
+        required Duration duration,
+        required int? numRowsAffected,
+        required String? error,
+        required StackTrace stackTrace,
+      }) => queries.add(query);
 }
 
 void main() {
@@ -209,6 +226,97 @@ void main() {
           expect(await s.balance(fixture: true), 23);
         });
         expect(await reconcilePointBalances(session), isEmpty);
+      },
+    );
+
+    test(
+      '8000-row tombstone fixture uses date index for saveConfirmed',
+      () async {
+        await session.db.unsafeExecute(
+          '''
+          INSERT INTO product_day ("authUserId", date, deleted, windows)
+          SELECT CAST(@id AS uuid),
+            to_char(date '2000-01-01' + n, 'YYYY-MM-DD'),
+            n % 2 = 0, '[]'::json
+          FROM generate_series(0, 7999) n
+          ''',
+          parameters: QueryParameters.named({'id': id.uuid}),
+        );
+        final counts = await session.db.unsafeQuery(
+          'SELECT count(*), count(*) FILTER (WHERE deleted) FROM product_day '
+          'WHERE "authUserId" = CAST(@id AS uuid)',
+          parameters: QueryParameters.named({'id': id.uuid}),
+        );
+        expect(counts.single[0], 8000);
+        expect(counts.single[1], 4000);
+        await session.db.unsafeExecute('ANALYZE product_day');
+
+        final input = GpsRecordInput(
+          schemaVersion: 1,
+          clientRecordId: const Uuid().v4obj(),
+          startedAt: DateTime.utc(2000, 1, 1).add(const Duration(days: 4000)),
+          endedAt: DateTime.utc(2000, 1, 1).add(const Duration(days: 4000)),
+          source: 'watch',
+          routePoints: [],
+        );
+        final measured = _QuerySession(server: session.server);
+        try {
+          measured.updateAuthenticated(
+            AuthenticationInfo(id.uuid, {}, authId: 'test'),
+          );
+          await expectLater(
+            RecordsEndpoint().saveConfirmed(measured, input),
+            throwsA(
+              isA<RecordException>().having(
+                (e) => e.code,
+                'code',
+                'dayDeleted',
+              ),
+            ),
+          );
+          // Measure the endpoint's actual SQL, not a copy of its predicate:
+          // removing its date bounds must also change the plan under test.
+          final query = measured.queries.singleWhere(
+            (q) => q.startsWith('SELECT') && q.contains('"product_day"'),
+          );
+          final result = await session.db.unsafeQuery(
+            'EXPLAIN (ANALYZE, FORMAT JSON) $query',
+          );
+          final raw = result.single.single;
+          final plan = (raw is String ? jsonDecode(raw) : raw) as List;
+          stdout.writeln(
+            'T27_FIXTURE rows=${counts.single[0]} deleted=${counts.single[1]}',
+          );
+          stdout.writeln('T27_QUERY=$query');
+          stdout.writeln('T27_EXPLAIN_JSON=${jsonEncode(plan)}');
+          final nodes = _nodes(
+            ((plan.single as Map)['Plan'] as Map).cast<String, dynamic>(),
+          ).toList();
+          final used = nodes
+              .where((n) => n['Index Name'] == 'product_day_auth_user_date')
+              .toList();
+          expect(used, hasLength(1), reason: jsonEncode(plan));
+          expect(
+            used.single['Node Type'],
+            isIn(['Index Scan', 'Index Only Scan', 'Bitmap Index Scan']),
+          );
+          expect(
+            used.single['Index Cond'],
+            allOf(
+              contains('"authUserId"'),
+              contains('date >='),
+              contains('date <='),
+            ),
+          );
+          expect(
+            nodes.where((n) => n['Node Type'] == 'Seq Scan'),
+            isEmpty,
+            reason: jsonEncode(plan),
+          );
+          expect(nodes.first['Actual Rows'], 1);
+        } finally {
+          await measured.close();
+        }
       },
     );
 
