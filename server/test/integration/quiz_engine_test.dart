@@ -814,6 +814,64 @@ void main() {
   );
 
   test(
+    'repeat getToday finishes while another session holds the account lock',
+    () async {
+      final a = await user();
+      final first = await at(() => quiz.getToday(a.session));
+      final locked = Completer<void>();
+      final release = Completer<void>();
+      final write = admin.db.transaction((tx) async {
+        await lockProductAccount(admin, a.owner, tx);
+        locked.complete();
+        await release.future.timeout(bound);
+      });
+      try {
+        await locked.future.timeout(bound);
+        final again = await at(
+          () => quiz.getToday(a.session),
+        ).timeout(const Duration(seconds: 5));
+        expect(again.status, 'ready');
+        expect(again.free!.assignmentId, first.free!.assignmentId);
+      } finally {
+        release.complete();
+        await write;
+      }
+    },
+  );
+
+  test('concurrent first getToday calls issue exactly one free slot', () async {
+    final a = await user();
+    final both = await at(
+      () => Future.wait([quiz.getToday(a.session), quiz.getToday(a.session)]),
+    );
+    expect(both.map((t) => t.free!.assignmentId).toSet(), hasLength(1));
+    expect(
+      await QuizAssignment.db.count(
+        admin,
+        where: (t) => t.owner.equals(a.owner) & t.slot.equals('free'),
+      ),
+      1,
+    );
+  });
+
+  test('getToday without bank content stays contentUnavailable', () async {
+    final a = await user();
+    await configureQuizBank(pod, bank: fixtureBank(0));
+    for (var i = 0; i < 2; i++) {
+      final today = await at(() => quiz.getToday(a.session));
+      expect(today.status, 'contentUnavailable');
+      expect(today.free, isNull);
+    }
+    expect(
+      await QuizAssignment.db.count(
+        admin,
+        where: (t) => t.owner.equals(a.owner),
+      ),
+      0,
+    );
+  });
+
+  test(
     'account deletion shares auth lock and purges quizzes without resurrection',
     () async {
       final a = await user();
@@ -829,13 +887,18 @@ void main() {
         await release.future.timeout(bound);
       });
       await purged.future.timeout(bound);
+      // getToday reads lock-free once issued; listHistory still takes the lock.
       final rejected = expectLater(
-        at(() => quiz.getToday(a.session)),
+        at(() => quiz.listHistory(a.session, null)),
         throwsA(isA<NotAuthorizedException>()),
       );
       release.complete();
       await deletion.timeout(bound);
       await rejected.timeout(bound);
+      await expectLater(
+        at(() => quiz.getToday(a.session)),
+        throwsA(isA<NotAuthorizedException>()),
+      );
       expect(
         await QuizAssignment.db.find(
           admin,
