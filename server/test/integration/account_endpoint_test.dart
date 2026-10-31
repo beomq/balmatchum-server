@@ -146,6 +146,7 @@ void main() {
           session,
           PointEntry(
             owner: owner,
+            authUserId: authUserIdOf(owner),
             entryKey: 'seed',
             kind: 'quiz',
             amount: 2,
@@ -156,13 +157,19 @@ void main() {
         );
         await QuizState.db.insertRow(
           session,
-          QuizState(owner: owner, date: '2026-10-14', questionId: 'test'),
+          QuizState(
+            owner: owner,
+            authUserId: authUserIdOf(owner),
+            date: '2026-10-14',
+            questionId: 'test',
+          ),
           transaction: s.tx,
         );
         await ThemeOwnership.db.insertRow(
           session,
           ThemeOwnership(
             owner: owner,
+            authUserId: authUserIdOf(owner),
             themeId: 'cloudy',
             purchasedAt: DateTime.utc(2026),
           ),
@@ -172,6 +179,7 @@ void main() {
           session,
           OutfitOwnership(
             owner: owner,
+            authUserId: authUserIdOf(owner),
             outfitId: 'vest-low-v',
             purchasedAt: DateTime.utc(2026),
           ),

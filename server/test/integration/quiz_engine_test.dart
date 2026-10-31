@@ -382,7 +382,7 @@ void main() {
     'wallet includes quiz policy without changing step or fixture balances',
     () async {
       final a = await user();
-      // Ledger-only fixtures exercise policy aggregation; no test question is
+      // Production credit fixtures exercise policy routing; no test question is
       // represented as reviewed production content.
       for (final entry in [
         ('steps', stepPolicyVersion, 7),
@@ -390,15 +390,17 @@ void main() {
         ('legacy', productFixtureLabel, 50),
         ('synthetic', quizFixturePolicy, 50),
       ]) {
-        await PointEntry.db.insertRow(
-          admin,
-          PointEntry(
-            owner: a.owner,
-            entryKey: entry.$1,
-            kind: entry.$1,
-            amount: entry.$3,
-            policyVersion: entry.$2,
-            createdAt: now,
+        await ProductService.run(
+          a.session,
+          (s) => s.appendPointEntry(
+            PointEntry(
+              owner: a.owner,
+              entryKey: entry.$1,
+              kind: entry.$1,
+              amount: entry.$3,
+              policyVersion: entry.$2,
+              createdAt: now,
+            ),
           ),
         );
       }

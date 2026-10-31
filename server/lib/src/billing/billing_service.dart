@@ -103,7 +103,7 @@ class BillingService {
     await lockProductAccount(s, owner, tx);
     return await BillingAccount.db.findFirstRow(
           s,
-          where: (t) => t.owner.equals(owner),
+          where: (t) => t.authUserId.equals(authUserIdOf(owner)),
           transaction: tx,
         ) ??
         await BillingAccount.db.insertRow(
@@ -224,7 +224,7 @@ class BillingService {
       }
       final account = await BillingAccount.db.findFirstRow(
         s,
-        where: (t) => t.owner.equals(owner),
+        where: (t) => t.authUserId.equals(authUserIdOf(owner)),
         transaction: tx,
       );
       if (account == null ||
@@ -282,7 +282,9 @@ class BillingService {
           if (user == null) return;
           final row = await StoredPurchase.db.findFirstRow(
             s,
-            where: (t) => t.owner.equals(owner) & t.identityHash.equals(hash),
+            where: (t) =>
+                t.authUserId.equals(authUserIdOf(owner)) &
+                t.identityHash.equals(hash),
             transaction: tx,
           );
           if (row == null || row.sequence != reservation.sequence) return;
@@ -305,7 +307,7 @@ class BillingService {
       await BillingAccount.db.updateRow(s, account, transaction: tx);
       final rows = await StoredPurchase.db.find(
         s,
-        where: (t) => t.owner.equals(_owner(s)),
+        where: (t) => t.authUserId.equals(authUserIdOf(_owner(s))),
         transaction: tx,
       );
       return (binding: account.binding, sequence: account.sequence, rows: rows);
@@ -348,7 +350,9 @@ class BillingService {
               t.observedAt(clock.now().toUtc()),
               t.acknowledgementPending(false),
             ],
-            where: (t) => t.id.equals(row.id) & t.owner.equals(_owner(s)),
+            where: (t) =>
+                t.id.equals(row.id) &
+                t.authUserId.equals(authUserIdOf(_owner(s))),
             transaction: tx,
           );
         });
@@ -391,7 +395,7 @@ class BillingService {
         }
         final rows = await StoredPurchase.db.find(
           s,
-          where: (t) => t.owner.equals(_owner(s)),
+          where: (t) => t.authUserId.equals(authUserIdOf(_owner(s))),
           orderBy: (t) => t.id,
           transaction: tx,
         );
@@ -447,7 +451,7 @@ class BillingBenefit {
   Future<bool> isActive(ProductService s) async {
     final account = await BillingAccount.db.findFirstRow(
       s.session,
-      where: (t) => t.owner.equals(s.owner),
+      where: (t) => t.authUserId.equals(authUserIdOf(s.owner)),
       transaction: s.tx,
     );
     if (s.owner != _owner ||
@@ -458,7 +462,7 @@ class BillingBenefit {
     }
     final rows = await StoredPurchase.db.find(
       s.session,
-      where: (t) => t.owner.equals(s.owner),
+      where: (t) => t.authUserId.equals(authUserIdOf(s.owner)),
       transaction: s.tx,
     );
     final now = _service.clock.now().toUtc();
@@ -503,7 +507,7 @@ Future<void> deleteBillingData(Session s, String owner, Transaction tx) async {
 Future<void> _deleteBillingData(Session s, String owner, Transaction tx) async {
   final rows = await StoredPurchase.db.find(
     s,
-    where: (t) => t.owner.equals(owner),
+    where: (t) => t.authUserId.equals(authUserIdOf(owner)),
     orderBy: (t) => t.identityHash,
     transaction: tx,
   );
@@ -527,12 +531,12 @@ Future<void> _deleteBillingData(Session s, String owner, Transaction tx) async {
   ], transaction: tx);
   await StoredPurchase.db.deleteWhere(
     s,
-    where: (t) => t.owner.equals(owner),
+    where: (t) => t.authUserId.equals(authUserIdOf(owner)),
     transaction: tx,
   );
   await BillingAccount.db.deleteWhere(
     s,
-    where: (t) => t.owner.equals(owner),
+    where: (t) => t.authUserId.equals(authUserIdOf(owner)),
     transaction: tx,
   );
 }

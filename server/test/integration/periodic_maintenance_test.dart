@@ -9,6 +9,7 @@ import 'package:balmatchum_server/src/product/product_request_cleanup.dart';
 import 'package:balmatchum_server/src/product/product_service.dart';
 import 'package:crypto/crypto.dart';
 import 'package:serverpod/serverpod.dart';
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -153,13 +154,15 @@ void main() {
     () async {
       final maintenance = await start(retentionJobs);
       final now = DateTime.now().toUtc();
-      const owner = 'maintenance-owner';
+      final user = await AuthUser.db.insertRow(admin, AuthUser(scopeNames: {}));
+      final owner = user.id!.uuid;
       final payload = ['equipTheme', 'forest'];
       final digest = sha256
           .convert(utf8.encode(jsonEncode(payload)))
           .toString();
       ProductRequest request(String id, Duration age) => ProductRequest(
         owner: owner,
+        authUserId: user.id,
         requestId: id,
         digest: digest,
         result: '$id-result',

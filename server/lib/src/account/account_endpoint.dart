@@ -42,62 +42,62 @@ Future<void> deleteAccountData(
   await deleteBillingData(session, owner, tx);
   await StoredAdIntent.db.deleteWhere(
     session,
-    where: (t) => t.owner.equals(owner),
+    where: (t) => t.authUserId.equals(authUserIdOf(owner)),
     transaction: tx,
   );
   await DogProfile.db.deleteWhere(
     session,
-    where: (t) => t.owner.equals(owner),
+    where: (t) => t.authUserId.equals(authUserIdOf(owner)),
     transaction: tx,
   );
   await StoredGpsRecord.db.deleteWhere(
     session,
-    where: (t) => t.owner.equals(owner),
+    where: (t) => t.authUserId.equals(authUserIdOf(owner)),
     transaction: tx,
   );
   await StepRevision.db.deleteWhere(
     session,
-    where: (t) => t.owner.equals(owner),
+    where: (t) => t.authUserId.equals(authUserIdOf(owner)),
     transaction: tx,
   );
   await ProductDay.db.deleteWhere(
     session,
-    where: (t) => t.owner.equals(owner),
+    where: (t) => t.authUserId.equals(authUserIdOf(owner)),
     transaction: tx,
   );
   await PointEntry.db.deleteWhere(
     session,
-    where: (t) => t.owner.equals(owner),
+    where: (t) => t.authUserId.equals(authUserIdOf(owner)),
     transaction: tx,
   );
   await QuizState.db.deleteWhere(
     session,
-    where: (t) => t.owner.equals(owner),
+    where: (t) => t.authUserId.equals(authUserIdOf(owner)),
     transaction: tx,
   );
   await QuizAssignment.db.deleteWhere(
     session,
-    where: (t) => t.owner.equals(owner),
+    where: (t) => t.authUserId.equals(authUserIdOf(owner)),
     transaction: tx,
   );
   await ThemeOwnership.db.deleteWhere(
     session,
-    where: (t) => t.owner.equals(owner),
+    where: (t) => t.authUserId.equals(authUserIdOf(owner)),
     transaction: tx,
   );
   await OutfitOwnership.db.deleteWhere(
     session,
-    where: (t) => t.owner.equals(owner),
+    where: (t) => t.authUserId.equals(authUserIdOf(owner)),
     transaction: tx,
   );
   await ProductRequest.db.deleteWhere(
     session,
-    where: (t) => t.owner.equals(owner),
+    where: (t) => t.authUserId.equals(authUserIdOf(owner)),
     transaction: tx,
   );
   await ProductAccount.db.deleteWhere(
     session,
-    where: (t) => t.owner.equals(owner),
+    where: (t) => t.authUserId.equals(authUserIdOf(owner)),
     transaction: tx,
   );
   final authUserId = UuidValue.fromString(owner);

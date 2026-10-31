@@ -25,7 +25,7 @@ class RecordsEndpoint extends Endpoint {
       final tombstone = await ProductDay.db.findFirstRow(
         session,
         where: (t) =>
-            t.owner.equals(owner) &
+            t.authUserId.equals(authUserIdOf(owner)) &
             t.deleted.equals(true) &
             (t.date >= localDate(input.startedAt)) &
             (t.date <= localDate(input.endedAt)),
@@ -53,7 +53,7 @@ class RecordsEndpoint extends Endpoint {
           : (await StoredGpsRecord.db.findFirstRow(
               session,
               where: (t) =>
-                  t.owner.equals(owner) &
+                  t.authUserId.equals(authUserIdOf(owner)) &
                   t.clientRecordId.equals(input.clientRecordId),
               transaction: transaction,
             ))!;
@@ -70,7 +70,8 @@ class RecordsEndpoint extends Endpoint {
     return ProductService.read(session, (service) async {
       final stored = await StoredGpsRecord.db.findFirstRow(
         session,
-        where: (t) => t.id.equals(recordId) & t.owner.equals(owner),
+        where: (t) =>
+            t.id.equals(recordId) & t.authUserId.equals(authUserIdOf(owner)),
         transaction: service.tx,
       );
       if (stored == null) throw RecordException(code: 'notFound');

@@ -61,14 +61,16 @@ class QuizService {
       QuizAssignment.db.findFirstRow(
         s.session,
         where: (t) =>
-            t.owner.equals(s.owner) & t.date.equals(date) & t.slot.equals(slot),
+            t.authUserId.equals(authUserIdOf(s.owner)) &
+            t.date.equals(date) &
+            t.slot.equals(slot),
         transaction: s.tx,
       );
 
   Future<String?> candidate() async {
     final seen = await QuizAssignment.db.find(
       s.session,
-      where: (t) => t.owner.equals(s.owner),
+      where: (t) => t.authUserId.equals(authUserIdOf(s.owner)),
       transaction: s.tx,
     );
     final ids = seen.map((a) => a.questionId).toSet();
@@ -221,7 +223,8 @@ class QuizService {
   Future<QuizAssignment> owned(int id) async {
     final a = await QuizAssignment.db.findFirstRow(
       s.session,
-      where: (t) => t.id.equals(id) & t.owner.equals(s.owner),
+      where: (t) =>
+          t.id.equals(id) & t.authUserId.equals(authUserIdOf(s.owner)),
       transaction: s.tx,
     );
     if (a == null) throw ProductException(code: 'quizNotFound');
@@ -291,7 +294,7 @@ class QuizService {
     final rows = await QuizAssignment.db.find(
       s.session,
       where: (t) =>
-          t.owner.equals(s.owner) &
+          t.authUserId.equals(authUserIdOf(s.owner)) &
           t.answerIndex.notEquals(null) &
           (before == null ? t.id.notEquals(null) : t.id < before),
       orderBy: (t) => t.id.desc(),

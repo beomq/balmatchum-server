@@ -62,7 +62,7 @@ class AdService {
     final previous = await StoredAdIntent.db.findFirstRow(
       s.session,
       where: (t) =>
-          t.owner.equals(s.owner) &
+          t.authUserId.equals(authUserIdOf(s.owner)) &
           t.purpose.equals(purpose) &
           t.targetDate.equals(date) &
           t.targetRevision.equals(revision),
@@ -130,7 +130,8 @@ class AdService {
   Future<AdIntent> get(ProductService s, String id) async {
     final i = await StoredAdIntent.db.findFirstRow(
       s.session,
-      where: (t) => t.owner.equals(s.owner) & t.nonce.equals(id),
+      where: (t) =>
+          t.authUserId.equals(authUserIdOf(s.owner)) & t.nonce.equals(id),
       transaction: s.tx,
     );
     if (i == null) throw AdException(code: 'intentNotFound');
@@ -215,7 +216,8 @@ class AdService {
     await lockProductAccount(session, owner, tx);
     final i = await StoredAdIntent.db.findFirstRow(
       session,
-      where: (t) => t.owner.equals(owner) & t.nonce.equals(intentId),
+      where: (t) =>
+          t.authUserId.equals(authUserIdOf(owner)) & t.nonce.equals(intentId),
       transaction: tx,
     );
     if (i == null) throw AdException(code: 'intentNotFound');

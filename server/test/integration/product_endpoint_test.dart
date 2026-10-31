@@ -84,6 +84,7 @@ void main() {
 
     PointEntry entry(String policy, int amount) => PointEntry(
       owner: owner,
+      authUserId: authUserIdOf(owner),
       entryKey: policy,
       kind: 'test-credit',
       amount: amount,
@@ -244,6 +245,7 @@ void main() {
             session,
             PointEntry(
               owner: session.authenticated!.userIdentifier,
+              authUserId: authUserIdOf(session.authenticated!.userIdentifier),
               entryKey: 'legacy-fixture',
               kind: 'quiz',
               amount: 2,
@@ -287,15 +289,18 @@ void main() {
     });
 
     Future<void> fund(int amount, {String policy = stepPolicyVersion}) async {
-      await PointEntry.db.insertRow(
+      await ProductService.run(
         session,
-        PointEntry(
-          owner: userId,
-          entryKey: 'fund:$policy',
-          kind: 'test-credit',
-          amount: amount,
-          policyVersion: policy,
-          createdAt: fixedNow,
+        (s) => s.appendPointEntry(
+          PointEntry(
+            owner: userId,
+            authUserId: authUserIdOf(userId),
+            entryKey: 'fund:$policy',
+            kind: 'test-credit',
+            amount: amount,
+            policyVersion: policy,
+            createdAt: fixedNow,
+          ),
         ),
       );
     }
@@ -490,15 +495,18 @@ void main() {
             roundSession,
             AuthUser(id: UuidValue.fromString(roundUser), scopeNames: {}),
           );
-          await PointEntry.db.insertRow(
+          await ProductService.run(
             roundSession,
-            PointEntry(
-              owner: roundUser,
-              entryKey: 'fund:round-$round',
-              kind: 'test-credit',
-              amount: 6,
-              policyVersion: stepPolicyVersion,
-              createdAt: fixedNow,
+            (s) => s.appendPointEntry(
+              PointEntry(
+                owner: roundUser,
+                authUserId: authUserIdOf(roundUser),
+                entryKey: 'fund:round-$round',
+                kind: 'test-credit',
+                amount: 6,
+                policyVersion: stepPolicyVersion,
+                createdAt: fixedNow,
+              ),
             ),
           );
 
@@ -951,6 +959,7 @@ void main() {
         s,
         ProductDay(
           owner: id,
+          authUserId: authUserIdOf(id),
           date: date,
           steps: 7000,
           availability: 'confirmed',
@@ -967,21 +976,29 @@ void main() {
           ],
         ),
       );
-      await PointEntry.db.insertRow(
+      await ProductService.run(
         s,
-        PointEntry(
-          owner: id,
-          entryKey: 'steps:$date:7',
-          kind: 'steps',
-          date: date,
-          amount: 7,
-          policyVersion: productFixtureLabel,
-          createdAt: fixedNow,
+        (service) => service.appendPointEntry(
+          PointEntry(
+            owner: id,
+            authUserId: authUserIdOf(id),
+            entryKey: 'steps:$date:7',
+            kind: 'steps',
+            date: date,
+            amount: 7,
+            policyVersion: productFixtureLabel,
+            createdAt: fixedNow,
+          ),
         ),
       );
       await ProductDay.db.insertRow(
         s,
-        ProductDay(owner: id, date: '2026-10-13', windows: []),
+        ProductDay(
+          owner: id,
+          authUserId: authUserIdOf(id),
+          date: '2026-10-13',
+          windows: [],
+        ),
       );
       await at(() async {
         final day = await endpoint.submitSteps(s, snapshot(9000, revision: 2));
@@ -1041,6 +1058,7 @@ void main() {
         (service) => service.appendPointEntry(
           PointEntry(
             owner: id,
+            authUserId: authUserIdOf(id),
             entryKey: 'fixture-fund',
             kind: 'fixture',
             amount: 10,
@@ -1053,6 +1071,7 @@ void main() {
         s,
         DogProfile(
           owner: id,
+          authUserId: authUserIdOf(id),
           breedId: 'shih-tzu',
           name: 'Fixture dog',
           sex: 'female',
@@ -1568,6 +1587,7 @@ void main() {
           a,
           StoredGpsRecord(
             owner: a.authenticated!.userIdentifier,
+            authUserId: authUserIdOf(a.authenticated!.userIdentifier),
             clientRecordId: input.clientRecordId,
             persistedAt: fixedNow,
             payload: input,
@@ -1674,15 +1694,17 @@ void main() {
       final a = await ready();
       final b = await owner(a.authenticated!.userIdentifier);
       await at(() => endpoint.claimDay(a, date, 'claim', 1));
-      await PointEntry.db.insertRow(
+      await ProductService.run(
         a,
-        PointEntry(
-          owner: a.authenticated!.userIdentifier,
-          entryKey: 'fixture-test',
-          kind: 'fixture',
-          amount: 7,
-          policyVersion: productFixtureLabel,
-          createdAt: fixedNow,
+        (s) => s.appendPointEntry(
+          PointEntry(
+            owner: a.authenticated!.userIdentifier,
+            entryKey: 'fixture-test',
+            kind: 'fixture',
+            amount: 7,
+            policyVersion: productFixtureLabel,
+            createdAt: fixedNow,
+          ),
         ),
       );
       final stores = await Future.wait([
