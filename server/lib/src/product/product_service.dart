@@ -284,17 +284,25 @@ class ProductService {
     return value;
   }
 
-  Future<DailyRecord> view(ProductDay value, {bool routes = true}) async {
+  Future<List<PointEntry>> stepEntries(String fromDate, String toDate) =>
+      PointEntry.db.find(
+        session,
+        where: (t) =>
+            t.owner.equals(owner) &
+            (t.date >= fromDate) &
+            (t.date <= toDate) &
+            t.kind.equals('steps') &
+            t.policyVersion.equals(stepPolicyVersion),
+        transaction: tx,
+      );
+
+  Future<DailyRecord> view(
+    ProductDay value, {
+    bool routes = true,
+    List<PointEntry>? entries,
+  }) async {
     final production = value.policyVersion == stepPolicyVersion;
-    final entries = await PointEntry.db.find(
-      session,
-      where: (t) =>
-          t.owner.equals(owner) &
-          t.date.equals(value.date) &
-          t.kind.equals('steps') &
-          t.policyVersion.equals(stepPolicyVersion),
-      transaction: tx,
-    );
+    entries ??= await stepEntries(value.date, value.date);
     final available = value.availability == 'confirmed' && value.steps != null;
     final amount = production && available && !value.deleted
         ? claimable(value)
@@ -371,13 +379,38 @@ class ProductService {
     final end = dayStart(toDate);
     final count = end.difference(start).inDays;
     if (count < 0 || count > 92) throw ProductException(code: 'invalidRange');
-    return [
-      for (var i = 0; i <= count; i++)
+    // Two range reads instead of two reads per day: the range is grouped here.
+    final stored = {
+      for (final value in await ProductDay.db.find(
+        session,
+        where: (t) =>
+            t.owner.equals(owner) & (t.date >= fromDate) & (t.date <= toDate),
+        transaction: tx,
+      ))
+        value.date: value,
+    };
+    final entries = <String, List<PointEntry>>{};
+    for (final entry in await stepEntries(fromDate, toDate)) {
+      entries.putIfAbsent(entry.date!, () => []).add(entry);
+    }
+    final days = <DailyRecord>[];
+    for (var i = 0; i <= count; i++) {
+      final date = localDate(start.add(Duration(days: i)));
+      days.add(
         await view(
-          await day(localDate(start.add(Duration(days: i)))),
+          stored[date] ??
+              ProductDay(
+                owner: owner,
+                date: date,
+                windows: [],
+                policyVersion: stepPolicyVersion,
+              ),
           routes: false,
+          entries: entries[date] ?? const [],
         ),
-    ];
+      );
+    }
+    return days;
   }
 
   Future<int> registerStream(String requestId, int expectedGeneration) async {
