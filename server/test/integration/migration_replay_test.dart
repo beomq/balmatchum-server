@@ -149,8 +149,53 @@ final _orphanExpires = DateTime.utc(2026, 9, 1, 12);
 const _orphanRows = {
   'gps_record': 1,
   'billing_account': 1,
-  'billing_purchase': 1,
+  'billing_purchase': 2,
 };
+
+final _leapDay = DateTime.utc(2024, 2, 29, 12);
+
+StoredPurchase _orphanPurchase({
+  required String hash,
+  required String reference,
+  required String transaction,
+  required DateTime observedAt,
+  DateTime? purchasedAt,
+  DateTime? expiresAt,
+}) => StoredPurchase(
+  authUserId: UuidValue.fromString(_orphan),
+  identityHash: hash,
+  store: 'apple',
+  environment: 'production',
+  productId: 'p1',
+  kind: 'subscription',
+  purchaseReference: reference,
+  transactionId: transaction,
+  state: 'expired',
+  sequence: 1,
+  observedAt: observedAt,
+  purchasedAt: purchasedAt,
+  expiresAt: expiresAt,
+  acknowledgementPending: false,
+);
+
+/// The expired subscription plus one observed on a leap day, where Dart's
+/// DateTime.utc(year + n, 2, 29) rolls over to Mar 1.
+final _orphanPurchases = [
+  _orphanPurchase(
+    hash: 'h-orphan',
+    reference: 'orig-orphan',
+    transaction: 'tx-orphan',
+    observedAt: _orphanObserved,
+    purchasedAt: _orphanPurchased,
+    expiresAt: _orphanExpires,
+  ),
+  _orphanPurchase(
+    hash: 'h-orphan-leap',
+    reference: 'orig-orphan-leap',
+    transaction: 'tx-orphan-leap',
+    observedAt: _leapDay,
+  ),
+];
 
 String _fixtureSql() {
   final b = StringBuffer();
@@ -202,6 +247,12 @@ INSERT INTO "billing_purchase" ("owner", "identityHash", "store",
   '${_orphanObserved.toIso8601String()}',
   '${_orphanPurchased.toIso8601String()}',
   '${_orphanExpires.toIso8601String()}', false);
+INSERT INTO "billing_purchase" ("owner", "identityHash", "store",
+  "environment", "productId", "kind", "purchaseReference", "transactionId",
+  "state", "sequence", "observedAt", "acknowledgementPending")
+  VALUES ('$_orphan', 'h-orphan-leap', 'apple', 'production', 'p1',
+  'subscription', 'orig-orphan-leap', 'tx-orphan-leap', 'expired', 1,
+  '${_leapDay.toIso8601String()}', false);
 INSERT INTO "dog_profile" ("owner", "breedId", "name", "sex", "dailyGoal",
   "firstMetAt") VALUES ('$_userA', 'maltese', 'Bori', 'female', 5000, now());
 INSERT INTO "outfit_ownership" ("owner", "outfitId", "purchasedAt")
@@ -490,60 +541,60 @@ void main() {
       expect(guard, isEmpty);
     });
 
-    test('(j) the orphan purchase is retained by the Dart rules', () async {
-      final tombstone = await db.execute(
-        'SELECT "retainUntil" FROM billing_purchase_tombstone '
-        "WHERE \"identityHash\" = 'h-orphan'",
-      );
-      final records = await db.execute(
-        'SELECT store, environment, "productId", kind, "storeTransactionId", '
-        '"originalTransactionId", state, "purchasedAt", "expiresAt", '
-        '"revokedAt", "recordedAt", "purgeAfter" FROM billing_payment_record',
-      );
-      final row = StoredPurchase(
-        authUserId: UuidValue.fromString(_orphan),
-        identityHash: 'h-orphan',
-        store: 'apple',
-        environment: 'production',
-        productId: 'p1',
-        kind: 'subscription',
-        purchaseReference: 'orig-orphan',
-        transactionId: 'tx-orphan',
-        state: 'expired',
-        sequence: 1,
-        observedAt: _orphanObserved,
-        purchasedAt: _orphanPurchased,
-        expiresAt: _orphanExpires,
-        acknowledgementPending: false,
-      );
-      final retain = identityRetainUntil('subscription', [
-        _orphanExpires,
-        null,
-      ], _orphanObserved);
-      final record = paymentRecordOf(row, DateTime.now().toUtc());
-      _log('(j) tombstone=$tombstone expected=$retain');
-      _log('(j) records=$records expectedPurge=${record.purgeAfter}');
-      expect(tombstone, hasLength(1));
-      expect(tombstone.first[0], retain);
-      expect(records, hasLength(1));
-      final r = records.first;
-      expect(r.sublist(0, 10), [
-        record.store,
-        record.environment,
-        record.productId,
-        record.kind,
-        record.storeTransactionId,
-        record.originalTransactionId,
-        record.state,
-        record.purchasedAt,
-        record.expiresAt,
-        record.revokedAt,
-      ]);
+    test('(j) orphan purchases are retained by the Dart rules', () async {
+      final tombstones = {
+        for (final r in await db.execute(
+          'SELECT "identityHash", "retainUntil" FROM billing_purchase_tombstone',
+        ))
+          r[0] as String: r[1],
+      };
+      final records = {
+        for (final r in await db.execute(
+          'SELECT store, environment, "productId", kind, "storeTransactionId", '
+          '"originalTransactionId", state, "purchasedAt", "expiresAt", '
+          '"revokedAt", "recordedAt", "purgeAfter" FROM billing_payment_record',
+        ))
+          r[4] as String: r,
+      };
       expect(
-        (r[10] as DateTime).difference(record.recordedAt).inSeconds.abs(),
-        lessThan(120),
+        tombstones.keys.toSet(),
+        _orphanPurchases.map((p) => p.identityHash).toSet(),
       );
-      expect(r[11], record.purgeAfter);
+      expect(
+        records.keys.toSet(),
+        _orphanPurchases.map((p) => p.transactionId).toSet(),
+      );
+      final now = DateTime.now().toUtc();
+      for (final row in _orphanPurchases) {
+        final retain = identityRetainUntil(row.kind, [
+          row.expiresAt,
+          row.graceExpiresAt,
+        ], row.observedAt);
+        final record = paymentRecordOf(row, now);
+        final r = records[row.transactionId]!;
+        _log(
+          '(j) ${row.identityHash} tombstone sql=${tombstones[row.identityHash]} '
+          'dart=$retain purgeAfter sql=${r[11]} dart=${record.purgeAfter}',
+        );
+        expect(tombstones[row.identityHash], retain, reason: row.identityHash);
+        expect(r.sublist(0, 10), [
+          record.store,
+          record.environment,
+          record.productId,
+          record.kind,
+          record.storeTransactionId,
+          record.originalTransactionId,
+          record.state,
+          record.purchasedAt,
+          record.expiresAt,
+          record.revokedAt,
+        ], reason: row.identityHash);
+        expect(
+          (r[10] as DateTime).difference(record.recordedAt).inSeconds.abs(),
+          lessThan(120),
+        );
+        expect(r[11], record.purgeAfter, reason: row.identityHash);
+      }
     });
 
     test('(k) only orphans are deleted and late owner rows are kept', () async {

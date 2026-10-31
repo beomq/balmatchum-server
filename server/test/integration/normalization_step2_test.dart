@@ -25,6 +25,8 @@ String _ts(DateTime? t) => t == null ? 'NULL' : "'${t.toIso8601String()}'";
 DateTime _d(int month, int day, [int year = 2026]) =>
     DateTime.utc(year, month, day, 12);
 
+final _leapDay = DateTime.utc(2024, 2, 29, 12);
+
 class _Purchase {
   const _Purchase(
     this.hash,
@@ -196,6 +198,32 @@ final _purchases = [
     expiresAt: _d(9, 11),
     hasTombstone: true,
     tombstone: _d(6, 1, 2030),
+  ),
+  // Leap days: Dart's DateTime.utc(year + n, 2, 29) rolls over to Mar 1.
+  // Observed on Feb 29 with no expiry: both retentions start on the leap day.
+  _Purchase(
+    'leap-observed',
+    'apple',
+    'subscription',
+    observedAt: _leapDay,
+  ),
+  // Expired on Feb 29: identity retention starts from the expiry, the
+  // payment record from the same paid-through date.
+  _Purchase(
+    'leap-expiry',
+    'google',
+    'subscription',
+    observedAt: DateTime.utc(2024, 3, 10, 12),
+    purchasedAt: DateTime.utc(2023, 2, 1, 12),
+    expiresAt: DateTime.utc(2024, 2, 29, 8, 15, 30, 250, 125),
+  ),
+  // Lifetime revoked on Feb 29 with sub-second time of day.
+  _Purchase(
+    'leap-revoked',
+    'apple',
+    'lifetime',
+    observedAt: DateTime.utc(2024, 1, 1, 12),
+    revokedAt: DateTime.utc(2024, 2, 29, 23, 59, 59, 999, 999),
   ),
   _Purchase(
     'tomb-lifetime',
@@ -436,6 +464,37 @@ void main() {
         );
         expect(r[11], expected.purgeAfter, reason: '${p.hash} purgeAfter');
       }
+    },
+  );
+
+  test(
+    'leap day: SQL retention equals the Dart helpers (Feb 29 -> Mar 1)',
+    () async {
+      final leap = _purchases.firstWhere((p) => p.hash == 'leap-observed');
+      final identity = identityRetainUntil(leap.kind, [
+        leap.expiresAt,
+        leap.graceExpiresAt,
+      ], leap.observedAt);
+      final purge = paymentRecordOf(leap.row, ranAt).purgeAfter;
+      final tombstone = await db.execute(
+        'SELECT "retainUntil" FROM billing_purchase_tombstone '
+        "WHERE \"identityHash\" = 'leap-observed'",
+      );
+      final record = await db.execute(
+        'SELECT "purgeAfter" FROM billing_payment_record '
+        "WHERE \"storeTransactionId\" = 'transaction-leap-observed'",
+      );
+      _log(
+        'leap identity sql=${tombstone.single[0]} dart=$identity; '
+        'payment sql=${record.single[0]} dart=$purge',
+      );
+      // Fixture sanity: the Dart rule really rolls this date over.
+      expect(
+        [identity!.month, identity.day, purge.month, purge.day],
+        [3, 1, 3, 1],
+      );
+      expect(tombstone.single[0], identity);
+      expect(record.single[0], purge);
     },
   );
 }

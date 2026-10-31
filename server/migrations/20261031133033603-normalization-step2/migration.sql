@@ -27,13 +27,20 @@ UPDATE "product_account" a SET "balance" = COALESCE((SELECT SUM(amount) FROM poi
 -- (2) Billing orphans keep the retention rules of _deleteBillingData before
 --     they are deleted: identity tombstone (identityRetainUntil) and the
 --     anonymous payment record (paymentRecordOf). GREATEST ignores NULLs.
+--     "+ n years" mirrors Dart DateTime.utc(year + n, month, day, ...): the
+--     day is added to the 1st of the target month, so Feb 29 rolls over to
+--     Mar 1 exactly as in Dart (interval '1 year' would clamp to Feb 28).
 INSERT INTO "billing_purchase_tombstone" ("identityHash", "retainUntil")
-SELECT "identityHash", CASE WHEN kind = 'lifetime' THEN NULL ELSE COALESCE(GREATEST("expiresAt", "graceExpiresAt"), "observedAt") + interval '1 year' END
-FROM "billing_purchase" WHERE "authUserId" IS NULL
+SELECT p."identityHash", CASE WHEN p.kind = 'lifetime' THEN NULL ELSE make_date(extract(year from b.base)::int + 1, extract(month from b.base)::int, 1) + (extract(day from b.base)::int - 1) * interval '1 day' + (b.base - date_trunc('day', b.base)) END
+FROM "billing_purchase" p
+CROSS JOIN LATERAL (SELECT COALESCE(GREATEST(p."expiresAt", p."graceExpiresAt"), p."observedAt") AS base) b
+WHERE p."authUserId" IS NULL
 ON CONFLICT ("identityHash") DO UPDATE SET "retainUntil" = CASE WHEN "billing_purchase_tombstone"."retainUntil" IS NULL OR EXCLUDED."retainUntil" IS NULL THEN NULL ELSE GREATEST("billing_purchase_tombstone"."retainUntil", EXCLUDED."retainUntil") END;
 INSERT INTO "billing_payment_record" ("store", "environment", "productId", "kind", "storeTransactionId", "originalTransactionId", "state", "purchasedAt", "expiresAt", "revokedAt", "recordedAt", "purgeAfter")
-SELECT "store", "environment", "productId", "kind", "transactionId", CASE WHEN "store" = 'apple' THEN "purchaseReference" ELSE NULL END, "state", "purchasedAt", "expiresAt", "revokedAt", (now() AT TIME ZONE 'UTC'), GREATEST(COALESCE("purchasedAt", "observedAt"), "revokedAt", CASE WHEN kind = 'subscription' THEN (CASE WHEN "expiresAt" IS NOT NULL AND "expiresAt" < "observedAt" THEN "expiresAt" ELSE "observedAt" END) END) + interval '5 years'
-FROM "billing_purchase" WHERE "authUserId" IS NULL;
+SELECT p."store", p."environment", p."productId", p."kind", p."transactionId", CASE WHEN p."store" = 'apple' THEN p."purchaseReference" ELSE NULL END, p."state", p."purchasedAt", p."expiresAt", p."revokedAt", (now() AT TIME ZONE 'UTC'), make_date(extract(year from b.base)::int + 5, extract(month from b.base)::int, 1) + (extract(day from b.base)::int - 1) * interval '1 day' + (b.base - date_trunc('day', b.base))
+FROM "billing_purchase" p
+CROSS JOIN LATERAL (SELECT GREATEST(COALESCE(p."purchasedAt", p."observedAt"), p."revokedAt", CASE WHEN p.kind = 'subscription' THEN (CASE WHEN p."expiresAt" IS NOT NULL AND p."expiresAt" < p."observedAt" THEN p."expiresAt" ELSE p."observedAt" END) END) AS base) b
+WHERE p."authUserId" IS NULL;
 -- (2c, 2d) Delete orphans whose AuthUser no longer exists; counts go to NOTICE.
 DO $$
 DECLARE deleted bigint;
