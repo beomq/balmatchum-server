@@ -1,0 +1,12 @@
+class: ProductRequest
+serverOnly: true
+table: product_request
+fields:
+  owner: String
+  requestId: String
+  digest: String
+  result: String
+indexes:
+  product_request_key:
+    fields: owner, requestId
+    unique: true

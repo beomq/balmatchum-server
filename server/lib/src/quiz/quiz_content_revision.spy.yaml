@@ -1,0 +1,11 @@
+class: QuizContentRevision
+serverOnly: true
+table: quiz_content_revision
+fields:
+  questionId: String
+  version: int
+  snapshot: String
+indexes:
+  quiz_content_revision_key:
+    fields: questionId, version
+    unique: true

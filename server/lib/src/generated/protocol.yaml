@@ -1,0 +1,65 @@
+account:
+  - deleteAccount:
+ads:
+  - createIntent:
+  - getIntent:
+appleIdp:
+  - isConfigured:
+  - login:
+  - hasAccount:
+googleIdp:
+  - isConfigured:
+  - login:
+  - loginWithCode:
+  - hasAccount:
+kakao:
+  - beginLogin:
+  - loginKakao:
+naver:
+  - isConfigured:
+  - beginLogin:
+  - completeLogin:
+billing:
+  - getPurchaseConfiguration:
+  - verifyPurchase:
+  - restorePurchase:
+  - getEntitlement:
+greeting:
+  - hello:
+product:
+  - getDay:
+  - listDays:
+  - getWallet:
+  - registerStepStream:
+  - submitSteps:
+  - deleteDay:
+  - listDeletions:
+  - claimDay:
+  - claimDayWithAd:
+  - getQuiz:
+  - claimDayWithPremium:
+  - listQuizHistory:
+  - answerQuiz:
+  - listThemes:
+  - purchaseTheme:
+  - equipTheme:
+  - listOutfits:
+  - purchaseOutfit:
+  - equipOutfit:
+  - unequipOutfit:
+profile:
+  - getProfile:
+  - createProfile:
+  - renameDog:
+  - updateGoal:
+quiz:
+  - getToday:
+  - getTodayWithPremium:
+  - unlockExtraWithPremium:
+  - unlockExtra:
+  - answer:
+  - listHistory:
+  - review:
+records:
+  - saveConfirmed:
+  - getMine:

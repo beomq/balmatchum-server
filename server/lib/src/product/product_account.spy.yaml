@@ -1,0 +1,13 @@
+class: ProductAccount
+serverOnly: true
+table: product_account
+fields:
+  owner: String
+  streamGeneration: int, default=0
+  deletionVersion: int, default=0
+  equippedTheme: String, default='sunny'
+  equippedOutfit: String?
+indexes:
+  product_account_owner:
+    fields: owner
+    unique: true

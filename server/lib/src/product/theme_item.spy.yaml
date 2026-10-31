@@ -1,0 +1,7 @@
+class: ThemeItem
+fields:
+  themeId: String
+  name: String
+  colorValue: int
+  price: int?
+  owned: bool

@@ -1,0 +1,13 @@
+class: RewardGrant
+fields:
+  ledgerId: int
+  date: String
+  amount: int
+  fromUnits: int
+  throughUnits: int
+  grantedAt: DateTime
+  fixtureLabel: String?
+  policyVersion: String?
+  basePoints: int?
+  multiplier: int?
+  slices: List<RewardSlice>?

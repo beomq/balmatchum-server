@@ -1,0 +1,6 @@
+class: RewardSlice
+fields:
+  fromUnits: int
+  throughUnits: int
+  basePoints: int
+  multiplier: int

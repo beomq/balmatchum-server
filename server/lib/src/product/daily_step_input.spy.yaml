@@ -1,0 +1,10 @@
+class: DailyStepInput
+fields:
+  date: String
+  streamGeneration: int
+  revision: int
+  windowStart: DateTime
+  windowEnd: DateTime
+  observedAt: DateTime
+  total: int?
+  availability: String

@@ -1,0 +1,8 @@
+class: LoginAttempt
+serverOnly: true
+table: login_attempt
+fields:
+  id: UuidValue?, defaultPersist=random_v7
+  nonceHash: String
+  expiresAt: DateTime
+  consumedAt: DateTime?

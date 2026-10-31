@@ -1,0 +1,6 @@
+class: WalletView
+fields:
+  balance: int
+  streamGeneration: int
+  fixtureLabel: String?
+  policyVersion: String

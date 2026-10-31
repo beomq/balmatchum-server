@@ -1,0 +1,3 @@
+exception: BillingException
+fields:
+  code: String

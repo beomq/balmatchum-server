@@ -1,0 +1,3 @@
+exception: RecordException
+fields:
+  code: String

@@ -1,0 +1,25 @@
+class: QuizAssignment
+serverOnly: true
+table: quiz_assignment
+fields:
+  owner: String
+  date: String
+  slot: String
+  questionId: String
+  version: int
+  snapshot: String
+  policyVersion: String
+  issuedAt: DateTime
+  answerIndex: int?
+  answeredAt: DateTime?
+  awardedPoints: int, default=0
+indexes:
+  quiz_assignment_slot:
+    fields: owner, date, slot
+    unique: true
+  quiz_assignment_seen_version:
+    fields: owner, questionId, version
+    unique: true
+  quiz_assignment_seen_question:
+    fields: owner, questionId
+    unique: true

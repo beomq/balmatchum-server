@@ -1,0 +1,21 @@
+class: ProductDay
+serverOnly: true
+table: product_day
+fields:
+  owner: String
+  date: String
+  revision: int, default=0
+  deleted: bool, default=false
+  deletionVersion: int, default=0
+  steps: int?
+  availability: String, default='unknown'
+  streamGeneration: int, default=0
+  stepRevision: int, default=0
+  grantedUnits: int, default=0
+  confirmedUnits: int, default=0
+  policyVersion: String?
+  windows: List<RewardWindow>
+indexes:
+  product_day_owner_date:
+    fields: owner, date
+    unique: true

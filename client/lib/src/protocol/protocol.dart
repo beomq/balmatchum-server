@@ -1,0 +1,723 @@
+/* AUTOMATICALLY GENERATED CODE DO NOT MODIFY */
+/*   To generate run: "serverpod generate"    */
+
+// ignore_for_file: implementation_imports
+// ignore_for_file: library_private_types_in_public_api
+// ignore_for_file: non_constant_identifier_names
+// ignore_for_file: public_member_api_docs
+// ignore_for_file: type_literal_in_constant_pattern
+// ignore_for_file: use_super_parameters
+// ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: dead_code, unnecessary_type_check
+
+// ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:balmatchum_client/src/protocol/product/daily_quiz.dart'
+    as _ig075m1r;
+import 'package:balmatchum_client/src/protocol/product/daily_record.dart'
+    as _i6924b5v;
+import 'package:balmatchum_client/src/protocol/quiz/quiz_question.dart'
+    as _iuif5p7z;
+import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
+    as _iacc;
+import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
+    as _iaic;
+import 'package:serverpod_client/serverpod_client.dart' as _isc;
+import 'ads/ad_exception.dart' as _i8mgtt64;
+import 'ads/ad_intent.dart' as _i5ffg0dz;
+import 'ads/ad_platform.dart' as _ijoh8voo;
+import 'auth/login_challenge.dart' as _izhe0wsm;
+import 'auth/login_exception.dart' as _iskwpc4e;
+import 'auth/naver_login_challenge.dart' as _iw8ezytr;
+import 'billing/billing_exception.dart' as _iy7y41or;
+import 'billing/entitlement_view.dart' as _ixe95a4n;
+import 'billing/purchase_configuration.dart' as _iqa89lpa;
+import 'billing/purchase_input.dart' as _i8awtsqn;
+import 'billing/purchase_product.dart' as _iiesu012;
+import 'billing/purchase_view.dart' as _i0fbcnhc;
+import 'greetings/greeting.dart' as _izw8z7ou;
+import 'product/daily_quiz.dart' as _i94q6xjz;
+import 'product/daily_record.dart' as _ie37ihl8;
+import 'product/daily_step_input.dart' as _i4z7ptb2;
+import 'product/day_route.dart' as _i7moag3o;
+import 'product/outfit_item.dart' as _ilwrhsef;
+import 'product/outfit_store.dart' as _i7c03me4;
+import 'product/product_exception.dart' as _ixe21ogc;
+import 'product/reward_grant.dart' as _iod7wzhm;
+import 'product/reward_slice.dart' as _ip4tl29k;
+import 'product/theme_item.dart' as _i4gtfwun;
+import 'product/theme_store.dart' as _iotuzcr6;
+import 'product/wallet_view.dart' as _izf11uf3;
+import 'profile/profile_exception.dart' as _ie17qpis;
+import 'profile/profile_input.dart' as _ib0yiys4;
+import 'profile/profile_view.dart' as _i7a0m7me;
+import 'quiz/quiz_question.dart' as _id1a33kr;
+import 'quiz/quiz_today.dart' as _iyr4ok9x;
+import 'records/gps_record.dart' as _ixays1el;
+import 'records/gps_record_input.dart' as _ijl0tr6b;
+import 'records/record_exception.dart' as _ihyrwhon;
+import 'records/record_receipt.dart' as _ipyparvp;
+import 'records/route_point.dart' as _ir7rvxr1;
+export 'ads/ad_exception.dart';
+export 'ads/ad_intent.dart';
+export 'ads/ad_platform.dart';
+export 'auth/login_challenge.dart';
+export 'auth/login_exception.dart';
+export 'auth/naver_login_challenge.dart';
+export 'billing/billing_exception.dart';
+export 'billing/entitlement_view.dart';
+export 'billing/purchase_configuration.dart';
+export 'billing/purchase_input.dart';
+export 'billing/purchase_product.dart';
+export 'billing/purchase_view.dart';
+export 'greetings/greeting.dart';
+export 'product/daily_quiz.dart';
+export 'product/daily_record.dart';
+export 'product/daily_step_input.dart';
+export 'product/day_route.dart';
+export 'product/outfit_item.dart';
+export 'product/outfit_store.dart';
+export 'product/product_exception.dart';
+export 'product/reward_grant.dart';
+export 'product/reward_slice.dart';
+export 'product/theme_item.dart';
+export 'product/theme_store.dart';
+export 'product/wallet_view.dart';
+export 'profile/profile_exception.dart';
+export 'profile/profile_input.dart';
+export 'profile/profile_view.dart';
+export 'quiz/quiz_question.dart';
+export 'quiz/quiz_today.dart';
+export 'records/gps_record.dart';
+export 'records/gps_record_input.dart';
+export 'records/record_exception.dart';
+export 'records/record_receipt.dart';
+export 'records/route_point.dart';
+export 'client.dart';
+
+class Protocol extends _isc.SerializationManager {
+  Protocol._();
+
+  factory Protocol() => _instance;
+
+  static final Protocol _instance = Protocol._().._registerHostProtocols();
+
+  static String? getClassNameFromObjectJson(dynamic data) {
+    if (data is! Map) return null;
+    final className = data['__className__'] as String?;
+    return className;
+  }
+
+  @override
+  T deserialize<T>(
+    dynamic data, [
+    Type? t,
+  ]) {
+    t ??= T;
+
+    final dataClassName = getClassNameFromObjectJson(data);
+    if (dataClassName != null && dataClassName != getClassNameForType(t)) {
+      try {
+        return deserializeByClassName({
+          'className': dataClassName,
+          'data': data,
+        });
+      } on _isc.DeserializationClassNameNotFoundException catch (_) {
+        // If the className is not recognized (e.g., older client receiving
+        // data with a new subtype), fall back to deserializing without the
+        // className, using the expected type T.
+      }
+    }
+
+    if (t == _i8mgtt64.AdException) {
+      return _i8mgtt64.AdException.fromJson(data) as T;
+    }
+    if (t == _i5ffg0dz.AdIntent) {
+      return _i5ffg0dz.AdIntent.fromJson(data) as T;
+    }
+    if (t == _ijoh8voo.AdPlatform) {
+      return _ijoh8voo.AdPlatform.fromJson(data) as T;
+    }
+    if (t == _izhe0wsm.LoginChallenge) {
+      return _izhe0wsm.LoginChallenge.fromJson(data) as T;
+    }
+    if (t == _iskwpc4e.LoginException) {
+      return _iskwpc4e.LoginException.fromJson(data) as T;
+    }
+    if (t == _iw8ezytr.NaverLoginChallenge) {
+      return _iw8ezytr.NaverLoginChallenge.fromJson(data) as T;
+    }
+    if (t == _iy7y41or.BillingException) {
+      return _iy7y41or.BillingException.fromJson(data) as T;
+    }
+    if (t == _ixe95a4n.EntitlementView) {
+      return _ixe95a4n.EntitlementView.fromJson(data) as T;
+    }
+    if (t == _iqa89lpa.PurchaseConfiguration) {
+      return _iqa89lpa.PurchaseConfiguration.fromJson(data) as T;
+    }
+    if (t == _i8awtsqn.PurchaseInput) {
+      return _i8awtsqn.PurchaseInput.fromJson(data) as T;
+    }
+    if (t == _iiesu012.PurchaseProduct) {
+      return _iiesu012.PurchaseProduct.fromJson(data) as T;
+    }
+    if (t == _i0fbcnhc.PurchaseView) {
+      return _i0fbcnhc.PurchaseView.fromJson(data) as T;
+    }
+    if (t == _izw8z7ou.Greeting) {
+      return _izw8z7ou.Greeting.fromJson(data) as T;
+    }
+    if (t == _i94q6xjz.DailyQuiz) {
+      return _i94q6xjz.DailyQuiz.fromJson(data) as T;
+    }
+    if (t == _ie37ihl8.DailyRecord) {
+      return _ie37ihl8.DailyRecord.fromJson(data) as T;
+    }
+    if (t == _i4z7ptb2.DailyStepInput) {
+      return _i4z7ptb2.DailyStepInput.fromJson(data) as T;
+    }
+    if (t == _i7moag3o.DayRoute) {
+      return _i7moag3o.DayRoute.fromJson(data) as T;
+    }
+    if (t == _ilwrhsef.OutfitItem) {
+      return _ilwrhsef.OutfitItem.fromJson(data) as T;
+    }
+    if (t == _i7c03me4.OutfitStore) {
+      return _i7c03me4.OutfitStore.fromJson(data) as T;
+    }
+    if (t == _ixe21ogc.ProductException) {
+      return _ixe21ogc.ProductException.fromJson(data) as T;
+    }
+    if (t == _iod7wzhm.RewardGrant) {
+      return _iod7wzhm.RewardGrant.fromJson(data) as T;
+    }
+    if (t == _ip4tl29k.RewardSlice) {
+      return _ip4tl29k.RewardSlice.fromJson(data) as T;
+    }
+    if (t == _i4gtfwun.ThemeItem) {
+      return _i4gtfwun.ThemeItem.fromJson(data) as T;
+    }
+    if (t == _iotuzcr6.ThemeStore) {
+      return _iotuzcr6.ThemeStore.fromJson(data) as T;
+    }
+    if (t == _izf11uf3.WalletView) {
+      return _izf11uf3.WalletView.fromJson(data) as T;
+    }
+    if (t == _ie17qpis.ProfileException) {
+      return _ie17qpis.ProfileException.fromJson(data) as T;
+    }
+    if (t == _ib0yiys4.ProfileInput) {
+      return _ib0yiys4.ProfileInput.fromJson(data) as T;
+    }
+    if (t == _i7a0m7me.ProfileView) {
+      return _i7a0m7me.ProfileView.fromJson(data) as T;
+    }
+    if (t == _id1a33kr.QuizQuestion) {
+      return _id1a33kr.QuizQuestion.fromJson(data) as T;
+    }
+    if (t == _iyr4ok9x.QuizToday) {
+      return _iyr4ok9x.QuizToday.fromJson(data) as T;
+    }
+    if (t == _ixays1el.GpsRecord) {
+      return _ixays1el.GpsRecord.fromJson(data) as T;
+    }
+    if (t == _ijl0tr6b.GpsRecordInput) {
+      return _ijl0tr6b.GpsRecordInput.fromJson(data) as T;
+    }
+    if (t == _ihyrwhon.RecordException) {
+      return _ihyrwhon.RecordException.fromJson(data) as T;
+    }
+    if (t == _ipyparvp.RecordReceipt) {
+      return _ipyparvp.RecordReceipt.fromJson(data) as T;
+    }
+    if (t == _ir7rvxr1.RoutePoint) {
+      return _ir7rvxr1.RoutePoint.fromJson(data) as T;
+    }
+    if (t == _isc.getType<_i8mgtt64.AdException?>()) {
+      return (data != null ? _i8mgtt64.AdException.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_i5ffg0dz.AdIntent?>()) {
+      return (data != null ? _i5ffg0dz.AdIntent.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_ijoh8voo.AdPlatform?>()) {
+      return (data != null ? _ijoh8voo.AdPlatform.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_izhe0wsm.LoginChallenge?>()) {
+      return (data != null ? _izhe0wsm.LoginChallenge.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_iskwpc4e.LoginException?>()) {
+      return (data != null ? _iskwpc4e.LoginException.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_iw8ezytr.NaverLoginChallenge?>()) {
+      return (data != null
+              ? _iw8ezytr.NaverLoginChallenge.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_iy7y41or.BillingException?>()) {
+      return (data != null ? _iy7y41or.BillingException.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_ixe95a4n.EntitlementView?>()) {
+      return (data != null ? _ixe95a4n.EntitlementView.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_iqa89lpa.PurchaseConfiguration?>()) {
+      return (data != null
+              ? _iqa89lpa.PurchaseConfiguration.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_i8awtsqn.PurchaseInput?>()) {
+      return (data != null ? _i8awtsqn.PurchaseInput.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_iiesu012.PurchaseProduct?>()) {
+      return (data != null ? _iiesu012.PurchaseProduct.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_i0fbcnhc.PurchaseView?>()) {
+      return (data != null ? _i0fbcnhc.PurchaseView.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_izw8z7ou.Greeting?>()) {
+      return (data != null ? _izw8z7ou.Greeting.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_i94q6xjz.DailyQuiz?>()) {
+      return (data != null ? _i94q6xjz.DailyQuiz.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_ie37ihl8.DailyRecord?>()) {
+      return (data != null ? _ie37ihl8.DailyRecord.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_i4z7ptb2.DailyStepInput?>()) {
+      return (data != null ? _i4z7ptb2.DailyStepInput.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_i7moag3o.DayRoute?>()) {
+      return (data != null ? _i7moag3o.DayRoute.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_ilwrhsef.OutfitItem?>()) {
+      return (data != null ? _ilwrhsef.OutfitItem.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_i7c03me4.OutfitStore?>()) {
+      return (data != null ? _i7c03me4.OutfitStore.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_ixe21ogc.ProductException?>()) {
+      return (data != null ? _ixe21ogc.ProductException.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_iod7wzhm.RewardGrant?>()) {
+      return (data != null ? _iod7wzhm.RewardGrant.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_ip4tl29k.RewardSlice?>()) {
+      return (data != null ? _ip4tl29k.RewardSlice.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_i4gtfwun.ThemeItem?>()) {
+      return (data != null ? _i4gtfwun.ThemeItem.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_iotuzcr6.ThemeStore?>()) {
+      return (data != null ? _iotuzcr6.ThemeStore.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_izf11uf3.WalletView?>()) {
+      return (data != null ? _izf11uf3.WalletView.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_ie17qpis.ProfileException?>()) {
+      return (data != null ? _ie17qpis.ProfileException.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_ib0yiys4.ProfileInput?>()) {
+      return (data != null ? _ib0yiys4.ProfileInput.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_i7a0m7me.ProfileView?>()) {
+      return (data != null ? _i7a0m7me.ProfileView.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_id1a33kr.QuizQuestion?>()) {
+      return (data != null ? _id1a33kr.QuizQuestion.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_iyr4ok9x.QuizToday?>()) {
+      return (data != null ? _iyr4ok9x.QuizToday.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_ixays1el.GpsRecord?>()) {
+      return (data != null ? _ixays1el.GpsRecord.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_ijl0tr6b.GpsRecordInput?>()) {
+      return (data != null ? _ijl0tr6b.GpsRecordInput.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_ihyrwhon.RecordException?>()) {
+      return (data != null ? _ihyrwhon.RecordException.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_ipyparvp.RecordReceipt?>()) {
+      return (data != null ? _ipyparvp.RecordReceipt.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_ir7rvxr1.RoutePoint?>()) {
+      return (data != null ? _ir7rvxr1.RoutePoint.fromJson(data) : null) as T;
+    }
+    if (t == List<_i0fbcnhc.PurchaseView>) {
+      return (data as List)
+              .map((e) => deserialize<_i0fbcnhc.PurchaseView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_iiesu012.PurchaseProduct>) {
+      return (data as List)
+              .map((e) => deserialize<_iiesu012.PurchaseProduct>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<String>) {
+      return (data as List).map((e) => deserialize<String>(e)).toList() as T;
+    }
+    if (t == List<_i7moag3o.DayRoute>) {
+      return (data as List)
+              .map((e) => deserialize<_i7moag3o.DayRoute>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_ir7rvxr1.RoutePoint>) {
+      return (data as List)
+              .map((e) => deserialize<_ir7rvxr1.RoutePoint>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_ilwrhsef.OutfitItem>) {
+      return (data as List)
+              .map((e) => deserialize<_ilwrhsef.OutfitItem>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_ip4tl29k.RewardSlice>) {
+      return (data as List)
+              .map((e) => deserialize<_ip4tl29k.RewardSlice>(e))
+              .toList()
+          as T;
+    }
+    if (t == _isc.getType<List<_ip4tl29k.RewardSlice>?>()) {
+      return (data != null
+              ? (data as List)
+                    .map((e) => deserialize<_ip4tl29k.RewardSlice>(e))
+                    .toList()
+              : null)
+          as T;
+    }
+    if (t == List<_i4gtfwun.ThemeItem>) {
+      return (data as List)
+              .map((e) => deserialize<_i4gtfwun.ThemeItem>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i6924b5v.DailyRecord>) {
+      return (data as List)
+              .map((e) => deserialize<_i6924b5v.DailyRecord>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_ig075m1r.DailyQuiz>) {
+      return (data as List)
+              .map((e) => deserialize<_ig075m1r.DailyQuiz>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_iuif5p7z.QuizQuestion>) {
+      return (data as List)
+              .map((e) => deserialize<_iuif5p7z.QuizQuestion>(e))
+              .toList()
+          as T;
+    }
+    try {
+      return _iacc.Protocol().deserialize<T>(data, t);
+    } on _isc.DeserializationTypeNotFoundException catch (_) {}
+    try {
+      return _iaic.Protocol().deserialize<T>(data, t);
+    } on _isc.DeserializationTypeNotFoundException catch (_) {}
+    return super.deserialize<T>(data, t);
+  }
+
+  static String? getClassNameForType(Type type) {
+    return switch (type) {
+      _i8mgtt64.AdException => 'AdException',
+      _i5ffg0dz.AdIntent => 'AdIntent',
+      _ijoh8voo.AdPlatform => 'AdPlatform',
+      _izhe0wsm.LoginChallenge => 'LoginChallenge',
+      _iskwpc4e.LoginException => 'LoginException',
+      _iw8ezytr.NaverLoginChallenge => 'NaverLoginChallenge',
+      _iy7y41or.BillingException => 'BillingException',
+      _ixe95a4n.EntitlementView => 'EntitlementView',
+      _iqa89lpa.PurchaseConfiguration => 'PurchaseConfiguration',
+      _i8awtsqn.PurchaseInput => 'PurchaseInput',
+      _iiesu012.PurchaseProduct => 'PurchaseProduct',
+      _i0fbcnhc.PurchaseView => 'PurchaseView',
+      _izw8z7ou.Greeting => 'Greeting',
+      _i94q6xjz.DailyQuiz => 'DailyQuiz',
+      _ie37ihl8.DailyRecord => 'DailyRecord',
+      _i4z7ptb2.DailyStepInput => 'DailyStepInput',
+      _i7moag3o.DayRoute => 'DayRoute',
+      _ilwrhsef.OutfitItem => 'OutfitItem',
+      _i7c03me4.OutfitStore => 'OutfitStore',
+      _ixe21ogc.ProductException => 'ProductException',
+      _iod7wzhm.RewardGrant => 'RewardGrant',
+      _ip4tl29k.RewardSlice => 'RewardSlice',
+      _i4gtfwun.ThemeItem => 'ThemeItem',
+      _iotuzcr6.ThemeStore => 'ThemeStore',
+      _izf11uf3.WalletView => 'WalletView',
+      _ie17qpis.ProfileException => 'ProfileException',
+      _ib0yiys4.ProfileInput => 'ProfileInput',
+      _i7a0m7me.ProfileView => 'ProfileView',
+      _id1a33kr.QuizQuestion => 'QuizQuestion',
+      _iyr4ok9x.QuizToday => 'QuizToday',
+      _ixays1el.GpsRecord => 'GpsRecord',
+      _ijl0tr6b.GpsRecordInput => 'GpsRecordInput',
+      _ihyrwhon.RecordException => 'RecordException',
+      _ipyparvp.RecordReceipt => 'RecordReceipt',
+      _ir7rvxr1.RoutePoint => 'RoutePoint',
+      _ => null,
+    };
+  }
+
+  @override
+  String? getClassNameForObject(Object? data) {
+    String? className = super.getClassNameForObject(data);
+    if (className != null) return className;
+
+    if (data is Map<String, dynamic> && data['__className__'] is String) {
+      return (data['__className__'] as String).replaceFirst('balmatchum.', '');
+    }
+
+    switch (data) {
+      case _i8mgtt64.AdException():
+        return 'AdException';
+      case _i5ffg0dz.AdIntent():
+        return 'AdIntent';
+      case _ijoh8voo.AdPlatform():
+        return 'AdPlatform';
+      case _izhe0wsm.LoginChallenge():
+        return 'LoginChallenge';
+      case _iskwpc4e.LoginException():
+        return 'LoginException';
+      case _iw8ezytr.NaverLoginChallenge():
+        return 'NaverLoginChallenge';
+      case _iy7y41or.BillingException():
+        return 'BillingException';
+      case _ixe95a4n.EntitlementView():
+        return 'EntitlementView';
+      case _iqa89lpa.PurchaseConfiguration():
+        return 'PurchaseConfiguration';
+      case _i8awtsqn.PurchaseInput():
+        return 'PurchaseInput';
+      case _iiesu012.PurchaseProduct():
+        return 'PurchaseProduct';
+      case _i0fbcnhc.PurchaseView():
+        return 'PurchaseView';
+      case _izw8z7ou.Greeting():
+        return 'Greeting';
+      case _i94q6xjz.DailyQuiz():
+        return 'DailyQuiz';
+      case _ie37ihl8.DailyRecord():
+        return 'DailyRecord';
+      case _i4z7ptb2.DailyStepInput():
+        return 'DailyStepInput';
+      case _i7moag3o.DayRoute():
+        return 'DayRoute';
+      case _ilwrhsef.OutfitItem():
+        return 'OutfitItem';
+      case _i7c03me4.OutfitStore():
+        return 'OutfitStore';
+      case _ixe21ogc.ProductException():
+        return 'ProductException';
+      case _iod7wzhm.RewardGrant():
+        return 'RewardGrant';
+      case _ip4tl29k.RewardSlice():
+        return 'RewardSlice';
+      case _i4gtfwun.ThemeItem():
+        return 'ThemeItem';
+      case _iotuzcr6.ThemeStore():
+        return 'ThemeStore';
+      case _izf11uf3.WalletView():
+        return 'WalletView';
+      case _ie17qpis.ProfileException():
+        return 'ProfileException';
+      case _ib0yiys4.ProfileInput():
+        return 'ProfileInput';
+      case _i7a0m7me.ProfileView():
+        return 'ProfileView';
+      case _id1a33kr.QuizQuestion():
+        return 'QuizQuestion';
+      case _iyr4ok9x.QuizToday():
+        return 'QuizToday';
+      case _ixays1el.GpsRecord():
+        return 'GpsRecord';
+      case _ijl0tr6b.GpsRecordInput():
+        return 'GpsRecordInput';
+      case _ihyrwhon.RecordException():
+        return 'RecordException';
+      case _ipyparvp.RecordReceipt():
+        return 'RecordReceipt';
+      case _ir7rvxr1.RoutePoint():
+        return 'RoutePoint';
+    }
+    className = _iacc.Protocol().getClassNameForObject(data);
+    if (className != null) {
+      return className.contains('.')
+          ? className
+          : 'serverpod_auth_core.$className';
+    }
+    className = _iaic.Protocol().getClassNameForObject(data);
+    if (className != null) {
+      return className.contains('.')
+          ? className
+          : 'serverpod_auth_idp.$className';
+    }
+    return null;
+  }
+
+  @override
+  dynamic deserializeByClassName(Map<String, dynamic> data) {
+    var dataClassName = data['className'];
+    if (dataClassName is! String) {
+      return super.deserializeByClassName(data);
+    }
+    if (dataClassName == 'AdException') {
+      return deserialize<_i8mgtt64.AdException>(data['data']);
+    }
+    if (dataClassName == 'AdIntent') {
+      return deserialize<_i5ffg0dz.AdIntent>(data['data']);
+    }
+    if (dataClassName == 'AdPlatform') {
+      return deserialize<_ijoh8voo.AdPlatform>(data['data']);
+    }
+    if (dataClassName == 'LoginChallenge') {
+      return deserialize<_izhe0wsm.LoginChallenge>(data['data']);
+    }
+    if (dataClassName == 'LoginException') {
+      return deserialize<_iskwpc4e.LoginException>(data['data']);
+    }
+    if (dataClassName == 'NaverLoginChallenge') {
+      return deserialize<_iw8ezytr.NaverLoginChallenge>(data['data']);
+    }
+    if (dataClassName == 'BillingException') {
+      return deserialize<_iy7y41or.BillingException>(data['data']);
+    }
+    if (dataClassName == 'EntitlementView') {
+      return deserialize<_ixe95a4n.EntitlementView>(data['data']);
+    }
+    if (dataClassName == 'PurchaseConfiguration') {
+      return deserialize<_iqa89lpa.PurchaseConfiguration>(data['data']);
+    }
+    if (dataClassName == 'PurchaseInput') {
+      return deserialize<_i8awtsqn.PurchaseInput>(data['data']);
+    }
+    if (dataClassName == 'PurchaseProduct') {
+      return deserialize<_iiesu012.PurchaseProduct>(data['data']);
+    }
+    if (dataClassName == 'PurchaseView') {
+      return deserialize<_i0fbcnhc.PurchaseView>(data['data']);
+    }
+    if (dataClassName == 'Greeting') {
+      return deserialize<_izw8z7ou.Greeting>(data['data']);
+    }
+    if (dataClassName == 'DailyQuiz') {
+      return deserialize<_i94q6xjz.DailyQuiz>(data['data']);
+    }
+    if (dataClassName == 'DailyRecord') {
+      return deserialize<_ie37ihl8.DailyRecord>(data['data']);
+    }
+    if (dataClassName == 'DailyStepInput') {
+      return deserialize<_i4z7ptb2.DailyStepInput>(data['data']);
+    }
+    if (dataClassName == 'DayRoute') {
+      return deserialize<_i7moag3o.DayRoute>(data['data']);
+    }
+    if (dataClassName == 'OutfitItem') {
+      return deserialize<_ilwrhsef.OutfitItem>(data['data']);
+    }
+    if (dataClassName == 'OutfitStore') {
+      return deserialize<_i7c03me4.OutfitStore>(data['data']);
+    }
+    if (dataClassName == 'ProductException') {
+      return deserialize<_ixe21ogc.ProductException>(data['data']);
+    }
+    if (dataClassName == 'RewardGrant') {
+      return deserialize<_iod7wzhm.RewardGrant>(data['data']);
+    }
+    if (dataClassName == 'RewardSlice') {
+      return deserialize<_ip4tl29k.RewardSlice>(data['data']);
+    }
+    if (dataClassName == 'ThemeItem') {
+      return deserialize<_i4gtfwun.ThemeItem>(data['data']);
+    }
+    if (dataClassName == 'ThemeStore') {
+      return deserialize<_iotuzcr6.ThemeStore>(data['data']);
+    }
+    if (dataClassName == 'WalletView') {
+      return deserialize<_izf11uf3.WalletView>(data['data']);
+    }
+    if (dataClassName == 'ProfileException') {
+      return deserialize<_ie17qpis.ProfileException>(data['data']);
+    }
+    if (dataClassName == 'ProfileInput') {
+      return deserialize<_ib0yiys4.ProfileInput>(data['data']);
+    }
+    if (dataClassName == 'ProfileView') {
+      return deserialize<_i7a0m7me.ProfileView>(data['data']);
+    }
+    if (dataClassName == 'QuizQuestion') {
+      return deserialize<_id1a33kr.QuizQuestion>(data['data']);
+    }
+    if (dataClassName == 'QuizToday') {
+      return deserialize<_iyr4ok9x.QuizToday>(data['data']);
+    }
+    if (dataClassName == 'GpsRecord') {
+      return deserialize<_ixays1el.GpsRecord>(data['data']);
+    }
+    if (dataClassName == 'GpsRecordInput') {
+      return deserialize<_ijl0tr6b.GpsRecordInput>(data['data']);
+    }
+    if (dataClassName == 'RecordException') {
+      return deserialize<_ihyrwhon.RecordException>(data['data']);
+    }
+    if (dataClassName == 'RecordReceipt') {
+      return deserialize<_ipyparvp.RecordReceipt>(data['data']);
+    }
+    if (dataClassName == 'RoutePoint') {
+      return deserialize<_ir7rvxr1.RoutePoint>(data['data']);
+    }
+    if (dataClassName.startsWith('serverpod_auth_core.')) {
+      data['className'] = dataClassName.substring(20);
+      return _iacc.Protocol().deserializeByClassName(data);
+    }
+    if (dataClassName.startsWith('serverpod_auth_idp.')) {
+      data['className'] = dataClassName.substring(19);
+      return _iaic.Protocol().deserializeByClassName(data);
+    }
+    return super.deserializeByClassName(data);
+  }
+
+  void _registerHostProtocols() {
+    _iacc.Protocol().registerHostProtocol('balmatchum', this);
+    _iaic.Protocol().registerHostProtocol('balmatchum', this);
+  }
+
+  @override
+  String getModuleName() => 'balmatchum';
+
+  /// Maps any `Record`s known to this [Protocol] to their JSON representation
+  ///
+  /// Throws in case the record type is not known.
+  ///
+  /// This method will return `null` (only) for `null` inputs.
+  Map<String, dynamic>? mapRecordToJson(Record? record) {
+    if (record == null) {
+      return null;
+    }
+    try {
+      return _iacc.Protocol().mapRecordToJson(record);
+    } catch (_) {}
+    try {
+      return _iaic.Protocol().mapRecordToJson(record);
+    } catch (_) {}
+    throw Exception('Unsupported record type ${record.runtimeType}');
+  }
+}

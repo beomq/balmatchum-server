@@ -1,0 +1,6 @@
+class: ThemeStore
+fields:
+  items: List<ThemeItem>
+  equippedTheme: String
+  balance: int
+  fixtureLabel: String?
