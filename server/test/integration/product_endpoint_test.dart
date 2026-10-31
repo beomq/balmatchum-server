@@ -1289,6 +1289,7 @@ void main() {
         );
         // Pre-launch legacy rows may contain coordinates; deletion must still
         // purge them even though the upload endpoint now refuses location.
+        // Day numbers are what the normalization-step1 backfill assigns.
         final legacy = await StoredGpsRecord.db.insertRow(
           a,
           StoredGpsRecord(
@@ -1296,6 +1297,8 @@ void main() {
             clientRecordId: input.clientRecordId,
             persistedAt: fixedNow,
             payload: input,
+            firstLocalDay: localDayNumber(input.startedAt),
+            lastLocalDay: localDayNumber(input.endedAt),
           ),
         );
         expect(

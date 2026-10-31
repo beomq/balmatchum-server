@@ -293,6 +293,232 @@ void main() {
         isEmpty,
       );
     });
+
+    group('KST day-number predicate', () {
+      GpsRecordInput span(DateTime start, DateTime end) =>
+          record().copyWith(startedAt: start, endedAt: end);
+
+      Future<Map<UuidValue, GpsRecordInput>> saveAll(
+        TestSessionBuilder user,
+        Iterable<GpsRecordInput> inputs,
+      ) async => {
+        for (final input in inputs)
+          (await endpoints.records.saveConfirmed(user, input)).recordId: input,
+      };
+
+      Future<void> expectRoutesMatchTouchesDay(
+        Map<UuidValue, GpsRecordInput> live,
+        List<String> dates,
+      ) async {
+        for (final date in dates) {
+          final routes = (await endpoints.product.getDay(owner, date)).routes;
+          expect(
+            routes.map((route) => route.recordId).toSet(),
+            {
+              for (final entry in live.entries)
+                if (touchesDay(entry.value, date)) entry.key,
+            },
+            reason: date,
+          );
+        }
+      }
+
+      test('localDayNumber equals the migration backfill expression', () async {
+        final session = owner.build();
+        for (final instant in [
+          DateTime.utc(1969, 12, 31, 14, 59, 59, 999, 999),
+          DateTime.utc(1969, 12, 31, 15),
+          DateTime.utc(2026, 10, 9, 14, 59, 59, 999, 999),
+          DateTime.utc(2026, 10, 9, 15),
+          DateTime.utc(2026, 12, 31, 14, 59, 59, 999),
+          DateTime.utc(2026, 12, 31, 15),
+          DateTime.utc(2028, 2, 28, 15),
+          DateTime.utc(2028, 2, 29, 14, 59, 59, 999, 999),
+        ]) {
+          final rows = await session.db.unsafeQuery(
+            'SELECT floor((extract(epoch from CAST(@ts AS timestamptz)) '
+            '+ 32400) / 86400)::int',
+            parameters: QueryParameters.named({
+              'ts': instant.toIso8601String(),
+            }),
+          );
+          expect(
+            localDayNumber(instant),
+            rows.single.single,
+            reason: '$instant',
+          );
+        }
+        expect(localDayNumber(dayStart('1970-01-01')), 0);
+        expect(localDayNumber(dayStart('1969-12-31')), -1);
+        expect(
+          localDayNumber(dayStart('2028-03-01')) -
+              localDayNumber(dayStart('2028-02-28')),
+          2,
+        );
+      });
+
+      test(
+        'getDay returns exactly the touchesDay set across KST midnights',
+        () async {
+          final live = await saveAll(owner, [
+            // KST 23:59:59.999999 -> 00:00: belongs to both dates.
+            span(
+              DateTime.utc(2026, 10, 9, 14, 59, 59, 999, 999),
+              DateTime.utc(2026, 10, 9, 15),
+            ),
+            // Ends at KST 23:59:59.999: only the earlier date.
+            span(
+              DateTime.utc(2026, 10, 9, 14),
+              DateTime.utc(2026, 10, 9, 14, 59, 59, 999),
+            ),
+            // Instant exactly at KST midnight: only the new date.
+            span(DateTime.utc(2026, 10, 9, 15), DateTime.utc(2026, 10, 9, 15)),
+            // Midnight to next midnight: two dates.
+            span(
+              DateTime.utc(2026, 10, 10, 15),
+              DateTime.utc(2026, 10, 11, 15),
+            ),
+            // Three-plus days: middle dates included.
+            span(
+              DateTime.utc(2026, 10, 12, 14),
+              DateTime.utc(2026, 10, 14, 16),
+            ),
+            // Month end.
+            span(
+              DateTime.utc(2026, 10, 31, 14, 30),
+              DateTime.utc(2026, 10, 31, 15, 30),
+            ),
+            // Year end.
+            span(
+              DateTime.utc(2026, 12, 31, 14, 59, 59, 999),
+              DateTime.utc(2026, 12, 31, 15),
+            ),
+            // Leap day.
+            span(DateTime.utc(2028, 2, 28, 15), DateTime.utc(2028, 2, 29, 15)),
+          ]);
+          // Another owner's overlapping record must never appear.
+          await saveAll(other, [
+            span(DateTime.utc(2026, 10, 9), DateTime.utc(2026, 10, 15)),
+          ]);
+          final dates = [
+            for (var day = 8; day <= 16; day++)
+              '2026-10-${day.toString().padLeft(2, '0')}',
+            '2026-10-31',
+            '2026-11-01',
+            '2026-12-31',
+            '2027-01-01',
+            '2028-02-28',
+            '2028-02-29',
+            '2028-03-01',
+          ];
+          await expectRoutesMatchTouchesDay(live, dates);
+          // Guard against a vacuous match on the midnight edges.
+          final ids = live.keys.toList();
+          Future<Set<UuidValue>> on(String date) async => {
+            for (final route in (await endpoints.product.getDay(
+              owner,
+              date,
+            )).routes)
+              route.recordId,
+          };
+          expect(await on('2026-10-09'), {ids[0], ids[1]});
+          expect(await on('2026-10-10'), {ids[0], ids[2]});
+          expect(await on('2026-10-12'), {ids[3], ids[4]});
+          expect(await on('2026-10-13'), {ids[4]});
+          expect(await on('2027-01-01'), {ids[6]});
+          expect(await on('2028-02-29'), {ids[7]});
+          expect(await on('2028-03-01'), {ids[7]});
+
+          final unmatched = await owner.build().db.unsafeQuery(
+            'SELECT count(*) FROM gps_record WHERE '
+            '"firstLocalDay" IS DISTINCT FROM floor((extract(epoch from '
+            '(payload->>\'startedAt\')::timestamptz) + 32400) / 86400)::int '
+            'OR "lastLocalDay" IS DISTINCT FROM floor((extract(epoch from '
+            '(payload->>\'endedAt\')::timestamptz) + 32400) / 86400)::int',
+          );
+          expect(unmatched.single.single, 0);
+        },
+      );
+
+      test(
+        'deleteDay tombstones only that KST day and keeps blocking resends',
+        () async {
+          final crossing = span(
+            DateTime.utc(2026, 10, 12, 14),
+            DateTime.utc(2026, 10, 14, 16),
+          );
+          final live = await saveAll(owner, [
+            crossing,
+            span(
+              DateTime.utc(2026, 10, 12, 14),
+              DateTime.utc(2026, 10, 12, 14, 59, 59, 999, 999),
+            ),
+            span(
+              DateTime.utc(2026, 10, 13, 15),
+              DateTime.utc(2026, 10, 13, 16),
+            ),
+          ]);
+          final otherIds = await saveAll(other, [
+            span(DateTime.utc(2026, 10, 13, 1), DateTime.utc(2026, 10, 13, 2)),
+          ]);
+          final crossingId = live.keys.first;
+
+          await endpoints.product.deleteDay(owner, '2026-10-13', 'delete-13');
+
+          final session = owner.build();
+          final tombstone = await StoredGpsRecord.db.findById(
+            session,
+            crossingId,
+          );
+          expect(tombstone!.deleted, isTrue);
+          expect(tombstone.payload, isNull);
+          expect(tombstone.firstLocalDay, isNull);
+          expect(tombstone.lastLocalDay, isNull);
+          for (final id in [...live.keys.skip(1), ...otherIds.keys]) {
+            final kept = await StoredGpsRecord.db.findById(session, id);
+            expect(kept!.deleted, isFalse);
+            expect(kept.firstLocalDay, isNotNull);
+          }
+          live.remove(crossingId);
+          await expectRoutesMatchTouchesDay(live, [
+            '2026-10-12',
+            '2026-10-13',
+            '2026-10-14',
+          ]);
+
+          // Same clientRecordId stays deleted; a midnight end touches the day.
+          for (final input in [
+            crossing,
+            span(
+              DateTime.utc(2026, 10, 12, 14, 30),
+              DateTime.utc(2026, 10, 12, 15),
+            ),
+          ]) {
+            await expectLater(
+              endpoints.records.saveConfirmed(owner, input),
+              failsWith('dayDeleted'),
+            );
+          }
+          // Neighbouring instants and other owners are not blocked.
+          for (final input in [
+            span(
+              DateTime.utc(2026, 10, 12, 14, 30),
+              DateTime.utc(2026, 10, 12, 14, 59, 59, 999, 999),
+            ),
+            span(
+              DateTime.utc(2026, 10, 13, 15),
+              DateTime.utc(2026, 10, 13, 15),
+            ),
+          ]) {
+            await endpoints.records.saveConfirmed(owner, input);
+          }
+          await endpoints.records.saveConfirmed(
+            other,
+            span(DateTime.utc(2026, 10, 13, 3), DateTime.utc(2026, 10, 13, 4)),
+          );
+        },
+      );
+    });
   });
 
   // Real independent transactions are essential for the unique-key race.

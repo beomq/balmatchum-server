@@ -50,6 +50,17 @@ String localDate(DateTime instant) => instant
     .toIso8601String()
     .substring(0, 10);
 
+const _kstOffsetMicros = 9 * Duration.microsecondsPerHour;
+
+/// KST calendar day as days since 1970-01-01. Mirrors the migration backfill:
+/// floor((epoch + 9h) / 1 day), floored (not truncated) before the epoch.
+int localDayNumber(DateTime instant) {
+  final shifted = instant.toUtc().microsecondsSinceEpoch + _kstOffsetMicros;
+  const day = Duration.microsecondsPerDay;
+  return (shifted - shifted % day) ~/ day;
+}
+
+/// Reference semantics for the indexed day predicate; kept for tests.
 bool touchesDay(GpsRecordInput input, String date) {
   final start = dayStart(date);
   final end = start.add(const Duration(days: 1));
@@ -324,14 +335,9 @@ class ProductService {
         : null;
     final paths = <DayRoute>[];
     if (routes && !value.deleted) {
-      final records = await StoredGpsRecord.db.find(
-        session,
-        where: (t) => t.owner.equals(owner) & t.deleted.equals(false),
-        transaction: tx,
-      );
+      final records = await gpsRecordsOnDay(value.date);
       for (final record in records) {
         final input = record.payload!;
-        if (!touchesDay(input, value.date)) continue;
         paths.add(
           DayRoute(
             recordId: record.id!,
@@ -566,22 +572,32 @@ class ProductService {
         parameters: QueryParameters.named({'owner': owner, 'date': date}),
         transaction: tx,
       );
-      final records = await StoredGpsRecord.db.find(
-        session,
-        where: (t) => t.owner.equals(owner) & t.deleted.equals(false),
-        transaction: tx,
-      );
-      for (final record in records) {
-        if (touchesDay(record.payload!, date)) {
-          record.payload = null;
-          record.deleted = true;
-          await StoredGpsRecord.db.updateRow(session, record, transaction: tx);
-        }
+      for (final record in await gpsRecordsOnDay(date)) {
+        record.payload = null;
+        record.deleted = true;
+        record.firstLocalDay = null;
+        record.lastLocalDay = null;
+        await StoredGpsRecord.db.updateRow(session, record, transaction: tx);
       }
     }
     // Store no snapshot/route in an idempotency response that could expose deletion.
     await remember(requestId, payload, value.deletionVersion);
     return view(value);
+  }
+
+  /// Live records whose [first, last] KST day range contains [date]; the same
+  /// set as [touchesDay] (an end exactly at midnight belongs to the new day).
+  Future<List<StoredGpsRecord>> gpsRecordsOnDay(String date) {
+    final target = localDayNumber(dayStart(date));
+    return StoredGpsRecord.db.find(
+      session,
+      where: (t) =>
+          t.owner.equals(owner) &
+          t.deleted.equals(false) &
+          (t.firstLocalDay <= target) &
+          (t.lastLocalDay >= target),
+      transaction: tx,
+    );
   }
 
   Future<List<DailyRecord>> deletions(int afterVersion) async {
