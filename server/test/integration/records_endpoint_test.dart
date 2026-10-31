@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:balmatchum_server/src/generated/protocol.dart';
+import 'package:balmatchum_server/src/product/product_service.dart';
 import 'package:balmatchum_server/src/records/records_endpoint.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
@@ -325,6 +327,50 @@ void main() {
         receipts.first.recordId,
       );
       expect(saved.payload.toJson(), input.toJson());
+    });
+  }, rollbackDatabase: RollbackDatabase.disabled);
+
+  // The lock holder needs its own committed transaction beside the reader.
+  withServerpod('Lock-free record reads', (builder, endpoints) {
+    final owner = builder.copyWith(
+      authentication: AuthenticationOverride.authenticationInfo(
+        const Uuid().v4(),
+        {},
+      ),
+    );
+    setUp(() async {
+      final session = owner.build();
+      await AuthUser.db.insertRow(
+        session,
+        AuthUser(
+          id: UuidValue.fromString(session.authenticated!.userIdentifier),
+          scopeNames: {},
+        ),
+      );
+    });
+    test('getMine completes while the account lock is held', () async {
+      final receipt = await endpoints.records.saveConfirmed(owner, record());
+      final locked = Completer<void>();
+      final release = Completer<void>();
+      final holder = owner.build().db.transaction((tx) async {
+        await lockProductAccount(
+          owner.build(),
+          owner.build().authenticated!.userIdentifier,
+          tx,
+        );
+        locked.complete();
+        await release.future;
+      });
+      try {
+        await locked.future;
+        final saved = await endpoints.records
+            .getMine(owner, receipt.recordId)
+            .timeout(const Duration(seconds: 10));
+        expect(saved.receipt.toJson(), receipt.toJson());
+      } finally {
+        release.complete();
+        await holder;
+      }
     });
   }, rollbackDatabase: RollbackDatabase.disabled);
 }

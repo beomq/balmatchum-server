@@ -60,12 +60,11 @@ class RecordsEndpoint extends Endpoint {
 
   Future<GpsRecord> getMine(Session session, UuidValue recordId) async {
     final owner = session.authenticated!.userIdentifier;
-    return session.db.transaction((transaction) async {
-      await lockProductAccount(session, owner, transaction);
+    return ProductService.read(session, (service) async {
       final stored = await StoredGpsRecord.db.findFirstRow(
         session,
         where: (t) => t.id.equals(recordId) & t.owner.equals(owner),
-        transaction: transaction,
+        transaction: service.tx,
       );
       if (stored == null) throw RecordException(code: 'notFound');
       if (stored.deleted) throw RecordException(code: 'dayDeleted');
