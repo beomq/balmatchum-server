@@ -73,7 +73,7 @@ ProfileView _view(DogProfile value) => ProfileView(
 extension ProfileService on ProductService {
   Future<DogProfile?> _profile() => DogProfile.db.findFirstRow(
     session,
-    where: (t) => t.owner.equals(owner),
+    where: (t) => t.authUserId.equals(authUserIdOf(owner)),
     transaction: tx,
   );
 

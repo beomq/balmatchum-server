@@ -63,7 +63,8 @@ Future<AuthSuccess> bootstrapDevTestUser(Session session) async {
     final starter = await PointEntry.db.findFirstRow(
       session,
       where: (t) =>
-          t.owner.equals(owner) & t.entryKey.equals('dev-harness-starter-v1'),
+          t.authUserId.equals(authUserIdOf(owner)) &
+          t.entryKey.equals('dev-harness-starter-v1'),
       transaction: transaction,
     );
     if (starter == null) {

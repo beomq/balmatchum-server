@@ -19,9 +19,16 @@ const outfitPurchasePolicyVersion = 'outfit-purchase-v1-20261027';
 const stepsPerPoint = 100;
 const dailyBaseCap = 100;
 
-/// AuthUser foreign key written next to the legacy `owner` column by every
-/// user-row insert, so the dual write has one place to change.
-UuidValue authUserIdOf(String owner) => UuidValue.fromString(owner);
+/// User-scoped queries and dual writes share the same AuthUser identity.
+UuidValue authUserIdOf(String owner) {
+  try {
+    return UuidValue.withValidation(owner);
+  } on FormatException {
+    throw NotAuthorizedException(
+      reason: AuthenticationFailureReason.unauthenticated,
+    );
+  }
+}
 
 bool productFixturesEnabled(Session session) {
   final config = session.server.serverpod.config;
@@ -83,7 +90,7 @@ Future<ProductAccount> lockProductAccount(
 ) async {
   final user = await AuthUser.db.findFirstRow(
     session,
-    where: (t) => t.id.equals(UuidValue.fromString(owner)),
+    where: (t) => t.id.equals(authUserIdOf(owner)),
     lockMode: LockMode.forUpdate,
     transaction: tx,
   );
@@ -100,7 +107,7 @@ Future<ProductAccount> lockProductAccount(
   );
   return (await ProductAccount.db.findFirstRow(
     session,
-    where: (t) => t.owner.equals(owner),
+    where: (t) => t.authUserId.equals(authUserIdOf(owner)),
     lockMode: LockMode.forUpdate,
     transaction: tx,
   ))!;
@@ -113,11 +120,11 @@ Future<List<List<dynamic>>> reconcilePointBalances(Session session) =>
       '''
       WITH ledger AS (
         SELECT owner,
-          COALESCE(SUM(amount) FILTER (WHERE "policyVersion" IN
+          COALESCE(SUM(ledger_entry.amount) FILTER (WHERE "policyVersion" IN
             (@steps, @quiz, @theme, @outfit)), 0) AS balance,
-          COALESCE(SUM(amount) FILTER (WHERE "policyVersion" = @fixture), 0)
+          COALESCE(SUM(ledger_entry.amount) FILTER (WHERE "policyVersion" = @fixture), 0)
             AS fixture_balance
-        FROM point_entry GROUP BY owner
+        FROM point_entry ledger_entry GROUP BY owner
       )
       SELECT COALESCE(a.owner, l.owner), a.balance,
         COALESCE(l.balance, 0)::bigint, a."fixtureBalance",
@@ -173,7 +180,7 @@ class ProductService {
         final account =
             await ProductAccount.db.findFirstRow(
               session,
-              where: (t) => t.owner.equals(owner),
+              where: (t) => t.authUserId.equals(authUserIdOf(owner)),
               transaction: tx,
             ) ??
             ProductAccount(owner: owner);
@@ -190,7 +197,7 @@ class ProductService {
     // outside the transaction without taking a lock; reads stay read-only.
     final user = await AuthUser.db.findById(
       session,
-      UuidValue.fromString(owner),
+      authUserIdOf(owner),
     );
     if (user == null) {
       throw NotAuthorizedException(
@@ -204,7 +211,8 @@ class ProductService {
     dayStart(date);
     return await ProductDay.db.findFirstRow(
           session,
-          where: (t) => t.owner.equals(owner) & t.date.equals(date),
+          where: (t) =>
+              t.authUserId.equals(authUserIdOf(owner)) & t.date.equals(date),
           transaction: tx,
         ) ??
         ProductDay(
@@ -233,7 +241,9 @@ class ProductService {
     }
     final request = await ProductRequest.db.findFirstRow(
       session,
-      where: (t) => t.owner.equals(owner) & t.requestId.equals(requestId),
+      where: (t) =>
+          t.authUserId.equals(authUserIdOf(owner)) &
+          t.requestId.equals(requestId),
       transaction: tx,
     );
     if (request == null) return null;
@@ -284,28 +294,8 @@ class ProductService {
     return inserted;
   }
 
-  Future<int> balance({bool fixture = false}) async {
-    final result = await session.db.unsafeQuery(
-      'SELECT COALESCE(SUM(amount), 0) FROM point_entry '
-      'WHERE owner = @owner AND ("policyVersion" = @policy '
-      'OR "policyVersion" = @quizPolicy '
-      'OR "policyVersion" = @themePolicy '
-      'OR "policyVersion" = @outfitPolicy)',
-      parameters: QueryParameters.named({
-        'owner': owner,
-        'policy': fixture ? productFixtureLabel : stepPolicyVersion,
-        'quizPolicy': fixture ? productFixtureLabel : quizPolicyVersion,
-        'themePolicy': fixture
-            ? productFixtureLabel
-            : themePurchasePolicyVersion,
-        'outfitPolicy': fixture
-            ? productFixtureLabel
-            : outfitPurchasePolicyVersion,
-      }),
-      transaction: tx,
-    );
-    return int.parse(result.single[0].toString());
-  }
+  Future<int> balance({bool fixture = false}) async =>
+      fixture ? account.fixtureBalance : account.balance;
 
   Future<WalletView> wallet() async => WalletView(
     balance: await balance(),
@@ -373,7 +363,7 @@ class ProductService {
       PointEntry.db.find(
         session,
         where: (t) =>
-            t.owner.equals(owner) &
+            t.authUserId.equals(authUserIdOf(owner)) &
             (t.date >= fromDate) &
             (t.date <= toDate) &
             t.kind.equals('steps') &
@@ -464,7 +454,9 @@ class ProductService {
       for (final value in await ProductDay.db.find(
         session,
         where: (t) =>
-            t.owner.equals(owner) & (t.date >= fromDate) & (t.date <= toDate),
+            t.authUserId.equals(authUserIdOf(owner)) &
+            (t.date >= fromDate) &
+            (t.date <= toDate),
         transaction: tx,
       ))
         value.date: value,
@@ -537,7 +529,7 @@ class ProductService {
     final previous = await StepRevision.db.findFirstRow(
       session,
       where: (t) =>
-          t.owner.equals(owner) &
+          t.authUserId.equals(authUserIdOf(owner)) &
           t.date.equals(input.date) &
           t.generation.equals(input.streamGeneration) &
           t.revision.equals(input.revision),
@@ -611,7 +603,8 @@ class ProductService {
       await saveDay(value);
       await StepRevision.db.deleteWhere(
         session,
-        where: (t) => t.owner.equals(owner) & t.date.equals(date),
+        where: (t) =>
+            t.authUserId.equals(authUserIdOf(owner)) & t.date.equals(date),
         transaction: tx,
       );
       await PointEntry.db.updateWhere(
@@ -621,7 +614,8 @@ class ProductService {
           t.throughUnits(null),
           t.slices(null),
         ],
-        where: (t) => t.owner.equals(owner) & t.date.equals(date),
+        where: (t) =>
+            t.authUserId.equals(authUserIdOf(owner)) & t.date.equals(date),
         transaction: tx,
       );
       // Retry receipts duplicate the same units. Preserve their key, digest,
@@ -630,9 +624,13 @@ class ProductService {
         'UPDATE product_request SET result = '
         '((result::jsonb - \'slices\' - \'basePoints\') || '
         '\'{"fromUnits":0,"throughUnits":0}\'::jsonb)::text '
-        'WHERE owner = @owner AND result::jsonb ->> \'date\' = @date '
+        'WHERE "authUserId" = CAST(@id AS uuid) '
+        'AND result::jsonb ->> \'date\' = @date '
         'AND result::jsonb ? \'ledgerId\'',
-        parameters: QueryParameters.named({'owner': owner, 'date': date}),
+        parameters: QueryParameters.named({
+          'id': owner,
+          'date': date,
+        }),
         transaction: tx,
       );
       for (final record in await gpsRecordsOnDay(date)) {
@@ -655,7 +653,7 @@ class ProductService {
     return StoredGpsRecord.db.find(
       session,
       where: (t) =>
-          t.owner.equals(owner) &
+          t.authUserId.equals(authUserIdOf(owner)) &
           t.deleted.equals(false) &
           (t.firstLocalDay <= target) &
           (t.lastLocalDay >= target),
@@ -668,7 +666,7 @@ class ProductService {
     final values = await ProductDay.db.find(
       session,
       where: (t) =>
-          t.owner.equals(owner) &
+          t.authUserId.equals(authUserIdOf(owner)) &
           t.deleted.equals(true) &
           (t.deletionVersion > afterVersion),
       orderBy: (t) => t.deletionVersion,

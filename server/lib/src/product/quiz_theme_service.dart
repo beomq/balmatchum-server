@@ -37,7 +37,8 @@ extension QuizThemeService on ProductService {
     requireProductFixtures(session);
     final existing = await QuizState.db.findFirstRow(
       session,
-      where: (t) => t.owner.equals(owner) & t.date.equals(date),
+      where: (t) =>
+          t.authUserId.equals(authUserIdOf(owner)) & t.date.equals(date),
       transaction: tx,
     );
     if (existing != null) return existing;
@@ -64,7 +65,7 @@ extension QuizThemeService on ProductService {
     final values = await QuizState.db.find(
       session,
       where: (t) =>
-          t.owner.equals(owner) &
+          t.authUserId.equals(authUserIdOf(owner)) &
           t.answerIndex.notEquals(null) &
           (t.date < beforeDate),
       orderBy: (t) => t.date.desc(),
@@ -122,7 +123,7 @@ extension QuizThemeService on ProductService {
   Future<ThemeStore> themes() async {
     final owned = await ThemeOwnership.db.find(
       session,
-      where: (t) => t.owner.equals(owner),
+      where: (t) => t.authUserId.equals(authUserIdOf(owner)),
       transaction: tx,
     );
     final fixture = productFixturesEnabled(session);

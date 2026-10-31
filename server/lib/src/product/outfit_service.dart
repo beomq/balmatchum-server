@@ -14,12 +14,12 @@ extension OutfitService on ProductService {
   Future<OutfitStore> outfits() async {
     final owned = await OutfitOwnership.db.find(
       session,
-      where: (t) => t.owner.equals(owner),
+      where: (t) => t.authUserId.equals(authUserIdOf(owner)),
       transaction: tx,
     );
     final dog = await DogProfile.db.findFirstRow(
       session,
-      where: (t) => t.owner.equals(owner),
+      where: (t) => t.authUserId.equals(authUserIdOf(owner)),
       transaction: tx,
     );
     final fixture = productFixturesEnabled(session);

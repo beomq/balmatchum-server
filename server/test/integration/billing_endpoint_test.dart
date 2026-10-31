@@ -540,6 +540,7 @@ void main() {
         admin,
         DogProfile(
           owner: a.owner,
+          authUserId: authUserIdOf(a.owner),
           breedId: 'shih-tzu',
           name: 'Balance dog',
           sex: 'female',
