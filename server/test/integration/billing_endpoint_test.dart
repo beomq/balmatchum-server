@@ -525,6 +525,153 @@ void main() {
   }
 
   test(
+    'materialized balance follows every production write and replay',
+    () async {
+      final a = await user();
+      purchase('balance-lifetime', a.binding);
+      await a.client.billing.verifyPurchase(input('balance-lifetime'));
+      final content = await File('assets/quiz/reviewed-v1.json').readAsString();
+      final bank = withClock(
+        Clock.fixed(DateTime.utc(2026, 10, 31)),
+        () => QuizBank.parse(content),
+      );
+      await configureQuizBank(pod, bank: bank);
+      await DogProfile.db.insertRow(
+        admin,
+        DogProfile(
+          owner: a.owner,
+          breedId: 'shih-tzu',
+          name: 'Balance dog',
+          sex: 'female',
+          dailyGoal: 5000,
+          firstMetAt: now,
+        ),
+      );
+
+      Future<void> invariant(int expected) async {
+        final account = (await ProductAccount.db.findFirstRow(
+          admin,
+          where: (t) => t.owner.equals(a.owner),
+        ))!;
+        expect(account.balance, expected);
+        expect(account.fixtureBalance, 0);
+        final entries = await PointEntry.db.find(
+          admin,
+          where: (t) => t.owner.equals(a.owner),
+        );
+        expect(entries.fold<int>(0, (sum, e) => sum + e.amount), expected);
+        expect(await reconcilePointBalances(admin), isEmpty);
+      }
+
+      final freeDay = await steps(a.client, 700);
+      Future<api.RewardGrant> free() => a.client.product.claimDay(
+        freeDay.date,
+        'balance-free',
+        freeDay.revision,
+      );
+      expect((await free()).amount, 7);
+      await invariant(7);
+      final adDay = await steps(a.client, 1000, revision: 2);
+      final intent = await verifiedAd(
+        a.client,
+        'dailyReward',
+        adDay.date,
+        adDay.revision,
+      );
+      Future<api.RewardGrant> ad() => a.client.product.claimDayWithAd(
+        adDay.date,
+        'balance-ad',
+        adDay.revision,
+        intent.id,
+      );
+      expect((await ad()).amount, 6);
+      await invariant(13);
+      final premiumDay = await steps(a.client, 1200, revision: 3);
+      Future<api.RewardGrant> premium() => a.client.product.claimDayWithPremium(
+        premiumDay.date,
+        'balance-premium',
+        premiumDay.revision,
+      );
+      expect((await premium()).amount, 4);
+      await invariant(17);
+      final question = (await a.client.quiz.getToday()).free!;
+      Future<api.QuizQuestion> answer() => a.client.quiz.answer(
+        question.assignmentId,
+        question.questionId,
+        question.version,
+        0,
+        'balance-quiz',
+      );
+      expect((await answer()).awardedPoints, 2);
+      await invariant(19);
+      Future<api.ThemeStore> theme() =>
+          a.client.product.purchaseTheme('cloudy', 'balance-theme');
+      expect((await theme()).balance, 16);
+      await invariant(16);
+      Future<api.OutfitStore> outfit() =>
+          a.client.product.purchaseOutfit('vest-low-v', 'balance-outfit');
+      expect((await outfit()).balance, 13);
+      await invariant(13);
+
+      final replayCalls = <Future<Object> Function()>[
+        free,
+        ad,
+        premium,
+        answer,
+        theme,
+        outfit,
+      ];
+      for (final replay in replayCalls) {
+        await replay();
+        await invariant(13);
+        expect(
+          await PointEntry.db.count(
+            admin,
+            where: (t) => t.owner.equals(a.owner),
+          ),
+          6,
+        );
+      }
+      final conflicts = <Future<Object> Function()>[
+        () => a.client.product.claimDay(freeDay.date, 'balance-free', 99),
+        () => a.client.product.claimDayWithAd(
+          adDay.date,
+          'balance-ad',
+          adDay.revision,
+          'other',
+        ),
+        () => a.client.product.claimDayWithPremium(
+          premiumDay.date,
+          'balance-premium',
+          99,
+        ),
+        () => a.client.quiz.answer(
+          question.assignmentId,
+          question.questionId,
+          question.version,
+          1,
+          'balance-quiz',
+        ),
+        () => a.client.product.purchaseTheme('rainy', 'balance-theme'),
+        () => a.client.product.purchaseOutfit('other', 'balance-outfit'),
+      ];
+      for (final conflict in conflicts) {
+        await expectLater(conflict(), productFailure('idempotencyConflict'));
+        await invariant(13);
+        expect(
+          await PointEntry.db.count(
+            admin,
+            where: (t) => t.owner.equals(a.owner),
+          ),
+          6,
+        );
+      }
+      await a.client.product.deleteDay(freeDay.date, 'balance-delete');
+      await invariant(13);
+    },
+  );
+
+  test(
     'all stored purchases are refreshed under one benefit sequence',
     () async {
       final a = await user();

@@ -102,6 +102,35 @@ Future<ProductAccount> lockProductAccount(
   ))!;
 }
 
+/// Compare both materialized balances with the ledger in one DB snapshot.
+/// The ledger remains authoritative; this reports drift without repairing it.
+Future<List<List<dynamic>>> reconcilePointBalances(Session session) =>
+    session.db.unsafeQuery(
+      '''
+      WITH ledger AS (
+        SELECT owner,
+          COALESCE(SUM(amount) FILTER (WHERE "policyVersion" IN
+            (@steps, @quiz, @theme, @outfit)), 0) AS balance,
+          COALESCE(SUM(amount) FILTER (WHERE "policyVersion" = @fixture), 0)
+            AS fixture_balance
+        FROM point_entry GROUP BY owner
+      )
+      SELECT COALESCE(a.owner, l.owner), a.balance,
+        COALESCE(l.balance, 0)::bigint, a."fixtureBalance",
+        COALESCE(l.fixture_balance, 0)::bigint
+      FROM product_account a FULL OUTER JOIN ledger l ON l.owner = a.owner
+      WHERE a.id IS NULL OR a.balance <> COALESCE(l.balance, 0)
+        OR a."fixtureBalance" <> COALESCE(l.fixture_balance, 0)
+      ''',
+      parameters: QueryParameters.named({
+        'steps': stepPolicyVersion,
+        'quiz': quizPolicyVersion,
+        'theme': themePurchasePolicyVersion,
+        'outfit': outfitPurchasePolicyVersion,
+        'fixture': productFixtureLabel,
+      }),
+    );
+
 class ProductService {
   ProductService(this.session, this.owner, this.tx, this.account);
   final Session session;
@@ -220,6 +249,32 @@ class ProductService {
       ),
       transaction: tx,
     );
+  }
+
+  /// Call only while holding [lockProductAccount] in [tx].
+  Future<PointEntry> appendPointEntry(
+    PointEntry entry, {
+    // Test-only failure injection at the boundary between the two writes.
+    Future<void> Function()? afterInsert,
+  }) async {
+    final inserted = await PointEntry.db.insertRow(
+      session,
+      entry,
+      transaction: tx,
+    );
+    await afterInsert?.call();
+    if ({
+      stepPolicyVersion,
+      quizPolicyVersion,
+      themePurchasePolicyVersion,
+      outfitPurchasePolicyVersion,
+    }.contains(entry.policyVersion)) {
+      account.balance += entry.amount;
+    } else if (entry.policyVersion == productFixtureLabel) {
+      account.fixtureBalance += entry.amount;
+    }
+    await ProductAccount.db.updateRow(session, account, transaction: tx);
+    return inserted;
   }
 
   Future<int> balance({bool fixture = false}) async {
@@ -677,8 +732,7 @@ class ProductService {
     }
     final from = slices.first.fromUnits;
     final through = slices.last.throughUnits;
-    final entry = await PointEntry.db.insertRow(
-      session,
+    final entry = await appendPointEntry(
       PointEntry(
         owner: owner,
         entryKey: '$stepPolicyVersion:steps:$date:${value.revision}',
@@ -691,7 +745,6 @@ class ProductService {
         createdAt: clock.now().toUtc(),
         slices: slices,
       ),
-      transaction: tx,
     );
     value.grantedUnits = max(value.grantedUnits, through);
     value.revision++;

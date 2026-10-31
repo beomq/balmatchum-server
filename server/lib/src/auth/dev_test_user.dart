@@ -56,23 +56,33 @@ Future<AuthSuccess> bootstrapDevTestUser(Session session) async {
         transaction: transaction,
       );
     }
-    // The owner/key unique index and identity lock keep reconnects idempotent.
-    // This credit belongs only to the fixture store, never the step wallet.
-    await PointEntry.db.insert(
+    final owner = identity.authUserId.toString();
+    final account = await lockProductAccount(session, owner, transaction);
+    // The identity and account locks serialize the existence check and credit.
+    // Only an actually inserted starter entry changes the fixture balance.
+    final starter = await PointEntry.db.findFirstRow(
       session,
-      [
+      where: (t) =>
+          t.owner.equals(owner) & t.entryKey.equals('dev-harness-starter-v1'),
+      transaction: transaction,
+    );
+    if (starter == null) {
+      await ProductService(
+        session,
+        owner,
+        transaction,
+        account,
+      ).appendPointEntry(
         PointEntry(
-          owner: identity.authUserId.toString(),
+          owner: owner,
           entryKey: 'dev-harness-starter-v1',
           kind: 'fixture-starter',
           amount: 10,
           policyVersion: productFixtureLabel,
           createdAt: DateTime.now().toUtc(),
         ),
-      ],
-      ignoreConflicts: true,
-      transaction: transaction,
-    );
+      );
+    }
     await services.tokenManager.revokeAllTokens(
       session,
       authUserId: identity.authUserId,
