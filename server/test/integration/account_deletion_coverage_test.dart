@@ -33,11 +33,14 @@ const _naver = {
 
 /// Every application table holding a user column, derived from the schema so
 /// that a newly added table fails here until deletion and this seed cover it.
-Map<String, String> _userTables() => {
+Map<String, Set<String>> _userTables() => {
   for (final table in Protocol().getTargetTableDefinitions())
-    if (!table.name.startsWith('serverpod_'))
-      for (final column in table.columns)
-        if (_userColumns.contains(column.name)) table.name: column.name,
+    if (!table.name.startsWith('serverpod_') &&
+        table.columns.any((c) => _userColumns.contains(c.name)))
+      table.name: {
+        for (final column in table.columns)
+          if (_userColumns.contains(column.name)) column.name,
+      },
 };
 
 void main() {
@@ -122,8 +125,8 @@ void main() {
       ]),
       reason: tables.keys.join(','),
     );
-    expect(tables, containsPair('naver_grant', 'authUserId'));
-    expect(tables, containsPair('external_identity', 'authUserId'));
+    expect(tables['naver_grant'], contains('authUserId'));
+    expect(tables['external_identity'], contains('authUserId'));
 
     // Kakao login fixture creates the AuthUser and its external_identity row.
     final client = api.Client('http://localhost:${pod.server.port}/');
@@ -274,33 +277,44 @@ void main() {
         ),
       );
 
-      Future<Map<String, int>> counts() async {
+      // Transition until todo 16 drops owner: a row is the user's under owner
+      // or authUserId, whichever columns the table has.
+      Future<Map<String, Map<String, int>>> counts() async {
         final parameters = QueryParameters.named({'o': owner});
         return {
-          for (final MapEntry(key: table, value: column) in tables.entries)
-            table:
-                (await admin.db.unsafeQuery(
-                      column == 'owner'
-                          ? 'SELECT count(*) FROM "$table" WHERE owner = @o'
-                          : 'SELECT count(*) FROM "$table" '
-                                'WHERE "authUserId" = CAST(@o AS uuid)',
-                      parameters: parameters,
-                    )).single[0]
-                    as int,
+          for (final MapEntry(key: table, value: columns) in tables.entries)
+            table: {
+              for (final column in columns)
+                column:
+                    (await admin.db.unsafeQuery(
+                          column == 'owner'
+                              ? 'SELECT count(*) FROM "$table" WHERE owner = @o'
+                              : 'SELECT count(*) FROM "$table" '
+                                    'WHERE "authUserId" = CAST(@o AS uuid)',
+                          parameters: parameters,
+                        )).single[0]
+                        as int,
+            },
         };
       }
 
       // A table missing from the seed must fail here, not pass vacuously.
       final before = await counts();
-      for (final entry in before.entries) {
-        expect(entry.value, greaterThan(0), reason: 'unseeded ${entry.key}');
+      for (final MapEntry(key: table, value: byColumn) in before.entries) {
+        expect(
+          byColumn.values.fold(0, (a, b) => a + b),
+          greaterThan(0),
+          reason: 'unseeded $table $byColumn',
+        );
       }
 
       await client.account.deleteAccount();
 
       final after = await counts();
-      for (final entry in after.entries) {
-        expect(entry.value, 0, reason: 'remaining ${entry.key}');
+      for (final MapEntry(key: table, value: byColumn) in after.entries) {
+        for (final MapEntry(key: column, value: count) in byColumn.entries) {
+          expect(count, 0, reason: 'remaining $table.$column');
+        }
       }
       expect(revoked, ['coverage-refresh']);
     } finally {
