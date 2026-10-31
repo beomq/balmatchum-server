@@ -218,6 +218,7 @@ FileSystemException → JSON/검토 필드 오류·testFixture 운영 사용이�
 - **Apple Android/web callback·서버 알림 미구현**: web server route를 mount하지 않았습니다(SOCIAL_AUTH_API.md). iOS 네이티브 로그인만 대상입니다.
 - **로그인 시작 속도 제한은 인스턴스별입니다**: 카카오·네이버 `beginLogin`은 60초 슬라이딩 윈도로 키당 30회, 전체 300회까지 허용하고 초과 시 `LoginException(code: 'tooManyAttempts')`를 반환합니다(`server/lib/src/auth/login_rate_limiter.dart`의 상수). 키는 `X-Forwarded-For`의 가장 오른쪽 항목(프록시가 붙인 값)이며, 헤더가 없거나 IP가 아니면 전체 한도만 적용합니다. 소켓 원격 주소는 쓰지 않으며 IP는 로그에 남기지 않습니다. 메모리에만 있으므로 인스턴스가 N개면 실제 한도는 N배이고 재시작하면 초기화됩니다. Serverpod Cloud 프록시가 이 헤더를 붙이는지는 아직 확인하지 않았습니다(미확인).
 - **Future call**: 결제 보관 기간 정리(`billing-retention-purge`, 매일 18:00 UTC)만 사용합니다. Starter 요금제에서는 future call이 비활성이라 서버 시작 때 1회 정리만 실행됩니다. 재시작이 드물면 만료분이 다음 재시작까지 남으므로 공개 출시 전 Growth 전환 후 예약 실행을 확인합니다(BILLING_API.md).
+- **주기 정리**: 30일 지난 product_request, 만료 로그인 시도, 결제 보관 만료분 정리는 인스턴스 내부 타이머(1시간)로 실행하므로 Starter의 Future calls 비활성과 무관합니다(`server/lib/src/maintenance/periodic_maintenance.dart`). 모두 멱등 삭제라 인스턴스 여러 개나 위 cron과 겹쳐도 무해합니다.
 
 ## 8. 상태 확인과 장애 대응
 

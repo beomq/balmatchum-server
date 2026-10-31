@@ -3,7 +3,8 @@ import 'package:serverpod/serverpod.dart';
 
 import '../generated/protocol.dart';
 
-/// Keep expired attempts for one day for diagnosis; no scheduler is enabled.
+/// Keep expired attempts for one day for diagnosis; PeriodicMaintenance runs
+/// the cleanup hourly.
 const expiredAttemptRetention = Duration(days: 1);
 
 Future<int> deleteStaleLoginAttempts(
