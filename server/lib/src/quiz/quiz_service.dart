@@ -14,8 +14,24 @@ class QuizService {
   final ProductService s;
   final QuizBank? bank;
 
-  QuizQuestion view(QuizAssignment a) {
-    final q = jsonDecode(a.snapshot) as Map<String, dynamic>;
+  /// Assignments store only (questionId, version); the body is the immutable
+  /// content revision.
+  Future<String> body(QuizAssignment a) async {
+    final revision = await QuizContentRevision.db.findFirstRow(
+      s.session,
+      where: (t) =>
+          t.questionId.equals(a.questionId) & t.version.equals(a.version),
+      transaction: s.tx,
+    );
+    if (revision == null) throw ProductException(code: 'contentUnavailable');
+    return revision.snapshot;
+  }
+
+  Future<QuizQuestion> view(QuizAssignment a) async =>
+      present(a, await body(a));
+
+  QuizQuestion present(QuizAssignment a, String snapshot) {
+    final q = jsonDecode(snapshot) as Map<String, dynamic>;
     final answered = a.answerIndex != null;
     return QuizQuestion(
       assignmentId: a.id!,
@@ -43,14 +59,16 @@ class QuizService {
       QuizAssignment.db.findFirstRow(
         s.session,
         where: (t) =>
-            t.owner.equals(s.owner) & t.date.equals(date) & t.slot.equals(slot),
+            t.authUserId.equals(s.authUserId) &
+            t.date.equals(date) &
+            t.slot.equals(slot),
         transaction: s.tx,
       );
 
   Future<String?> candidate() async {
     final seen = await QuizAssignment.db.find(
       s.session,
-      where: (t) => t.owner.equals(s.owner),
+      where: (t) => t.authUserId.equals(s.authUserId),
       transaction: s.tx,
     );
     final ids = seen.map((a) => a.questionId).toSet();
@@ -66,17 +84,29 @@ class QuizService {
       ? 'contentUnavailable'
       : 'exhausted';
 
-  Future<QuizAssignment> issue(String date, String slot, String snapshot) {
+  Future<QuizAssignment> issue(
+    String date,
+    String slot,
+    String snapshot,
+  ) async {
     final q = jsonDecode(snapshot) as Map<String, dynamic>;
+    final questionId = q['questionId'] as String;
+    final version = q['version'] as int;
+    // The row stores only the identity, so its revision must already exist.
+    final revision = await QuizContentRevision.db.findFirstRow(
+      s.session,
+      where: (t) => t.questionId.equals(questionId) & t.version.equals(version),
+      transaction: s.tx,
+    );
+    if (revision == null) throw ProductException(code: 'contentUnavailable');
     return QuizAssignment.db.insertRow(
       s.session,
       QuizAssignment(
-        owner: s.owner,
+        authUserId: s.authUserId,
         date: date,
         slot: slot,
-        questionId: q['questionId'] as String,
-        version: q['version'] as int,
-        snapshot: snapshot,
+        questionId: questionId,
+        version: version,
         policyVersion: bank!.fixture ? quizFixturePolicy : quizPolicyVersion,
         issuedAt: clock.now().toUtc(),
       ),
@@ -84,14 +114,30 @@ class QuizService {
     );
   }
 
+  /// Issue-free projection for lock-free reads; null when today's free slot
+  /// is still missing and [today] must issue it under the account lock.
+  Future<QuizToday?> todayView({BillingBenefit? premium}) async {
+    final date = localDate(clock.now());
+    final free = await slot(date, 'free');
+    return free == null ? null : project(date, free, premium);
+  }
+
   Future<QuizToday> today({BillingBenefit? premium}) async {
-    final paid = premium != null && await premium.isActive(s);
     final date = localDate(clock.now());
     var free = await slot(date, 'free');
     if (free == null) {
       final next = await candidate();
       if (next != null) free = await issue(date, 'free', next);
     }
+    return project(date, free, premium);
+  }
+
+  Future<QuizToday> project(
+    String date,
+    QuizAssignment? free,
+    BillingBenefit? premium,
+  ) async {
+    final paid = premium != null && await premium.isActive(s);
     final extra = await slot(date, 'extra');
     final extraStatus = extra != null
         ? 'issued'
@@ -105,8 +151,8 @@ class QuizService {
     return QuizToday(
       date: date,
       status: free == null ? unavailable : 'ready',
-      free: free == null ? null : view(free),
-      extra: extra == null ? null : view(extra),
+      free: free == null ? null : await view(free),
+      extra: extra == null ? null : await view(extra),
       extraStatus: extraStatus,
       // Immutable assignment ID is the extra-slot eligibility revision.
       extraRevision: {'adRequired', 'premiumAvailable'}.contains(extraStatus)
@@ -166,7 +212,7 @@ class QuizService {
         targetRevision: revision,
       );
     }
-    final result = view(await issue(date, 'extra', next));
+    final result = await view(await issue(date, 'extra', next));
     await s.remember(requestId, payload, result.toJson());
     return result;
   }
@@ -174,7 +220,7 @@ class QuizService {
   Future<QuizAssignment> owned(int id) async {
     final a = await QuizAssignment.db.findFirstRow(
       s.session,
-      where: (t) => t.id.equals(id) & t.owner.equals(s.owner),
+      where: (t) => t.id.equals(id) & t.authUserId.equals(s.authUserId),
       transaction: s.tx,
     );
     if (a == null) throw ProductException(code: 'quizNotFound');
@@ -197,7 +243,8 @@ class QuizService {
     if (a.questionId != questionId || a.version != version) {
       throw ProductException(code: 'staleQuestion');
     }
-    final q = jsonDecode(a.snapshot) as Map<String, dynamic>;
+    final snapshot = await body(a);
+    final q = jsonDecode(snapshot) as Map<String, dynamic>;
     if (answerIndex < 0 || answerIndex >= (q['choices'] as List).length) {
       throw ProductException(code: 'invalidAnswer');
     }
@@ -212,10 +259,9 @@ class QuizService {
       a.answerIndex = answerIndex;
       a.answeredAt = clock.now().toUtc();
       a.awardedPoints = 2;
-      await PointEntry.db.insertRow(
-        s.session,
+      await s.appendPointEntry(
         PointEntry(
-          owner: s.owner,
+          authUserId: s.authUserId,
           entryKey: 'quiz-assignment:${a.id}',
           kind: 'quiz',
           date: a.date,
@@ -223,11 +269,10 @@ class QuizService {
           policyVersion: a.policyVersion,
           createdAt: a.answeredAt!,
         ),
-        transaction: s.tx,
       );
       await QuizAssignment.db.updateRow(s.session, a, transaction: s.tx);
     }
-    final result = view(a);
+    final result = present(a, snapshot);
     await s.remember(requestId, payload, result.toJson());
     return result;
   }
@@ -245,13 +290,33 @@ class QuizService {
     final rows = await QuizAssignment.db.find(
       s.session,
       where: (t) =>
-          t.owner.equals(s.owner) &
+          t.authUserId.equals(s.authUserId) &
           t.answerIndex.notEquals(null) &
           (before == null ? t.id.notEquals(null) : t.id < before),
       orderBy: (t) => t.id.desc(),
       limit: 30,
       transaction: s.tx,
     );
-    return rows.map(view).toList();
+    // One revision query for the whole page instead of one per row.
+    final revisions = rows.isEmpty
+        ? <QuizContentRevision>[]
+        : await QuizContentRevision.db.find(
+            s.session,
+            where: (t) =>
+                t.questionId.inSet(rows.map((a) => a.questionId).toSet()) &
+                t.version.inSet(rows.map((a) => a.version).toSet()),
+            transaction: s.tx,
+          );
+    final bodies = {
+      for (final r in revisions) (r.questionId, r.version): r.snapshot,
+    };
+    return [
+      for (final a in rows)
+        present(
+          a,
+          bodies[(a.questionId, a.version)] ??
+              (throw ProductException(code: 'contentUnavailable')),
+        ),
+    ];
   }
 }

@@ -9,7 +9,7 @@ class ProfileEndpoint extends Endpoint {
   bool get requireLogin => true;
 
   Future<ProfileView?> getProfile(Session session) =>
-      ProductService.run(session, (s) => s.getProfile());
+      ProductService.read(session, (s) => s.getProfile());
 
   Future<ProfileView> createProfile(
     Session session,

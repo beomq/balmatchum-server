@@ -18,7 +18,7 @@ import 'package:clock/clock.dart';
 import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:serverpod/protocol.dart' show FutureCallEntry;
+import 'package:serverpod/protocol.dart' show FutureCallEntry, LogEntry;
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
 import 'package:test/test.dart';
@@ -150,7 +150,7 @@ void main() {
       await admin.db.transaction(
         (tx) => admin.db.unsafeQuery(
           'SELECT id FROM serverpod_auth_core_user WHERE id = CAST(@owner AS uuid) FOR UPDATE NOWAIT',
-          parameters: QueryParameters.named({'owner': row.owner}),
+          parameters: QueryParameters.named({'owner': row.authUserId.uuid}),
           transaction: tx,
         ),
       );
@@ -175,7 +175,9 @@ void main() {
       await admin.db.transaction(
         (tx) => admin.db.unsafeQuery(
           'SELECT id FROM serverpod_auth_core_user WHERE id = CAST(@owner AS uuid) FOR UPDATE NOWAIT',
-          parameters: QueryParameters.named({'owner': persisted.owner}),
+          parameters: QueryParameters.named({
+            'owner': persisted.authUserId.uuid,
+          }),
           transaction: tx,
         ),
       );
@@ -227,11 +229,17 @@ void main() {
 
   Future<void> noOwner(String owner) async {
     expect(
-      await StoredPurchase.db.count(admin, where: (t) => t.owner.equals(owner)),
+      await StoredPurchase.db.count(
+        admin,
+        where: (t) => t.authUserId.equals(authUserIdOf(owner)),
+      ),
       0,
     );
     expect(
-      await BillingAccount.db.count(admin, where: (t) => t.owner.equals(owner)),
+      await BillingAccount.db.count(
+        admin,
+        where: (t) => t.authUserId.equals(authUserIdOf(owner)),
+      ),
       0,
     );
     expect(
@@ -345,7 +353,7 @@ void main() {
                   expect(await check(), hasActive);
                   final rows = await StoredPurchase.db.find(
                     admin,
-                    where: (t) => t.owner.equals(a.owner),
+                    where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
                   );
                   expect(rows, hasLength(hasActive ? 2 : 1));
                   if (status == 410) {
@@ -384,7 +392,8 @@ void main() {
       (await StoredPurchase.db.findFirstRow(
         admin,
         where: (t) =>
-            t.owner.equals(owner) & t.purchaseReference.equals(reference),
+            t.authUserId.equals(authUserIdOf(owner)) &
+            t.purchaseReference.equals(reference),
       ))!.state;
 
   test(
@@ -442,7 +451,7 @@ void main() {
         await a.client.billing.verifyPurchase(input(token));
         Future<StoredPurchase> row() async => (await StoredPurchase.db.find(
           admin,
-          where: (t) => t.owner.equals(a.owner),
+          where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
         )).single;
         final before = await row();
         oauthStatus = status;
@@ -525,6 +534,153 @@ void main() {
   }
 
   test(
+    'materialized balance follows every production write and replay',
+    () async {
+      final a = await user();
+      purchase('balance-lifetime', a.binding);
+      await a.client.billing.verifyPurchase(input('balance-lifetime'));
+      final content = await File('assets/quiz/reviewed-v1.json').readAsString();
+      final bank = withClock(
+        Clock.fixed(DateTime.utc(2026, 10, 31)),
+        () => QuizBank.parse(content),
+      );
+      await configureQuizBank(pod, bank: bank);
+      await DogProfile.db.insertRow(
+        admin,
+        DogProfile(
+          authUserId: authUserIdOf(a.owner),
+          breedId: 'shih-tzu',
+          name: 'Balance dog',
+          sex: 'female',
+          dailyGoal: 5000,
+          firstMetAt: now,
+        ),
+      );
+
+      Future<void> invariant(int expected) async {
+        final account = (await ProductAccount.db.findFirstRow(
+          admin,
+          where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
+        ))!;
+        expect(account.balance, expected);
+        expect(account.fixtureBalance, 0);
+        final entries = await PointEntry.db.find(
+          admin,
+          where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
+        );
+        expect(entries.fold<int>(0, (sum, e) => sum + e.amount), expected);
+        expect(await reconcilePointBalances(admin), isEmpty);
+      }
+
+      final freeDay = await steps(a.client, 700);
+      Future<api.RewardGrant> free() => a.client.product.claimDay(
+        freeDay.date,
+        'balance-free',
+        freeDay.revision,
+      );
+      expect((await free()).amount, 7);
+      await invariant(7);
+      final adDay = await steps(a.client, 1000, revision: 2);
+      final intent = await verifiedAd(
+        a.client,
+        'dailyReward',
+        adDay.date,
+        adDay.revision,
+      );
+      Future<api.RewardGrant> ad() => a.client.product.claimDayWithAd(
+        adDay.date,
+        'balance-ad',
+        adDay.revision,
+        intent.id,
+      );
+      expect((await ad()).amount, 6);
+      await invariant(13);
+      final premiumDay = await steps(a.client, 1200, revision: 3);
+      Future<api.RewardGrant> premium() => a.client.product.claimDayWithPremium(
+        premiumDay.date,
+        'balance-premium',
+        premiumDay.revision,
+      );
+      expect((await premium()).amount, 4);
+      await invariant(17);
+      final question = (await a.client.quiz.getToday()).free!;
+      Future<api.QuizQuestion> answer() => a.client.quiz.answer(
+        question.assignmentId,
+        question.questionId,
+        question.version,
+        0,
+        'balance-quiz',
+      );
+      expect((await answer()).awardedPoints, 2);
+      await invariant(19);
+      Future<api.ThemeStore> theme() =>
+          a.client.product.purchaseTheme('cloudy', 'balance-theme');
+      expect((await theme()).balance, 16);
+      await invariant(16);
+      Future<api.OutfitStore> outfit() =>
+          a.client.product.purchaseOutfit('vest-low-v', 'balance-outfit');
+      expect((await outfit()).balance, 13);
+      await invariant(13);
+
+      final replayCalls = <Future<Object> Function()>[
+        free,
+        ad,
+        premium,
+        answer,
+        theme,
+        outfit,
+      ];
+      for (final replay in replayCalls) {
+        await replay();
+        await invariant(13);
+        expect(
+          await PointEntry.db.count(
+            admin,
+            where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
+          ),
+          6,
+        );
+      }
+      final conflicts = <Future<Object> Function()>[
+        () => a.client.product.claimDay(freeDay.date, 'balance-free', 99),
+        () => a.client.product.claimDayWithAd(
+          adDay.date,
+          'balance-ad',
+          adDay.revision,
+          'other',
+        ),
+        () => a.client.product.claimDayWithPremium(
+          premiumDay.date,
+          'balance-premium',
+          99,
+        ),
+        () => a.client.quiz.answer(
+          question.assignmentId,
+          question.questionId,
+          question.version,
+          1,
+          'balance-quiz',
+        ),
+        () => a.client.product.purchaseTheme('rainy', 'balance-theme'),
+        () => a.client.product.purchaseOutfit('other', 'balance-outfit'),
+      ];
+      for (final conflict in conflicts) {
+        await expectLater(conflict(), productFailure('idempotencyConflict'));
+        await invariant(13);
+        expect(
+          await PointEntry.db.count(
+            admin,
+            where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
+          ),
+          6,
+        );
+      }
+      await a.client.product.deleteDay(freeDay.date, 'balance-delete');
+      await invariant(13);
+    },
+  );
+
+  test(
     'all stored purchases are refreshed under one benefit sequence',
     () async {
       final a = await user();
@@ -546,7 +702,7 @@ void main() {
       expect(queryCount, before + 2);
       final rows = await StoredPurchase.db.find(
         admin,
-        where: (t) => t.owner.equals(a.owner),
+        where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
       );
       expect(rows.map((r) => r.sequence).toSet(), hasLength(1));
       expect(rows.map((r) => r.state), contains('revoked'));
@@ -933,7 +1089,7 @@ void main() {
       expect((await a.client.ads.getIntent(intent.id)).status, 'verified');
       final entries = await PointEntry.db.find(
         admin,
-        where: (e) => e.owner.equals(a.owner),
+        where: (e) => e.authUserId.equals(authUserIdOf(a.owner)),
       );
       expect(entries, hasLength(2));
       expect(entries.fold<int>(0, (n, e) => n + e.amount), 4);
@@ -1128,7 +1284,10 @@ void main() {
         winner.ledgerId,
       );
       expect(
-        await PointEntry.db.count(admin, where: (t) => t.owner.equals(a.owner)),
+        await PointEntry.db.count(
+          admin,
+          where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
+        ),
         1,
       );
     },
@@ -1174,7 +1333,7 @@ void main() {
         expect(
           await PointEntry.db.count(
             admin,
-            where: (t) => t.owner.equals(a.owner),
+            where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
           ),
           1,
         );
@@ -1230,7 +1389,9 @@ void main() {
         expect(
           await QuizAssignment.db.count(
             admin,
-            where: (r) => r.owner.equals(a.owner) & r.slot.equals('extra'),
+            where: (r) =>
+                r.authUserId.equals(authUserIdOf(a.owner)) &
+                r.slot.equals('extra'),
           ),
           1,
         );
@@ -1274,21 +1435,21 @@ void main() {
         expect(
           await ProductAccount.db.count(
             admin,
-            where: (r) => r.owner.equals(a.owner),
+            where: (r) => r.authUserId.equals(authUserIdOf(a.owner)),
           ),
           0,
         );
         expect(
           await PointEntry.db.count(
             admin,
-            where: (r) => r.owner.equals(a.owner),
+            where: (r) => r.authUserId.equals(authUserIdOf(a.owner)),
           ),
           0,
         );
         expect(
           await QuizAssignment.db.count(
             admin,
-            where: (r) => r.owner.equals(a.owner),
+            where: (r) => r.authUserId.equals(authUserIdOf(a.owner)),
           ),
           0,
         );
@@ -1355,7 +1516,7 @@ void main() {
     expect(
       await StoredPurchase.db.count(
         admin,
-        where: (t) => t.owner.equals(a.owner),
+        where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
       ),
       1,
     );
@@ -1373,7 +1534,7 @@ void main() {
     expect(
       await StoredPurchase.db.count(
         admin,
-        where: (t) => t.owner.equals(b.owner),
+        where: (t) => t.authUserId.equals(authUserIdOf(b.owner)),
       ),
       0,
     );
@@ -1410,7 +1571,7 @@ void main() {
         where: (t) => t.identityHash.equals(hash('google', token)),
       );
       expect(rows, hasLength(1));
-      expect(rows.single.owner, b.owner);
+      expect(rows.single.authUserId.uuid, b.owner);
     },
   );
 
@@ -1438,7 +1599,7 @@ void main() {
       );
       final row = (await StoredPurchase.db.find(
         admin,
-        where: (t) => t.owner.equals(a.owner),
+        where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
       )).single;
       expect(row.purchaseReference, '700');
       expect(row.identityHash, hash('apple', '700'));
@@ -1533,7 +1694,7 @@ void main() {
       await older.timeout(bound);
       final row = (await StoredPurchase.db.find(
         admin,
-        where: (t) => t.owner.equals(a.owner),
+        where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
       )).single;
       expect(row.state, 'revoked');
       expect(row.sequence, 2);
@@ -1608,6 +1769,62 @@ void main() {
         a.client.billing.getEntitlement(),
         throwsA(isA<api.ServerpodClientUnauthorized>()),
       );
+    },
+  );
+
+  test(
+    'ack failure logs safely while preserving response and pending purchase',
+    () async {
+      final a = await user();
+      const token = 'ack-log-private-purchase-token';
+      const rawBody = 'private-upstream-error';
+      purchase(token, a.binding, pendingAck: true);
+      ackFails = true;
+      final before =
+          (await admin.db.unsafeQuery(
+                'SELECT COALESCE(MAX(id), 0) FROM serverpod_log',
+              )).single.single
+              as int;
+
+      // The HTTP fake returns 503, so the real acknowledge client throws.
+      final view = await a.client.billing.verifyPurchase(input(token));
+      expect(view.active, true);
+      final response = view.purchases.single;
+      expect(response.store, 'google');
+      expect(response.productId, 'lifetime');
+      expect(response.state, 'active');
+      expect(response.active, true);
+      expect(response.acknowledgementPending, true);
+      expect(acknowledgements.where((t) => t == token), hasLength(1));
+      stdout.writeln('T31_RESPONSE active=true purchases=1 pending=true');
+
+      final row = (await StoredPurchase.db.find(
+        admin,
+        where: (t) =>
+            t.authUserId.equals(authUserIdOf(a.owner)) &
+            t.identityHash.equals(hash('google', token)),
+      )).single;
+      expect(row.acknowledgementPending, true);
+      stdout.writeln('T31_PENDING persisted=true');
+
+      // The warning session closes before the response, awaiting log writes.
+      final entries = await LogEntry.db.find(
+        admin,
+        where: (t) => t.id > before,
+      );
+      expect(entries, hasLength(1));
+      final entry = entries.single;
+      expect(entry.logLevel, LogLevel.warning);
+      expect(entry.message, isNotEmpty);
+      expect(entry.error, isNull);
+      expect(entry.stackTrace, isNull);
+      final recorded = jsonEncode(entries.map((e) => e.toJson()).toList());
+      expect(recorded, isNot(contains(token)));
+      expect(recorded, isNot(contains(rawBody)));
+      expect(recorded, isNot(contains(a.owner)));
+      expect(recorded, isNot(contains(row.identityHash)));
+      stdout.writeln('T31_LOG ${entry.message}');
+      stdout.writeln('T31_SECRET tokenAbsent=true rawBodyAbsent=true');
     },
   );
 
@@ -1694,7 +1911,7 @@ void main() {
         expect(
           (await StoredPurchase.db.find(
             admin,
-            where: (t) => t.owner.equals(a.owner),
+            where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
           )).single.acknowledgementPending,
           true,
         );

@@ -20,22 +20,28 @@ class RecordsEndpoint extends Endpoint {
     // ON CONFLICT waits for a concurrent insert before the following lookup.
     return session.db.transaction((transaction) async {
       await lockProductAccount(session, owner, transaction);
-      final tombstones = await ProductDay.db.find(
+      // Only deleted days inside the record's KST date range can block it;
+      // this is the touchesDay rule expressed as a date-range lookup.
+      final tombstone = await ProductDay.db.findFirstRow(
         session,
-        where: (t) => t.owner.equals(owner) & t.deleted.equals(true),
+        where: (t) =>
+            t.authUserId.equals(authUserIdOf(owner)) &
+            t.deleted.equals(true) &
+            (t.date >= localDate(input.startedAt)) &
+            (t.date <= localDate(input.endedAt)),
         transaction: transaction,
       );
-      if (tombstones.any((day) => touchesDay(input, day.date))) {
-        throw RecordException(code: 'dayDeleted');
-      }
+      if (tombstone != null) throw RecordException(code: 'dayDeleted');
       final inserted = await StoredGpsRecord.db.insert(
         session,
         [
           StoredGpsRecord(
-            owner: owner,
+            authUserId: authUserIdOf(owner),
             clientRecordId: input.clientRecordId,
             persistedAt: DateTime.now().toUtc(),
             payload: input,
+            firstLocalDay: localDayNumber(input.startedAt),
+            lastLocalDay: localDayNumber(input.endedAt),
           ),
         ],
         ignoreConflicts: true,
@@ -46,7 +52,7 @@ class RecordsEndpoint extends Endpoint {
           : (await StoredGpsRecord.db.findFirstRow(
               session,
               where: (t) =>
-                  t.owner.equals(owner) &
+                  t.authUserId.equals(authUserIdOf(owner)) &
                   t.clientRecordId.equals(input.clientRecordId),
               transaction: transaction,
             ))!;
@@ -60,12 +66,12 @@ class RecordsEndpoint extends Endpoint {
 
   Future<GpsRecord> getMine(Session session, UuidValue recordId) async {
     final owner = session.authenticated!.userIdentifier;
-    return session.db.transaction((transaction) async {
-      await lockProductAccount(session, owner, transaction);
+    return ProductService.read(session, (service) async {
       final stored = await StoredGpsRecord.db.findFirstRow(
         session,
-        where: (t) => t.id.equals(recordId) & t.owner.equals(owner),
-        transaction: transaction,
+        where: (t) =>
+            t.id.equals(recordId) & t.authUserId.equals(authUserIdOf(owner)),
+        transaction: service.tx,
       );
       if (stored == null) throw RecordException(code: 'notFound');
       if (stored.deleted) throw RecordException(code: 'dayDeleted');

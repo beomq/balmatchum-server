@@ -11,8 +11,14 @@ class QuizEndpoint extends Endpoint {
   @override
   bool get requireLogin => true;
 
-  Future<QuizToday> getToday(Session session) =>
-      ProductService.run(session, (s) => QuizService(s).today());
+  // Repeat views read without the account lock; only a missing free slot
+  // takes the write path, where the lock serializes the first issuance.
+  Future<QuizToday> getToday(Session session) async =>
+      await ProductService.read<QuizToday?>(
+        session,
+        (s) => QuizService(s).todayView(),
+      ) ??
+      await ProductService.run(session, (s) => QuizService(s).today());
 
   Future<QuizToday> getTodayWithPremium(Session session) =>
       BillingService.run(session, (billing, db) async {

@@ -8,40 +8,61 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: dead_code, unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:balmatchum_server/src/generated/protocol.dart' as _iu3f2ih9;
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+    as _iacs;
 
 abstract class ProductAccount
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
   ProductAccount._({
     this.id,
-    required this.owner,
+    required this.authUserId,
+    this.authUser,
     int? streamGeneration,
     int? deletionVersion,
     String? equippedTheme,
     this.equippedOutfit,
+    int? balance,
+    int? fixtureBalance,
   }) : streamGeneration = streamGeneration ?? 0,
        deletionVersion = deletionVersion ?? 0,
-       equippedTheme = equippedTheme ?? 'sunny';
+       equippedTheme = equippedTheme ?? 'sunny',
+       balance = balance ?? 0,
+       fixtureBalance = fixtureBalance ?? 0;
 
   factory ProductAccount({
     int? id,
-    required String owner,
+    required _is.UuidValue authUserId,
+    _iacs.AuthUser? authUser,
     int? streamGeneration,
     int? deletionVersion,
     String? equippedTheme,
     String? equippedOutfit,
+    int? balance,
+    int? fixtureBalance,
   }) = _ProductAccountImpl;
 
   factory ProductAccount.fromJson(Map<String, dynamic> jsonSerialization) {
     return ProductAccount(
       id: jsonSerialization['id'] as int?,
-      owner: jsonSerialization['owner'] as String,
+      authUserId: _is.UuidValueJsonExtension.fromJson(
+        jsonSerialization['authUserId'],
+      ),
+      authUser: jsonSerialization['authUser'] == null
+          ? null
+          : _iu3f2ih9.Protocol().deserialize<_iacs.AuthUser>(
+              jsonSerialization['authUser'],
+            ),
       streamGeneration: jsonSerialization['streamGeneration'] as int?,
       deletionVersion: jsonSerialization['deletionVersion'] as int?,
       equippedTheme: jsonSerialization['equippedTheme'] as String?,
       equippedOutfit: jsonSerialization['equippedOutfit'] as String?,
+      balance: jsonSerialization['balance'] as int?,
+      fixtureBalance: jsonSerialization['fixtureBalance'] as int?,
     );
   }
 
@@ -52,7 +73,9 @@ abstract class ProductAccount
   @override
   int? id;
 
-  String owner;
+  _is.UuidValue authUserId;
+
+  _iacs.AuthUser? authUser;
 
   int streamGeneration;
 
@@ -62,6 +85,10 @@ abstract class ProductAccount
 
   String? equippedOutfit;
 
+  int balance;
+
+  int fixtureBalance;
+
   @override
   _is.Table<int?> get table => t;
 
@@ -70,22 +97,28 @@ abstract class ProductAccount
   @_is.useResult
   ProductAccount copyWith({
     int? id,
-    String? owner,
+    _is.UuidValue? authUserId,
+    _iacs.AuthUser? authUser,
     int? streamGeneration,
     int? deletionVersion,
     String? equippedTheme,
     String? equippedOutfit,
+    int? balance,
+    int? fixtureBalance,
   });
   @override
   Map<String, dynamic> toJson() {
     return {
       '__className__': 'ProductAccount',
       if (id != null) 'id': id,
-      'owner': owner,
+      'authUserId': authUserId.toJson(),
+      if (authUser != null) 'authUser': authUser?.toJson(),
       'streamGeneration': streamGeneration,
       'deletionVersion': deletionVersion,
       'equippedTheme': equippedTheme,
       if (equippedOutfit != null) 'equippedOutfit': equippedOutfit,
+      'balance': balance,
+      'fixtureBalance': fixtureBalance,
     };
   }
 
@@ -94,8 +127,8 @@ abstract class ProductAccount
     return {};
   }
 
-  static ProductAccountInclude include() {
-    return ProductAccountInclude._();
+  static ProductAccountInclude include({_iacs.AuthUserInclude? authUser}) {
+    return ProductAccountInclude._(authUser: authUser);
   }
 
   static ProductAccountIncludeList includeList({
@@ -127,18 +160,24 @@ class _Undefined {}
 class _ProductAccountImpl extends ProductAccount {
   _ProductAccountImpl({
     int? id,
-    required String owner,
+    required _is.UuidValue authUserId,
+    _iacs.AuthUser? authUser,
     int? streamGeneration,
     int? deletionVersion,
     String? equippedTheme,
     String? equippedOutfit,
+    int? balance,
+    int? fixtureBalance,
   }) : super._(
          id: id,
-         owner: owner,
+         authUserId: authUserId,
+         authUser: authUser,
          streamGeneration: streamGeneration,
          deletionVersion: deletionVersion,
          equippedTheme: equippedTheme,
          equippedOutfit: equippedOutfit,
+         balance: balance,
+         fixtureBalance: fixtureBalance,
        );
 
   /// Returns a shallow copy of this [ProductAccount]
@@ -147,21 +186,29 @@ class _ProductAccountImpl extends ProductAccount {
   @override
   ProductAccount copyWith({
     Object? id = _Undefined,
-    String? owner,
+    _is.UuidValue? authUserId,
+    Object? authUser = _Undefined,
     int? streamGeneration,
     int? deletionVersion,
     String? equippedTheme,
     Object? equippedOutfit = _Undefined,
+    int? balance,
+    int? fixtureBalance,
   }) {
     return ProductAccount(
       id: id is int? ? id : this.id,
-      owner: owner ?? this.owner,
+      authUserId: authUserId ?? this.authUserId,
+      authUser: authUser is _iacs.AuthUser?
+          ? authUser
+          : this.authUser?.copyWith(),
       streamGeneration: streamGeneration ?? this.streamGeneration,
       deletionVersion: deletionVersion ?? this.deletionVersion,
       equippedTheme: equippedTheme ?? this.equippedTheme,
       equippedOutfit: equippedOutfit is String?
           ? equippedOutfit
           : this.equippedOutfit,
+      balance: balance ?? this.balance,
+      fixtureBalance: fixtureBalance ?? this.fixtureBalance,
     );
   }
 }
@@ -169,8 +216,10 @@ class _ProductAccountImpl extends ProductAccount {
 class ProductAccountUpdateTable extends _is.UpdateTable<ProductAccountTable> {
   ProductAccountUpdateTable(super.table);
 
-  _is.ColumnValue<String, String> owner(String value) => _is.ColumnValue(
-    table.owner,
+  _is.ColumnValue<_is.UuidValue, _is.UuidValue> authUserId(
+    _is.UuidValue value,
+  ) => _is.ColumnValue(
+    table.authUserId,
     value,
   );
 
@@ -195,14 +244,24 @@ class ProductAccountUpdateTable extends _is.UpdateTable<ProductAccountTable> {
         table.equippedOutfit,
         value,
       );
+
+  _is.ColumnValue<int, int> balance(int value) => _is.ColumnValue(
+    table.balance,
+    value,
+  );
+
+  _is.ColumnValue<int, int> fixtureBalance(int value) => _is.ColumnValue(
+    table.fixtureBalance,
+    value,
+  );
 }
 
 class ProductAccountTable extends _is.Table<int?> {
   ProductAccountTable({super.tableRelation})
     : super(tableName: 'product_account') {
     updateTable = ProductAccountUpdateTable(this);
-    owner = _is.ColumnString(
-      'owner',
+    authUserId = _is.ColumnUuid(
+      'authUserId',
       this,
     );
     streamGeneration = _is.ColumnInt(
@@ -224,11 +283,23 @@ class ProductAccountTable extends _is.Table<int?> {
       'equippedOutfit',
       this,
     );
+    balance = _is.ColumnInt(
+      'balance',
+      this,
+      hasDefault: true,
+    );
+    fixtureBalance = _is.ColumnInt(
+      'fixtureBalance',
+      this,
+      hasDefault: true,
+    );
   }
 
   late final ProductAccountUpdateTable updateTable;
 
-  late final _is.ColumnString owner;
+  late final _is.ColumnUuid authUserId;
+
+  _iacs.AuthUserTable? _authUser;
 
   late final _is.ColumnInt streamGeneration;
 
@@ -238,22 +309,53 @@ class ProductAccountTable extends _is.Table<int?> {
 
   late final _is.ColumnString equippedOutfit;
 
+  late final _is.ColumnInt balance;
+
+  late final _is.ColumnInt fixtureBalance;
+
+  _iacs.AuthUserTable get authUser {
+    if (_authUser != null) return _authUser!;
+    _authUser = _is.createRelationTable(
+      relationFieldName: 'authUser',
+      field: ProductAccount.t.authUserId,
+      foreignField: _iacs.AuthUser.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _iacs.AuthUserTable(tableRelation: foreignTableRelation),
+    );
+    return _authUser!;
+  }
+
   @override
   List<_is.Column> get columns => [
     id,
-    owner,
+    authUserId,
     streamGeneration,
     deletionVersion,
     equippedTheme,
     equippedOutfit,
+    balance,
+    fixtureBalance,
   ];
+
+  @override
+  _is.Table? getRelationTable(String relationField) {
+    if (relationField == 'authUser') {
+      return authUser;
+    }
+    return null;
+  }
 }
 
 class ProductAccountInclude extends _is.IncludeObject {
-  ProductAccountInclude._();
+  ProductAccountInclude._({_iacs.AuthUserInclude? authUser}) {
+    _authUser = authUser;
+  }
+
+  _iacs.AuthUserInclude? _authUser;
 
   @override
-  Map<String, _is.Include?> get includes => {};
+  Map<String, _is.Include?> get includes => {'authUser': _authUser};
 
   @override
   _is.Table<int?> get table => ProductAccount.t;
@@ -280,6 +382,8 @@ class ProductAccountIncludeList extends _is.IncludeList {
 
 class ProductAccountRepository {
   const ProductAccountRepository._();
+
+  final attachRow = const ProductAccountAttachRowRepository._();
 
   /// Returns a list of [ProductAccount]s matching the given query parameters.
   ///
@@ -311,6 +415,7 @@ class ProductAccountRepository {
     _is.OrderByBuilder<ProductAccountTable>? orderBy,
     _is.OrderByListBuilder<ProductAccountTable>? orderByList,
     _is.Transaction? transaction,
+    ProductAccountInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
@@ -321,6 +426,7 @@ class ProductAccountRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -350,6 +456,7 @@ class ProductAccountRepository {
     _is.OrderByBuilder<ProductAccountTable>? orderBy,
     _is.OrderByListBuilder<ProductAccountTable>? orderByList,
     _is.Transaction? transaction,
+    ProductAccountInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
@@ -359,6 +466,7 @@ class ProductAccountRepository {
       orderByList: orderByList?.call(ProductAccount.t),
       offset: offset,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -369,12 +477,14 @@ class ProductAccountRepository {
     _is.DatabaseSession session,
     int id, {
     _is.Transaction? transaction,
+    ProductAccountInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
     return session.db.findById<ProductAccount>(
       id,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -668,6 +778,33 @@ class ProductAccountRepository {
       where: where(ProductAccount.t),
       lockMode: lockMode,
       lockBehavior: lockBehavior,
+      transaction: transaction,
+    );
+  }
+}
+
+class ProductAccountAttachRowRepository {
+  const ProductAccountAttachRowRepository._();
+
+  /// Creates a relation between the given [ProductAccount] and [AuthUser]
+  /// by setting the [ProductAccount]'s foreign key `authUserId` to refer to the [AuthUser].
+  Future<void> authUser(
+    _is.DatabaseSession session,
+    ProductAccount productAccount,
+    _iacs.AuthUser authUser, {
+    _is.Transaction? transaction,
+  }) async {
+    if (productAccount.id == null) {
+      throw ArgumentError.notNull('productAccount.id');
+    }
+    if (authUser.id == null) {
+      throw ArgumentError.notNull('authUser.id');
+    }
+
+    var $productAccount = productAccount.copyWith(authUserId: authUser.id);
+    await session.db.updateRow<ProductAccount>(
+      $productAccount,
+      columns: [ProductAccount.t.authUserId],
       transaction: transaction,
     );
   }

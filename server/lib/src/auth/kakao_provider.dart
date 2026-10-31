@@ -8,6 +8,7 @@ import 'package:serverpod_auth_idp_server/core.dart';
 
 import '../generated/protocol.dart';
 import 'kakao_token_verifier.dart';
+import 'login_rate_limiter.dart';
 
 class KakaoProvider implements IdentityProvider {
   KakaoProvider({
@@ -15,6 +16,7 @@ class KakaoProvider implements IdentityProvider {
     required this.authUsers,
     required this.audience,
     required this.verifier,
+    required this.limiter,
     this.clock = const Clock(),
     this.cleanupSessions = removeOlderSessions,
   });
@@ -31,6 +33,7 @@ class KakaoProvider implements IdentityProvider {
   final AuthUsers authUsers;
   final String? audience;
   final KakaoTokenVerifier? verifier;
+  final LoginRateLimiter limiter;
   final Clock clock;
   final Future<void> Function(Session, UuidValue) cleanupSessions;
 
@@ -49,6 +52,7 @@ class KakaoProvider implements IdentityProvider {
   }) async {
     _configured();
     if (provider != method) throw LoginException(code: 'unsupportedProvider');
+    limiter.check(session);
     final random = Random.secure();
     final nonce = base64UrlEncode(
       List.generate(32, (_) => random.nextInt(256)),
@@ -196,11 +200,13 @@ class KakaoProviderBuilder extends IdentityProviderBuilder<KakaoProvider> {
   const KakaoProviderBuilder({
     required this.audience,
     required this.verifier,
+    this.limiter,
     this.clock = const Clock(),
     this.cleanupSessions = removeOlderSessions,
   });
   final String? audience;
   final KakaoTokenVerifier? verifier;
+  final LoginRateLimiter? limiter;
   final Clock clock;
   final Future<void> Function(Session, UuidValue) cleanupSessions;
   @override
@@ -213,6 +219,7 @@ class KakaoProviderBuilder extends IdentityProviderBuilder<KakaoProvider> {
     authUsers: authUsers,
     audience: audience,
     verifier: verifier,
+    limiter: limiter ?? LoginRateLimiter(clock: clock),
     clock: clock,
     cleanupSessions: cleanupSessions,
   );

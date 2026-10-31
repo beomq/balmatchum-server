@@ -6,3 +6,6 @@ fields:
   nonceHash: String
   expiresAt: DateTime
   consumedAt: DateTime?
+indexes:
+  login_attempt_expires_at:
+    fields: expiresAt

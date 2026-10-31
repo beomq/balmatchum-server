@@ -73,7 +73,7 @@ ProfileView _view(DogProfile value) => ProfileView(
 extension ProfileService on ProductService {
   Future<DogProfile?> _profile() => DogProfile.db.findFirstRow(
     session,
-    where: (t) => t.owner.equals(owner),
+    where: (t) => t.authUserId.equals(authUserIdOf(owner)),
     transaction: tx,
   );
 
@@ -115,7 +115,7 @@ extension ProfileService on ProductService {
     final value = await DogProfile.db.insertRow(
       session,
       DogProfile(
-        owner: owner,
+        authUserId: authUserIdOf(owner),
         breedId: input.breedId,
         name: name,
         sex: input.sex,

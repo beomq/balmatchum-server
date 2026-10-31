@@ -1,0 +1,14 @@
+# Home screen state built from one repeatable-read snapshot (see PRODUCT_API.md).
+class: HomeSnapshot
+fields:
+  # Server KST date used for day and as the last recentDays entry.
+  date: String
+  # Null means the account has no dog profile yet (app shows onboarding).
+  profile: ProfileView?
+  # Routes are always empty: home never draws them.
+  day: DailyRecord
+  wallet: WalletView
+  themes: ThemeStore
+  outfits: OutfitStore
+  # date - 30 ... date (31 entries, oldest first), routes empty.
+  recentDays: List<DailyRecord>

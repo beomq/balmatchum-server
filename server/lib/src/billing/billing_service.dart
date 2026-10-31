@@ -7,6 +7,7 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
 
 import '../config_password.dart';
 import '../generated/protocol.dart';
+import '../maintenance/schema_guard.dart';
 import '../product/product_service.dart';
 import 'billing_retention.dart';
 import 'billing_verifier.dart';
@@ -55,6 +56,7 @@ class BillingService {
     Session caller,
     Future<T> Function(BillingService, Session) action,
   ) async {
+    SchemaGuard.require();
     final service = instances[caller.serverpod];
     if (service == null) throw BillingException(code: 'configurationMissing');
     if (caller.authenticated == null) {
@@ -103,12 +105,15 @@ class BillingService {
     await lockProductAccount(s, owner, tx);
     return await BillingAccount.db.findFirstRow(
           s,
-          where: (t) => t.owner.equals(owner),
+          where: (t) => t.authUserId.equals(authUserIdOf(owner)),
           transaction: tx,
         ) ??
         await BillingAccount.db.insertRow(
           s,
-          BillingAccount(owner: owner, binding: const Uuid().v4()),
+          BillingAccount(
+            authUserId: authUserIdOf(owner),
+            binding: const Uuid().v4(),
+          ),
           transaction: tx,
         );
   }
@@ -183,7 +188,7 @@ class BillingService {
       // of a verified lookup that was already in flight when deletion won.
       final user = await AuthUser.db.findFirstRow(
         s,
-        where: (t) => t.id.equals(UuidValue.fromString(owner)),
+        where: (t) => t.id.equals(authUserIdOf(owner)),
         lockMode: LockMode.forUpdate,
         transaction: tx,
       );
@@ -193,7 +198,7 @@ class BillingService {
         where: (t) => t.identityHash.equals(hash),
         transaction: tx,
       );
-      if (previous != null && previous.owner != owner) {
+      if (previous != null && previous.authUserId != authUserIdOf(owner)) {
         return 'purchaseUnavailable';
       }
       // A store subscription outlives account deletion; a later observation
@@ -220,7 +225,7 @@ class BillingService {
       }
       final account = await BillingAccount.db.findFirstRow(
         s,
-        where: (t) => t.owner.equals(owner),
+        where: (t) => t.authUserId.equals(authUserIdOf(owner)),
         transaction: tx,
       );
       if (account == null ||
@@ -231,7 +236,7 @@ class BillingService {
       }
       final row = StoredPurchase(
         id: previous?.id,
-        owner: owner,
+        authUserId: authUserIdOf(owner),
         identityHash: hash,
         store: facts.store.name,
         environment: facts.environment.name,
@@ -270,14 +275,16 @@ class BillingService {
         await s.db.transaction((tx) async {
           final user = await AuthUser.db.findFirstRow(
             s,
-            where: (t) => t.id.equals(UuidValue.fromString(owner)),
+            where: (t) => t.id.equals(authUserIdOf(owner)),
             lockMode: LockMode.forUpdate,
             transaction: tx,
           );
           if (user == null) return;
           final row = await StoredPurchase.db.findFirstRow(
             s,
-            where: (t) => t.owner.equals(owner) & t.identityHash.equals(hash),
+            where: (t) =>
+                t.authUserId.equals(authUserIdOf(owner)) &
+                t.identityHash.equals(hash),
             transaction: tx,
           );
           if (row == null || row.sequence != reservation.sequence) return;
@@ -287,6 +294,13 @@ class BillingService {
       } on BillingVerificationException {
         // Entitlement was committed. Never report that persistence failed or
         // clear the marker because a remote acknowledgement outcome is unknown.
+        // Purchase queries stay unlogged; only this static warning is recorded.
+        await s.serverpod.withSession((logSession) async {
+          logSession.log(
+            'Google purchase acknowledgement failed; pending marker retained.',
+            level: LogLevel.warning,
+          );
+        });
       }
     }
   }
@@ -300,7 +314,7 @@ class BillingService {
       await BillingAccount.db.updateRow(s, account, transaction: tx);
       final rows = await StoredPurchase.db.find(
         s,
-        where: (t) => t.owner.equals(_owner(s)),
+        where: (t) => t.authUserId.equals(authUserIdOf(_owner(s))),
         transaction: tx,
       );
       return (binding: account.binding, sequence: account.sequence, rows: rows);
@@ -343,7 +357,9 @@ class BillingService {
               t.observedAt(clock.now().toUtc()),
               t.acknowledgementPending(false),
             ],
-            where: (t) => t.id.equals(row.id) & t.owner.equals(_owner(s)),
+            where: (t) =>
+                t.id.equals(row.id) &
+                t.authUserId.equals(authUserIdOf(_owner(s))),
             transaction: tx,
           );
         });
@@ -386,7 +402,7 @@ class BillingService {
         }
         final rows = await StoredPurchase.db.find(
           s,
-          where: (t) => t.owner.equals(_owner(s)),
+          where: (t) => t.authUserId.equals(authUserIdOf(_owner(s))),
           orderBy: (t) => t.id,
           transaction: tx,
         );
@@ -442,7 +458,7 @@ class BillingBenefit {
   Future<bool> isActive(ProductService s) async {
     final account = await BillingAccount.db.findFirstRow(
       s.session,
-      where: (t) => t.owner.equals(s.owner),
+      where: (t) => t.authUserId.equals(s.authUserId),
       transaction: s.tx,
     );
     if (s.owner != _owner ||
@@ -453,7 +469,7 @@ class BillingBenefit {
     }
     final rows = await StoredPurchase.db.find(
       s.session,
-      where: (t) => t.owner.equals(s.owner),
+      where: (t) => t.authUserId.equals(s.authUserId),
       transaction: s.tx,
     );
     final now = _service.clock.now().toUtc();
@@ -498,7 +514,7 @@ Future<void> deleteBillingData(Session s, String owner, Transaction tx) async {
 Future<void> _deleteBillingData(Session s, String owner, Transaction tx) async {
   final rows = await StoredPurchase.db.find(
     s,
-    where: (t) => t.owner.equals(owner),
+    where: (t) => t.authUserId.equals(authUserIdOf(owner)),
     orderBy: (t) => t.identityHash,
     transaction: tx,
   );
@@ -522,12 +538,12 @@ Future<void> _deleteBillingData(Session s, String owner, Transaction tx) async {
   ], transaction: tx);
   await StoredPurchase.db.deleteWhere(
     s,
-    where: (t) => t.owner.equals(owner),
+    where: (t) => t.authUserId.equals(authUserIdOf(owner)),
     transaction: tx,
   );
   await BillingAccount.db.deleteWhere(
     s,
-    where: (t) => t.owner.equals(owner),
+    where: (t) => t.authUserId.equals(authUserIdOf(owner)),
     transaction: tx,
   );
 }

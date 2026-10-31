@@ -10,3 +10,6 @@ fields:
   redirectUri: String
   expiresAt: DateTime
   consumedAt: DateTime?
+indexes:
+  naver_login_attempt_expires_at:
+    fields: expiresAt

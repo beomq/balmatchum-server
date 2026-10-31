@@ -8,17 +8,21 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: dead_code, unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:balmatchum_server/src/generated/protocol.dart' as _iu3f2ih9;
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+    as _iacs;
 import '../product/reward_window.dart' as _izf8seq4;
 
 abstract class ProductDay
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
   ProductDay._({
     this.id,
-    required this.owner,
+    required this.authUserId,
+    this.authUser,
     required this.date,
     int? revision,
     bool? deleted,
@@ -42,7 +46,8 @@ abstract class ProductDay
 
   factory ProductDay({
     int? id,
-    required String owner,
+    required _is.UuidValue authUserId,
+    _iacs.AuthUser? authUser,
     required String date,
     int? revision,
     bool? deleted,
@@ -60,7 +65,14 @@ abstract class ProductDay
   factory ProductDay.fromJson(Map<String, dynamic> jsonSerialization) {
     return ProductDay(
       id: jsonSerialization['id'] as int?,
-      owner: jsonSerialization['owner'] as String,
+      authUserId: _is.UuidValueJsonExtension.fromJson(
+        jsonSerialization['authUserId'],
+      ),
+      authUser: jsonSerialization['authUser'] == null
+          ? null
+          : _iu3f2ih9.Protocol().deserialize<_iacs.AuthUser>(
+              jsonSerialization['authUser'],
+            ),
       date: jsonSerialization['date'] as String,
       revision: jsonSerialization['revision'] as int?,
       deleted: jsonSerialization['deleted'] == null
@@ -87,7 +99,9 @@ abstract class ProductDay
   @override
   int? id;
 
-  String owner;
+  _is.UuidValue authUserId;
+
+  _iacs.AuthUser? authUser;
 
   String date;
 
@@ -121,7 +135,8 @@ abstract class ProductDay
   @_is.useResult
   ProductDay copyWith({
     int? id,
-    String? owner,
+    _is.UuidValue? authUserId,
+    _iacs.AuthUser? authUser,
     String? date,
     int? revision,
     bool? deleted,
@@ -140,7 +155,8 @@ abstract class ProductDay
     return {
       '__className__': 'ProductDay',
       if (id != null) 'id': id,
-      'owner': owner,
+      'authUserId': authUserId.toJson(),
+      if (authUser != null) 'authUser': authUser?.toJson(),
       'date': date,
       'revision': revision,
       'deleted': deleted,
@@ -161,8 +177,8 @@ abstract class ProductDay
     return {};
   }
 
-  static ProductDayInclude include() {
-    return ProductDayInclude._();
+  static ProductDayInclude include({_iacs.AuthUserInclude? authUser}) {
+    return ProductDayInclude._(authUser: authUser);
   }
 
   static ProductDayIncludeList includeList({
@@ -194,7 +210,8 @@ class _Undefined {}
 class _ProductDayImpl extends ProductDay {
   _ProductDayImpl({
     int? id,
-    required String owner,
+    required _is.UuidValue authUserId,
+    _iacs.AuthUser? authUser,
     required String date,
     int? revision,
     bool? deleted,
@@ -209,7 +226,8 @@ class _ProductDayImpl extends ProductDay {
     required List<_izf8seq4.RewardWindow> windows,
   }) : super._(
          id: id,
-         owner: owner,
+         authUserId: authUserId,
+         authUser: authUser,
          date: date,
          revision: revision,
          deleted: deleted,
@@ -230,7 +248,8 @@ class _ProductDayImpl extends ProductDay {
   @override
   ProductDay copyWith({
     Object? id = _Undefined,
-    String? owner,
+    _is.UuidValue? authUserId,
+    Object? authUser = _Undefined,
     String? date,
     int? revision,
     bool? deleted,
@@ -246,7 +265,10 @@ class _ProductDayImpl extends ProductDay {
   }) {
     return ProductDay(
       id: id is int? ? id : this.id,
-      owner: owner ?? this.owner,
+      authUserId: authUserId ?? this.authUserId,
+      authUser: authUser is _iacs.AuthUser?
+          ? authUser
+          : this.authUser?.copyWith(),
       date: date ?? this.date,
       revision: revision ?? this.revision,
       deleted: deleted ?? this.deleted,
@@ -268,8 +290,10 @@ class _ProductDayImpl extends ProductDay {
 class ProductDayUpdateTable extends _is.UpdateTable<ProductDayTable> {
   ProductDayUpdateTable(super.table);
 
-  _is.ColumnValue<String, String> owner(String value) => _is.ColumnValue(
-    table.owner,
+  _is.ColumnValue<_is.UuidValue, _is.UuidValue> authUserId(
+    _is.UuidValue value,
+  ) => _is.ColumnValue(
+    table.authUserId,
     value,
   );
 
@@ -339,8 +363,8 @@ class ProductDayUpdateTable extends _is.UpdateTable<ProductDayTable> {
 class ProductDayTable extends _is.Table<int?> {
   ProductDayTable({super.tableRelation}) : super(tableName: 'product_day') {
     updateTable = ProductDayUpdateTable(this);
-    owner = _is.ColumnString(
-      'owner',
+    authUserId = _is.ColumnUuid(
+      'authUserId',
       this,
     );
     date = _is.ColumnString(
@@ -403,7 +427,9 @@ class ProductDayTable extends _is.Table<int?> {
 
   late final ProductDayUpdateTable updateTable;
 
-  late final _is.ColumnString owner;
+  late final _is.ColumnUuid authUserId;
+
+  _iacs.AuthUserTable? _authUser;
 
   late final _is.ColumnString date;
 
@@ -429,10 +455,23 @@ class ProductDayTable extends _is.Table<int?> {
 
   late final _is.ColumnSerializable<List<_izf8seq4.RewardWindow>> windows;
 
+  _iacs.AuthUserTable get authUser {
+    if (_authUser != null) return _authUser!;
+    _authUser = _is.createRelationTable(
+      relationFieldName: 'authUser',
+      field: ProductDay.t.authUserId,
+      foreignField: _iacs.AuthUser.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _iacs.AuthUserTable(tableRelation: foreignTableRelation),
+    );
+    return _authUser!;
+  }
+
   @override
   List<_is.Column> get columns => [
     id,
-    owner,
+    authUserId,
     date,
     revision,
     deleted,
@@ -446,13 +485,25 @@ class ProductDayTable extends _is.Table<int?> {
     policyVersion,
     windows,
   ];
+
+  @override
+  _is.Table? getRelationTable(String relationField) {
+    if (relationField == 'authUser') {
+      return authUser;
+    }
+    return null;
+  }
 }
 
 class ProductDayInclude extends _is.IncludeObject {
-  ProductDayInclude._();
+  ProductDayInclude._({_iacs.AuthUserInclude? authUser}) {
+    _authUser = authUser;
+  }
+
+  _iacs.AuthUserInclude? _authUser;
 
   @override
-  Map<String, _is.Include?> get includes => {};
+  Map<String, _is.Include?> get includes => {'authUser': _authUser};
 
   @override
   _is.Table<int?> get table => ProductDay.t;
@@ -479,6 +530,8 @@ class ProductDayIncludeList extends _is.IncludeList {
 
 class ProductDayRepository {
   const ProductDayRepository._();
+
+  final attachRow = const ProductDayAttachRowRepository._();
 
   /// Returns a list of [ProductDay]s matching the given query parameters.
   ///
@@ -510,6 +563,7 @@ class ProductDayRepository {
     _is.OrderByBuilder<ProductDayTable>? orderBy,
     _is.OrderByListBuilder<ProductDayTable>? orderByList,
     _is.Transaction? transaction,
+    ProductDayInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
@@ -520,6 +574,7 @@ class ProductDayRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -549,6 +604,7 @@ class ProductDayRepository {
     _is.OrderByBuilder<ProductDayTable>? orderBy,
     _is.OrderByListBuilder<ProductDayTable>? orderByList,
     _is.Transaction? transaction,
+    ProductDayInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
@@ -558,6 +614,7 @@ class ProductDayRepository {
       orderByList: orderByList?.call(ProductDay.t),
       offset: offset,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -568,12 +625,14 @@ class ProductDayRepository {
     _is.DatabaseSession session,
     int id, {
     _is.Transaction? transaction,
+    ProductDayInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
     return session.db.findById<ProductDay>(
       id,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -867,6 +926,33 @@ class ProductDayRepository {
       where: where(ProductDay.t),
       lockMode: lockMode,
       lockBehavior: lockBehavior,
+      transaction: transaction,
+    );
+  }
+}
+
+class ProductDayAttachRowRepository {
+  const ProductDayAttachRowRepository._();
+
+  /// Creates a relation between the given [ProductDay] and [AuthUser]
+  /// by setting the [ProductDay]'s foreign key `authUserId` to refer to the [AuthUser].
+  Future<void> authUser(
+    _is.DatabaseSession session,
+    ProductDay productDay,
+    _iacs.AuthUser authUser, {
+    _is.Transaction? transaction,
+  }) async {
+    if (productDay.id == null) {
+      throw ArgumentError.notNull('productDay.id');
+    }
+    if (authUser.id == null) {
+      throw ArgumentError.notNull('authUser.id');
+    }
+
+    var $productDay = productDay.copyWith(authUserId: authUser.id);
+    await session.db.updateRow<ProductDay>(
+      $productDay,
+      columns: [ProductDay.t.authUserId],
       transaction: transaction,
     );
   }

@@ -155,15 +155,35 @@ void main() {
       await pod.start(runInGuardedZone: false);
       session = await pod.createSession(enableLogging: false);
       // Given a new fixture user.
-      final first = await bootstrapDevTestUser(session);
+      final other = await pod.createSession(enableLogging: false);
+      late AuthSuccess first;
+      try {
+        final results = await Future.wait([
+          bootstrapDevTestUser(session),
+          bootstrapDevTestUser(other),
+        ]);
+        expect(results[0].authUserId, results[1].authUserId);
+        first = results.first;
+      } finally {
+        await other.close();
+      }
       final initialCredits = await PointEntry.db.find(session);
       expect(initialCredits.single.amount, 10);
       expect(initialCredits.single.policyVersion, productFixtureLabel);
-      expect(initialCredits.single.owner, first.authUserId.toString());
+      expect(initialCredits.single.authUserId, first.authUserId);
+      final account = (await ProductAccount.db.find(session)).single;
+      expect(account.balance, 0);
+      expect(account.fixtureBalance, 10);
+      expect(await reconcilePointBalances(session), isEmpty);
       // When the same fixture user connects again.
       final second = await bootstrapDevTestUser(session);
       // Then the starter credit is not granted again or added to the wallet.
       expect(await PointEntry.db.count(session), 1);
+      expect(
+        (await ProductAccount.db.find(session)).single.fixtureBalance,
+        10,
+      );
+      expect(await reconcilePointBalances(session), isEmpty);
       expect((await client(second.token).product.listThemes()).balance, 10);
       expect((await client(second.token).product.getWallet()).balance, 0);
       expect(first.authUserId, second.authUserId);

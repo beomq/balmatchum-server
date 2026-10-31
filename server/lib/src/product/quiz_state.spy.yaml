@@ -2,13 +2,13 @@ class: QuizState
 serverOnly: true
 table: quiz_state
 fields:
-  owner: String
+  authUser: module:serverpod_auth_core:AuthUser?, relation(onDelete=Cascade)
   date: String
   questionId: String
   answerIndex: int?
   answeredAt: DateTime?
   awardedPoints: int, default=0
 indexes:
-  quiz_state_key:
-    fields: owner, date
+  quiz_state_auth_user_key:
+    fields: authUserId, date
     unique: true

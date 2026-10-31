@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:balmatchum_client/balmatchum_client.dart' as api;
@@ -113,7 +114,8 @@ void main() {
 
   Future<int> points(String owner) async => (await PointEntry.db.find(
     admin,
-    where: (t) => t.owner.equals(owner) & t.kind.equals('quiz'),
+    where: (t) =>
+        t.authUserId.equals(authUserIdOf(owner)) & t.kind.equals('quiz'),
   )).fold<int>(0, (sum, p) => sum + p.amount);
 
   setUpAll(() async {
@@ -268,6 +270,13 @@ void main() {
         2,
       );
       expect(await points(a.owner), 4);
+      final account = (await ProductAccount.db.findFirstRow(
+        admin,
+        where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
+      ))!;
+      expect(account.balance, 0);
+      expect(account.fixtureBalance, 0);
+      expect(await reconcilePointBalances(admin), isEmpty);
     },
   );
 
@@ -374,7 +383,7 @@ void main() {
     'wallet includes quiz policy without changing step or fixture balances',
     () async {
       final a = await user();
-      // Ledger-only fixtures exercise policy aggregation; no test question is
+      // Production credit fixtures exercise policy routing; no test question is
       // represented as reviewed production content.
       for (final entry in [
         ('steps', stepPolicyVersion, 7),
@@ -382,15 +391,17 @@ void main() {
         ('legacy', productFixtureLabel, 50),
         ('synthetic', quizFixturePolicy, 50),
       ]) {
-        await PointEntry.db.insertRow(
-          admin,
-          PointEntry(
-            owner: a.owner,
-            entryKey: entry.$1,
-            kind: entry.$1,
-            amount: entry.$3,
-            policyVersion: entry.$2,
-            createdAt: now,
+        await ProductService.run(
+          a.session,
+          (s) => s.appendPointEntry(
+            PointEntry(
+              authUserId: authUserIdOf(a.owner),
+              entryKey: entry.$1,
+              kind: entry.$1,
+              amount: entry.$3,
+              policyVersion: entry.$2,
+              createdAt: now,
+            ),
           ),
         );
       }
@@ -700,7 +711,7 @@ void main() {
         expect(
           (await QuizAssignment.db.find(
             admin,
-            where: (q) => q.owner.equals(a.owner),
+            where: (q) => q.authUserId.equals(authUserIdOf(a.owner)),
           )),
           hasLength(1),
         );
@@ -814,6 +825,65 @@ void main() {
   );
 
   test(
+    'repeat getToday finishes while another session holds the account lock',
+    () async {
+      final a = await user();
+      final first = await at(() => quiz.getToday(a.session));
+      final locked = Completer<void>();
+      final release = Completer<void>();
+      final write = admin.db.transaction((tx) async {
+        await lockProductAccount(admin, a.owner, tx);
+        locked.complete();
+        await release.future.timeout(bound);
+      });
+      try {
+        await locked.future.timeout(bound);
+        final again = await at(
+          () => quiz.getToday(a.session),
+        ).timeout(const Duration(seconds: 5));
+        expect(again.status, 'ready');
+        expect(again.free!.assignmentId, first.free!.assignmentId);
+      } finally {
+        release.complete();
+        await write;
+      }
+    },
+  );
+
+  test('concurrent first getToday calls issue exactly one free slot', () async {
+    final a = await user();
+    final both = await at(
+      () => Future.wait([quiz.getToday(a.session), quiz.getToday(a.session)]),
+    );
+    expect(both.map((t) => t.free!.assignmentId).toSet(), hasLength(1));
+    expect(
+      await QuizAssignment.db.count(
+        admin,
+        where: (t) =>
+            t.authUserId.equals(authUserIdOf(a.owner)) & t.slot.equals('free'),
+      ),
+      1,
+    );
+  });
+
+  test('getToday without bank content stays contentUnavailable', () async {
+    final a = await user();
+    await configureQuizBank(pod, bank: fixtureBank(0));
+    for (var i = 0; i < 2; i++) {
+      final today = await at(() => quiz.getToday(a.session));
+      expect(today.status, 'contentUnavailable');
+      expect(today.free, isNull);
+    }
+    expect(
+      await QuizAssignment.db.count(
+        admin,
+        where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
+      ),
+      0,
+    );
+  });
+
+  test(
     'account deletion shares auth lock and purges quizzes without resurrection',
     () async {
       final a = await user();
@@ -829,31 +899,36 @@ void main() {
         await release.future.timeout(bound);
       });
       await purged.future.timeout(bound);
+      // getToday reads lock-free once issued; listHistory still takes the lock.
       final rejected = expectLater(
-        at(() => quiz.getToday(a.session)),
+        at(() => quiz.listHistory(a.session, null)),
         throwsA(isA<NotAuthorizedException>()),
       );
       release.complete();
       await deletion.timeout(bound);
       await rejected.timeout(bound);
+      await expectLater(
+        at(() => quiz.getToday(a.session)),
+        throwsA(isA<NotAuthorizedException>()),
+      );
       expect(
         await QuizAssignment.db.find(
           admin,
-          where: (q) => q.owner.equals(a.owner),
+          where: (q) => q.authUserId.equals(authUserIdOf(a.owner)),
         ),
         isEmpty,
       );
       expect(
         await StoredAdIntent.db.find(
           admin,
-          where: (q) => q.owner.equals(a.owner),
+          where: (q) => q.authUserId.equals(authUserIdOf(a.owner)),
         ),
         isEmpty,
       );
       expect(
         await ProductRequest.db.find(
           admin,
-          where: (q) => q.owner.equals(a.owner),
+          where: (q) => q.authUserId.equals(authUserIdOf(a.owner)),
         ),
         isEmpty,
       );
@@ -866,4 +941,186 @@ void main() {
       );
     },
   );
+
+  group('revision-backed assignments', () {
+    Future<Map<String, dynamic>> revision(String id, int version) async =>
+        jsonDecode(
+              (await QuizContentRevision.db.findFirstRow(
+                admin,
+                where: (t) =>
+                    t.questionId.equals(id) & t.version.equals(version),
+              ))!.snapshot,
+            )
+            as Map<String, dynamic>;
+
+    QuizAssignment answered(String owner, int question, String date) =>
+        QuizAssignment(
+          authUserId: authUserIdOf(owner),
+          date: date,
+          slot: 'free',
+          questionId: 'test-question-$question',
+          version: 1,
+          policyVersion: quizFixturePolicy,
+          issuedAt: now,
+          answerIndex: 0,
+          answeredAt: now,
+        );
+
+    test(
+      'new rows store no snapshot and reads return the revision body',
+      () async {
+        final a = await user();
+        final t = await eligible(a.session);
+        final i = await verified(a.session, t);
+        final extra = await at(
+          () => quiz.unlockExtra(
+            a.session,
+            t.date,
+            t.extraRevision!,
+            i.id,
+            'revision-unlock',
+          ),
+        );
+        final rows = await QuizAssignment.db.find(
+          admin,
+          where: (q) => q.authUserId.equals(authUserIdOf(a.owner)),
+        );
+        expect(rows, hasLength(2));
+        final graded = await answer(a.session, extra);
+        final today = await at(() => quiz.getToday(a.session));
+        final history = await quiz.listHistory(a.session, null);
+        expect(history, hasLength(2));
+        final reviews = [
+          for (final r in rows) await quiz.review(a.session, r.id!),
+        ];
+        for (final q in [
+          today.free!,
+          today.extra!,
+          graded,
+          ...history,
+          ...reviews,
+        ]) {
+          final body = await revision(q.questionId, q.version);
+          expect(q.question, body['question']);
+          expect(q.choices, body['choices']);
+          expect(q.conditions, body['conditions']);
+          expect(q.reviewedAt, body['reviewedAt']);
+          expect(q.reviewedBy, body['reviewedBy']);
+          expect(q.correctIndex, body['correctIndex']);
+          expect(q.explanation, body['explanation']);
+          expect(q.source, body['source']);
+        }
+      },
+    );
+
+    test(
+      'issuing a question without a content revision is contentUnavailable',
+      () async {
+        final a = await user();
+        // Installed in memory only, so no quiz_content_revision row exists.
+        QuizBank.instances[pod] = QuizBank.parse(
+          fixturePack([fixtureQuestion(99)]),
+        );
+        await expectLater(
+          at(() => quiz.getToday(a.session)),
+          error('contentUnavailable'),
+        );
+        expect(
+          await QuizAssignment.db.count(
+            admin,
+            where: (t) => t.authUserId.equals(authUserIdOf(a.owner)),
+          ),
+          0,
+        );
+      },
+    );
+
+    test('malformed revision JSON fails in the existing decode path', () async {
+      final a = await user();
+      await QuizContentRevision.db.insertRow(
+        admin,
+        QuizContentRevision(
+          questionId: 'test-question-malformed',
+          version: 1,
+          snapshot: '{not json',
+        ),
+      );
+      final row = await QuizAssignment.db.insertRow(
+        admin,
+        answered(
+          a.owner,
+          0,
+          '2026-10-18',
+        ).copyWith(questionId: 'test-question-malformed'),
+      );
+      await expectLater(quiz.review(a.session, row.id!), throwsFormatException);
+      await expectLater(
+        quiz.listHistory(a.session, null),
+        throwsFormatException,
+      );
+    });
+
+    test(
+      '30-row history page reads revisions in one query, not per row',
+      () async {
+        await configureQuizBank(pod, bank: fixtureBank(30));
+        final a = await user();
+        for (var i = 1; i <= 30; i++) {
+          await QuizAssignment.db.insertRow(
+            admin,
+            answered(a.owner, i, '2026-09-${i.toString().padLeft(2, '0')}'),
+          );
+        }
+        final original = pod.runtimeSettings;
+        await pod.updateRuntimeSettings(
+          original.copyWith(
+            logSettings: original.logSettings.copyWith(
+              logAllSessions: true,
+              logAllQueries: true,
+            ),
+          ),
+        );
+        final before =
+            (await admin.db.unsafeQuery(
+                  'SELECT COALESCE(MAX(id), 0) FROM serverpod_session_log',
+                )).first.first
+                as int;
+        final logged = await pod.createSession(enableLogging: true);
+        final List<QuizQuestion> page;
+        try {
+          page = await logged.db.transaction(
+            (tx) => QuizService(
+              ProductService(
+                logged,
+                a.owner,
+                tx,
+                ProductAccount(authUserId: authUserIdOf(a.owner)),
+              ),
+            ).history(null),
+          );
+        } finally {
+          // Closing awaits the session log flush, so the rows are persisted.
+          await logged.close();
+          await pod.updateRuntimeSettings(original);
+        }
+        final queries = await admin.db.unsafeQuery(
+          'SELECT q.query FROM serverpod_query_log q '
+          'JOIN serverpod_session_log s ON s.id = q."sessionLogId" '
+          'WHERE s.id > @before ORDER BY q."sessionLogId", q."order"',
+          parameters: QueryParameters.named({'before': before}),
+        );
+        stdout.writeln(
+          'QUERY-COUNT history rows=${page.length} '
+          'serverpod_query_log rows=${queries.length}',
+        );
+        for (final q in queries) {
+          stdout.writeln('QUERY-COUNT query: ${q.first}');
+        }
+        expect(page, hasLength(30));
+        expect(page.map((q) => q.questionId).toSet(), hasLength(30));
+        expect(queries, isNotEmpty);
+        expect(queries.length, lessThanOrEqualTo(3));
+      },
+    );
+  });
 }

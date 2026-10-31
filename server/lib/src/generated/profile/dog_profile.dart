@@ -8,15 +8,20 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: dead_code, unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:balmatchum_server/src/generated/protocol.dart' as _iu3f2ih9;
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+    as _iacs;
 
 abstract class DogProfile
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
   DogProfile._({
     this.id,
-    required this.owner,
+    required this.authUserId,
+    this.authUser,
     required this.breedId,
     required this.name,
     required this.sex,
@@ -27,7 +32,8 @@ abstract class DogProfile
 
   factory DogProfile({
     int? id,
-    required String owner,
+    required _is.UuidValue authUserId,
+    _iacs.AuthUser? authUser,
     required String breedId,
     required String name,
     required String sex,
@@ -39,7 +45,14 @@ abstract class DogProfile
   factory DogProfile.fromJson(Map<String, dynamic> jsonSerialization) {
     return DogProfile(
       id: jsonSerialization['id'] as int?,
-      owner: jsonSerialization['owner'] as String,
+      authUserId: _is.UuidValueJsonExtension.fromJson(
+        jsonSerialization['authUserId'],
+      ),
+      authUser: jsonSerialization['authUser'] == null
+          ? null
+          : _iu3f2ih9.Protocol().deserialize<_iacs.AuthUser>(
+              jsonSerialization['authUser'],
+            ),
       breedId: jsonSerialization['breedId'] as String,
       name: jsonSerialization['name'] as String,
       sex: jsonSerialization['sex'] as String,
@@ -58,7 +71,9 @@ abstract class DogProfile
   @override
   int? id;
 
-  String owner;
+  _is.UuidValue authUserId;
+
+  _iacs.AuthUser? authUser;
 
   String breedId;
 
@@ -80,7 +95,8 @@ abstract class DogProfile
   @_is.useResult
   DogProfile copyWith({
     int? id,
-    String? owner,
+    _is.UuidValue? authUserId,
+    _iacs.AuthUser? authUser,
     String? breedId,
     String? name,
     String? sex,
@@ -93,7 +109,8 @@ abstract class DogProfile
     return {
       '__className__': 'DogProfile',
       if (id != null) 'id': id,
-      'owner': owner,
+      'authUserId': authUserId.toJson(),
+      if (authUser != null) 'authUser': authUser?.toJson(),
       'breedId': breedId,
       'name': name,
       'sex': sex,
@@ -108,8 +125,8 @@ abstract class DogProfile
     return {};
   }
 
-  static DogProfileInclude include() {
-    return DogProfileInclude._();
+  static DogProfileInclude include({_iacs.AuthUserInclude? authUser}) {
+    return DogProfileInclude._(authUser: authUser);
   }
 
   static DogProfileIncludeList includeList({
@@ -141,7 +158,8 @@ class _Undefined {}
 class _DogProfileImpl extends DogProfile {
   _DogProfileImpl({
     int? id,
-    required String owner,
+    required _is.UuidValue authUserId,
+    _iacs.AuthUser? authUser,
     required String breedId,
     required String name,
     required String sex,
@@ -150,7 +168,8 @@ class _DogProfileImpl extends DogProfile {
     int? revision,
   }) : super._(
          id: id,
-         owner: owner,
+         authUserId: authUserId,
+         authUser: authUser,
          breedId: breedId,
          name: name,
          sex: sex,
@@ -165,7 +184,8 @@ class _DogProfileImpl extends DogProfile {
   @override
   DogProfile copyWith({
     Object? id = _Undefined,
-    String? owner,
+    _is.UuidValue? authUserId,
+    Object? authUser = _Undefined,
     String? breedId,
     String? name,
     String? sex,
@@ -175,7 +195,10 @@ class _DogProfileImpl extends DogProfile {
   }) {
     return DogProfile(
       id: id is int? ? id : this.id,
-      owner: owner ?? this.owner,
+      authUserId: authUserId ?? this.authUserId,
+      authUser: authUser is _iacs.AuthUser?
+          ? authUser
+          : this.authUser?.copyWith(),
       breedId: breedId ?? this.breedId,
       name: name ?? this.name,
       sex: sex ?? this.sex,
@@ -189,8 +212,10 @@ class _DogProfileImpl extends DogProfile {
 class DogProfileUpdateTable extends _is.UpdateTable<DogProfileTable> {
   DogProfileUpdateTable(super.table);
 
-  _is.ColumnValue<String, String> owner(String value) => _is.ColumnValue(
-    table.owner,
+  _is.ColumnValue<_is.UuidValue, _is.UuidValue> authUserId(
+    _is.UuidValue value,
+  ) => _is.ColumnValue(
+    table.authUserId,
     value,
   );
 
@@ -229,8 +254,8 @@ class DogProfileUpdateTable extends _is.UpdateTable<DogProfileTable> {
 class DogProfileTable extends _is.Table<int?> {
   DogProfileTable({super.tableRelation}) : super(tableName: 'dog_profile') {
     updateTable = DogProfileUpdateTable(this);
-    owner = _is.ColumnString(
-      'owner',
+    authUserId = _is.ColumnUuid(
+      'authUserId',
       this,
     );
     breedId = _is.ColumnString(
@@ -262,7 +287,9 @@ class DogProfileTable extends _is.Table<int?> {
 
   late final DogProfileUpdateTable updateTable;
 
-  late final _is.ColumnString owner;
+  late final _is.ColumnUuid authUserId;
+
+  _iacs.AuthUserTable? _authUser;
 
   late final _is.ColumnString breedId;
 
@@ -276,10 +303,23 @@ class DogProfileTable extends _is.Table<int?> {
 
   late final _is.ColumnInt revision;
 
+  _iacs.AuthUserTable get authUser {
+    if (_authUser != null) return _authUser!;
+    _authUser = _is.createRelationTable(
+      relationFieldName: 'authUser',
+      field: DogProfile.t.authUserId,
+      foreignField: _iacs.AuthUser.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _iacs.AuthUserTable(tableRelation: foreignTableRelation),
+    );
+    return _authUser!;
+  }
+
   @override
   List<_is.Column> get columns => [
     id,
-    owner,
+    authUserId,
     breedId,
     name,
     sex,
@@ -287,13 +327,25 @@ class DogProfileTable extends _is.Table<int?> {
     firstMetAt,
     revision,
   ];
+
+  @override
+  _is.Table? getRelationTable(String relationField) {
+    if (relationField == 'authUser') {
+      return authUser;
+    }
+    return null;
+  }
 }
 
 class DogProfileInclude extends _is.IncludeObject {
-  DogProfileInclude._();
+  DogProfileInclude._({_iacs.AuthUserInclude? authUser}) {
+    _authUser = authUser;
+  }
+
+  _iacs.AuthUserInclude? _authUser;
 
   @override
-  Map<String, _is.Include?> get includes => {};
+  Map<String, _is.Include?> get includes => {'authUser': _authUser};
 
   @override
   _is.Table<int?> get table => DogProfile.t;
@@ -320,6 +372,8 @@ class DogProfileIncludeList extends _is.IncludeList {
 
 class DogProfileRepository {
   const DogProfileRepository._();
+
+  final attachRow = const DogProfileAttachRowRepository._();
 
   /// Returns a list of [DogProfile]s matching the given query parameters.
   ///
@@ -351,6 +405,7 @@ class DogProfileRepository {
     _is.OrderByBuilder<DogProfileTable>? orderBy,
     _is.OrderByListBuilder<DogProfileTable>? orderByList,
     _is.Transaction? transaction,
+    DogProfileInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
@@ -361,6 +416,7 @@ class DogProfileRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -390,6 +446,7 @@ class DogProfileRepository {
     _is.OrderByBuilder<DogProfileTable>? orderBy,
     _is.OrderByListBuilder<DogProfileTable>? orderByList,
     _is.Transaction? transaction,
+    DogProfileInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
@@ -399,6 +456,7 @@ class DogProfileRepository {
       orderByList: orderByList?.call(DogProfile.t),
       offset: offset,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -409,12 +467,14 @@ class DogProfileRepository {
     _is.DatabaseSession session,
     int id, {
     _is.Transaction? transaction,
+    DogProfileInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
     return session.db.findById<DogProfile>(
       id,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -708,6 +768,33 @@ class DogProfileRepository {
       where: where(DogProfile.t),
       lockMode: lockMode,
       lockBehavior: lockBehavior,
+      transaction: transaction,
+    );
+  }
+}
+
+class DogProfileAttachRowRepository {
+  const DogProfileAttachRowRepository._();
+
+  /// Creates a relation between the given [DogProfile] and [AuthUser]
+  /// by setting the [DogProfile]'s foreign key `authUserId` to refer to the [AuthUser].
+  Future<void> authUser(
+    _is.DatabaseSession session,
+    DogProfile dogProfile,
+    _iacs.AuthUser authUser, {
+    _is.Transaction? transaction,
+  }) async {
+    if (dogProfile.id == null) {
+      throw ArgumentError.notNull('dogProfile.id');
+    }
+    if (authUser.id == null) {
+      throw ArgumentError.notNull('authUser.id');
+    }
+
+    var $dogProfile = dogProfile.copyWith(authUserId: authUser.id);
+    await session.db.updateRow<DogProfile>(
+      $dogProfile,
+      columns: [DogProfile.t.authUserId],
       transaction: transaction,
     );
   }

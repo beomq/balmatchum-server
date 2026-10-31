@@ -9,6 +9,7 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
 import '../generated/protocol.dart';
 import '../ads/ad_service.dart';
 import '../billing/billing_service.dart';
+import '../maintenance/schema_guard.dart';
 import '../quiz/quiz_bank.dart';
 
 /// Legacy quiz/theme fixtures remain isolated from production step balances.
@@ -18,6 +19,17 @@ const themePurchasePolicyVersion = 'theme-purchase-v1-20261027';
 const outfitPurchasePolicyVersion = 'outfit-purchase-v1-20261027';
 const stepsPerPoint = 100;
 const dailyBaseCap = 100;
+
+/// User-scoped queries and dual writes share the same AuthUser identity.
+UuidValue authUserIdOf(String owner) {
+  try {
+    return UuidValue.withValidation(owner);
+  } on FormatException {
+    throw NotAuthorizedException(
+      reason: AuthenticationFailureReason.unauthenticated,
+    );
+  }
+}
 
 bool productFixturesEnabled(Session session) {
   final config = session.server.serverpod.config;
@@ -50,6 +62,17 @@ String localDate(DateTime instant) => instant
     .toIso8601String()
     .substring(0, 10);
 
+const _kstOffsetMicros = 9 * Duration.microsecondsPerHour;
+
+/// KST calendar day as days since 1970-01-01. Mirrors the migration backfill:
+/// floor((epoch + 9h) / 1 day), floored (not truncated) before the epoch.
+int localDayNumber(DateTime instant) {
+  final shifted = instant.toUtc().microsecondsSinceEpoch + _kstOffsetMicros;
+  const day = Duration.microsecondsPerDay;
+  return (shifted - shifted % day) ~/ day;
+}
+
+/// Reference semantics for the indexed day predicate; kept for tests.
 bool touchesDay(GpsRecordInput input, String date) {
   final start = dayStart(date);
   final end = start.add(const Duration(days: 1));
@@ -66,9 +89,10 @@ Future<ProductAccount> lockProductAccount(
   String owner,
   Transaction tx,
 ) async {
+  SchemaGuard.require();
   final user = await AuthUser.db.findFirstRow(
     session,
-    where: (t) => t.id.equals(UuidValue.fromString(owner)),
+    where: (t) => t.id.equals(authUserIdOf(owner)),
     lockMode: LockMode.forUpdate,
     transaction: tx,
   );
@@ -79,22 +103,54 @@ Future<ProductAccount> lockProductAccount(
   }
   await ProductAccount.db.insert(
     session,
-    [ProductAccount(owner: owner)],
+    [ProductAccount(authUserId: authUserIdOf(owner))],
     ignoreConflicts: true,
     transaction: tx,
   );
   return (await ProductAccount.db.findFirstRow(
     session,
-    where: (t) => t.owner.equals(owner),
+    where: (t) => t.authUserId.equals(authUserIdOf(owner)),
     lockMode: LockMode.forUpdate,
     transaction: tx,
   ))!;
 }
 
+/// Compare both materialized balances with the ledger in one DB snapshot.
+/// The ledger remains authoritative; this reports drift without repairing it.
+Future<List<List<dynamic>>> reconcilePointBalances(Session session) =>
+    session.db.unsafeQuery(
+      '''
+      WITH ledger AS (
+        SELECT "authUserId",
+          COALESCE(SUM(ledger_entry.amount) FILTER (WHERE "policyVersion" IN
+            (@steps, @quiz, @theme, @outfit)), 0) AS balance,
+          COALESCE(SUM(ledger_entry.amount) FILTER (WHERE "policyVersion" = @fixture), 0)
+            AS fixture_balance
+        FROM point_entry ledger_entry GROUP BY "authUserId"
+      )
+      SELECT COALESCE(a."authUserId", l."authUserId")::text, a.balance,
+        COALESCE(l.balance, 0)::bigint, a."fixtureBalance",
+        COALESCE(l.fixture_balance, 0)::bigint
+      FROM product_account a
+        FULL OUTER JOIN ledger l ON l."authUserId" = a."authUserId"
+      WHERE a.id IS NULL OR a.balance <> COALESCE(l.balance, 0)
+        OR a."fixtureBalance" <> COALESCE(l.fixture_balance, 0)
+      ''',
+      parameters: QueryParameters.named({
+        'steps': stepPolicyVersion,
+        'quiz': quizPolicyVersion,
+        'theme': themePurchasePolicyVersion,
+        'outfit': outfitPurchasePolicyVersion,
+        'fixture': productFixtureLabel,
+      }),
+    );
+
 class ProductService {
-  ProductService(this.session, this.owner, this.tx, this.account);
+  ProductService(this.session, this.owner, this.tx, this.account)
+    : authUserId = authUserIdOf(owner);
   final Session session;
   final String owner;
+  final UuidValue authUserId;
   final Transaction tx;
   final ProductAccount account;
 
@@ -121,18 +177,19 @@ class ProductService {
   static Future<T> read<T>(
     Session session,
     Future<T> Function(ProductService) action,
-  ) {
+  ) async {
+    SchemaGuard.require();
     final owner = session.authenticated?.userIdentifier;
     if (owner == null) throw ProductException(code: 'unauthenticated');
-    return session.db.transaction(
+    final result = await session.db.transaction(
       (tx) async {
         final account =
             await ProductAccount.db.findFirstRow(
               session,
-              where: (t) => t.owner.equals(owner),
+              where: (t) => t.authUserId.equals(authUserIdOf(owner)),
               transaction: tx,
             ) ??
-            ProductAccount(owner: owner);
+            ProductAccount(authUserId: authUserIdOf(owner));
         return withClock(
           Clock.fixed(clock.now()),
           () => action(ProductService(session, owner, tx, account)),
@@ -142,17 +199,29 @@ class ProductService {
         isolationLevel: IsolationLevel.repeatableRead,
       ),
     );
+    // The snapshot cannot see a deletion committed after it began, so recheck
+    // outside the transaction without taking a lock; reads stay read-only.
+    final user = await AuthUser.db.findById(
+      session,
+      authUserIdOf(owner),
+    );
+    if (user == null) {
+      throw NotAuthorizedException(
+        reason: AuthenticationFailureReason.unauthenticated,
+      );
+    }
+    return result;
   }
 
   Future<ProductDay> day(String date) async {
     dayStart(date);
     return await ProductDay.db.findFirstRow(
           session,
-          where: (t) => t.owner.equals(owner) & t.date.equals(date),
+          where: (t) => t.authUserId.equals(authUserId) & t.date.equals(date),
           transaction: tx,
         ) ??
         ProductDay(
-          owner: owner,
+          authUserId: authUserId,
           date: date,
           windows: [],
           policyVersion: stepPolicyVersion,
@@ -161,6 +230,7 @@ class ProductService {
 
   Future<void> saveDay(ProductDay value) async {
     if (value.id == null) {
+      value.authUserId = authUserId;
       await ProductDay.db.insertRow(session, value, transaction: tx);
     } else {
       await ProductDay.db.updateRow(session, value, transaction: tx);
@@ -176,7 +246,8 @@ class ProductService {
     }
     final request = await ProductRequest.db.findFirstRow(
       session,
-      where: (t) => t.owner.equals(owner) & t.requestId.equals(requestId),
+      where: (t) =>
+          t.authUserId.equals(authUserId) & t.requestId.equals(requestId),
       transaction: tx,
     );
     if (request == null) return null;
@@ -190,7 +261,7 @@ class ProductService {
     await ProductRequest.db.insertRow(
       session,
       ProductRequest(
-        owner: owner,
+        authUserId: authUserId,
         requestId: requestId,
         digest: digest(payload),
         result: jsonEncode(result),
@@ -199,28 +270,35 @@ class ProductService {
     );
   }
 
-  Future<int> balance({bool fixture = false}) async {
-    final result = await session.db.unsafeQuery(
-      'SELECT COALESCE(SUM(amount), 0) FROM point_entry '
-      'WHERE owner = @owner AND ("policyVersion" = @policy '
-      'OR "policyVersion" = @quizPolicy '
-      'OR "policyVersion" = @themePolicy '
-      'OR "policyVersion" = @outfitPolicy)',
-      parameters: QueryParameters.named({
-        'owner': owner,
-        'policy': fixture ? productFixtureLabel : stepPolicyVersion,
-        'quizPolicy': fixture ? productFixtureLabel : quizPolicyVersion,
-        'themePolicy': fixture
-            ? productFixtureLabel
-            : themePurchasePolicyVersion,
-        'outfitPolicy': fixture
-            ? productFixtureLabel
-            : outfitPurchasePolicyVersion,
-      }),
+  /// Call only while holding [lockProductAccount] in [tx].
+  Future<PointEntry> appendPointEntry(
+    PointEntry entry, {
+    // Test-only failure injection at the boundary between the two writes.
+    Future<void> Function()? afterInsert,
+  }) async {
+    entry.authUserId = authUserId;
+    final inserted = await PointEntry.db.insertRow(
+      session,
+      entry,
       transaction: tx,
     );
-    return int.parse(result.single[0].toString());
+    await afterInsert?.call();
+    if ({
+      stepPolicyVersion,
+      quizPolicyVersion,
+      themePurchasePolicyVersion,
+      outfitPurchasePolicyVersion,
+    }.contains(entry.policyVersion)) {
+      account.balance += entry.amount;
+    } else if (entry.policyVersion == productFixtureLabel) {
+      account.fixtureBalance += entry.amount;
+    }
+    await ProductAccount.db.updateRow(session, account, transaction: tx);
+    return inserted;
   }
+
+  Future<int> balance({bool fixture = false}) async =>
+      fixture ? account.fixtureBalance : account.balance;
 
   Future<WalletView> wallet() async => WalletView(
     balance: await balance(),
@@ -284,17 +362,25 @@ class ProductService {
     return value;
   }
 
-  Future<DailyRecord> view(ProductDay value, {bool routes = true}) async {
+  Future<List<PointEntry>> stepEntries(String fromDate, String toDate) =>
+      PointEntry.db.find(
+        session,
+        where: (t) =>
+            t.authUserId.equals(authUserId) &
+            (t.date >= fromDate) &
+            (t.date <= toDate) &
+            t.kind.equals('steps') &
+            t.policyVersion.equals(stepPolicyVersion),
+        transaction: tx,
+      );
+
+  Future<DailyRecord> view(
+    ProductDay value, {
+    bool routes = true,
+    List<PointEntry>? entries,
+  }) async {
     final production = value.policyVersion == stepPolicyVersion;
-    final entries = await PointEntry.db.find(
-      session,
-      where: (t) =>
-          t.owner.equals(owner) &
-          t.date.equals(value.date) &
-          t.kind.equals('steps') &
-          t.policyVersion.equals(stepPolicyVersion),
-      transaction: tx,
-    );
+    entries ??= await stepEntries(value.date, value.date);
     final available = value.availability == 'confirmed' && value.steps != null;
     final amount = production && available && !value.deleted
         ? claimable(value)
@@ -304,14 +390,9 @@ class ProductService {
         : null;
     final paths = <DayRoute>[];
     if (routes && !value.deleted) {
-      final records = await StoredGpsRecord.db.find(
-        session,
-        where: (t) => t.owner.equals(owner) & t.deleted.equals(false),
-        transaction: tx,
-      );
+      final records = await gpsRecordsOnDay(value.date);
       for (final record in records) {
         final input = record.payload!;
-        if (!touchesDay(input, value.date)) continue;
         paths.add(
           DayRoute(
             recordId: record.id!,
@@ -371,13 +452,40 @@ class ProductService {
     final end = dayStart(toDate);
     final count = end.difference(start).inDays;
     if (count < 0 || count > 92) throw ProductException(code: 'invalidRange');
-    return [
-      for (var i = 0; i <= count; i++)
+    // Two range reads instead of two reads per day: the range is grouped here.
+    final stored = {
+      for (final value in await ProductDay.db.find(
+        session,
+        where: (t) =>
+            t.authUserId.equals(authUserId) &
+            (t.date >= fromDate) &
+            (t.date <= toDate),
+        transaction: tx,
+      ))
+        value.date: value,
+    };
+    final entries = <String, List<PointEntry>>{};
+    for (final entry in await stepEntries(fromDate, toDate)) {
+      entries.putIfAbsent(entry.date!, () => []).add(entry);
+    }
+    final days = <DailyRecord>[];
+    for (var i = 0; i <= count; i++) {
+      final date = localDate(start.add(Duration(days: i)));
+      days.add(
         await view(
-          await day(localDate(start.add(Duration(days: i)))),
+          stored[date] ??
+              ProductDay(
+                authUserId: authUserId,
+                date: date,
+                windows: [],
+                policyVersion: stepPolicyVersion,
+              ),
           routes: false,
+          entries: entries[date] ?? const [],
         ),
-    ];
+      );
+    }
+    return days;
   }
 
   Future<int> registerStream(String requestId, int expectedGeneration) async {
@@ -424,7 +532,7 @@ class ProductService {
     final previous = await StepRevision.db.findFirstRow(
       session,
       where: (t) =>
-          t.owner.equals(owner) &
+          t.authUserId.equals(authUserId) &
           t.date.equals(input.date) &
           t.generation.equals(input.streamGeneration) &
           t.revision.equals(input.revision),
@@ -439,7 +547,7 @@ class ProductService {
     await StepRevision.db.insertRow(
       session,
       StepRevision(
-        owner: owner,
+        authUserId: authUserId,
         date: input.date,
         generation: input.streamGeneration,
         revision: input.revision,
@@ -497,7 +605,7 @@ class ProductService {
       await saveDay(value);
       await StepRevision.db.deleteWhere(
         session,
-        where: (t) => t.owner.equals(owner) & t.date.equals(date),
+        where: (t) => t.authUserId.equals(authUserId) & t.date.equals(date),
         transaction: tx,
       );
       await PointEntry.db.updateWhere(
@@ -507,7 +615,7 @@ class ProductService {
           t.throughUnits(null),
           t.slices(null),
         ],
-        where: (t) => t.owner.equals(owner) & t.date.equals(date),
+        where: (t) => t.authUserId.equals(authUserId) & t.date.equals(date),
         transaction: tx,
       );
       // Retry receipts duplicate the same units. Preserve their key, digest,
@@ -516,22 +624,21 @@ class ProductService {
         'UPDATE product_request SET result = '
         '((result::jsonb - \'slices\' - \'basePoints\') || '
         '\'{"fromUnits":0,"throughUnits":0}\'::jsonb)::text '
-        'WHERE owner = @owner AND result::jsonb ->> \'date\' = @date '
+        'WHERE "authUserId" = CAST(@id AS uuid) '
+        'AND result::jsonb ->> \'date\' = @date '
         'AND result::jsonb ? \'ledgerId\'',
-        parameters: QueryParameters.named({'owner': owner, 'date': date}),
+        parameters: QueryParameters.named({
+          'id': owner,
+          'date': date,
+        }),
         transaction: tx,
       );
-      final records = await StoredGpsRecord.db.find(
-        session,
-        where: (t) => t.owner.equals(owner) & t.deleted.equals(false),
-        transaction: tx,
-      );
-      for (final record in records) {
-        if (touchesDay(record.payload!, date)) {
-          record.payload = null;
-          record.deleted = true;
-          await StoredGpsRecord.db.updateRow(session, record, transaction: tx);
-        }
+      for (final record in await gpsRecordsOnDay(date)) {
+        record.payload = null;
+        record.deleted = true;
+        record.firstLocalDay = null;
+        record.lastLocalDay = null;
+        await StoredGpsRecord.db.updateRow(session, record, transaction: tx);
       }
     }
     // Store no snapshot/route in an idempotency response that could expose deletion.
@@ -539,12 +646,27 @@ class ProductService {
     return view(value);
   }
 
+  /// Live records whose [first, last] KST day range contains [date]; the same
+  /// set as [touchesDay] (an end exactly at midnight belongs to the new day).
+  Future<List<StoredGpsRecord>> gpsRecordsOnDay(String date) {
+    final target = localDayNumber(dayStart(date));
+    return StoredGpsRecord.db.find(
+      session,
+      where: (t) =>
+          t.authUserId.equals(authUserId) &
+          t.deleted.equals(false) &
+          (t.firstLocalDay <= target) &
+          (t.lastLocalDay >= target),
+      transaction: tx,
+    );
+  }
+
   Future<List<DailyRecord>> deletions(int afterVersion) async {
     if (afterVersion < 0) throw ProductException(code: 'invalidCursor');
     final values = await ProductDay.db.find(
       session,
       where: (t) =>
-          t.owner.equals(owner) &
+          t.authUserId.equals(authUserId) &
           t.deleted.equals(true) &
           (t.deletionVersion > afterVersion),
       orderBy: (t) => t.deletionVersion,
@@ -616,10 +738,9 @@ class ProductService {
     }
     final from = slices.first.fromUnits;
     final through = slices.last.throughUnits;
-    final entry = await PointEntry.db.insertRow(
-      session,
+    final entry = await appendPointEntry(
       PointEntry(
-        owner: owner,
+        authUserId: authUserId,
         entryKey: '$stepPolicyVersion:steps:$date:${value.revision}',
         kind: 'steps',
         date: date,
@@ -630,7 +751,6 @@ class ProductService {
         createdAt: clock.now().toUtc(),
         slices: slices,
       ),
-      transaction: tx,
     );
     value.grantedUnits = max(value.grantedUnits, through);
     value.revision++;

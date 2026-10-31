@@ -8,6 +8,7 @@ import 'package:serverpod_auth_idp_server/core.dart';
 
 import '../generated/protocol.dart';
 import 'kakao_provider.dart';
+import 'login_rate_limiter.dart';
 import 'naver_client.dart';
 import 'oidc_token_verifier.dart';
 
@@ -20,6 +21,7 @@ class NaverProvider implements IdentityProvider {
     required this.authUsers,
     required this.client,
     required this.verifier,
+    required this.limiter,
     required this.clock,
     required this.cleanupSessions,
   });
@@ -35,6 +37,7 @@ class NaverProvider implements IdentityProvider {
   final AuthUsers authUsers;
   final NaverClient client;
   final OidcTokenVerifier verifier;
+  final LoginRateLimiter limiter;
   final Clock clock;
   final Future<void> Function(Session, UuidValue) cleanupSessions;
 
@@ -55,6 +58,7 @@ class NaverProvider implements IdentityProvider {
       // Dart also rejects nonzero padding bits; do not log parser input.
       throw LoginException(code: 'invalidAttempt');
     }
+    limiter.check(session);
     final random = Random.secure();
     String secret() => base64UrlEncode(
       List.generate(32, (_) => random.nextInt(256)),
@@ -267,10 +271,12 @@ String _digest(String value) => sha256.convert(utf8.encode(value)).toString();
 class NaverProviderBuilder extends IdentityProviderBuilder<NaverProvider> {
   const NaverProviderBuilder({
     required this.config,
+    this.limiter,
     this.clock = const Clock(),
     this.cleanupSessions = removeOlderSessions,
   });
   final NaverConfig config;
+  final LoginRateLimiter? limiter;
   final Clock clock;
   final Future<void> Function(Session, UuidValue) cleanupSessions;
 
@@ -291,6 +297,7 @@ class NaverProviderBuilder extends IdentityProviderBuilder<NaverProvider> {
         loadJwks: client.loadJwks,
         clock: clock,
       ),
+      limiter: limiter ?? LoginRateLimiter(clock: clock),
       clock: clock,
       cleanupSessions: cleanupSessions,
     );

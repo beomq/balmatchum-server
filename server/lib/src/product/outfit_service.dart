@@ -14,12 +14,12 @@ extension OutfitService on ProductService {
   Future<OutfitStore> outfits() async {
     final owned = await OutfitOwnership.db.find(
       session,
-      where: (t) => t.owner.equals(owner),
+      where: (t) => t.authUserId.equals(authUserId),
       transaction: tx,
     );
     final dog = await DogProfile.db.findFirstRow(
       session,
-      where: (t) => t.owner.equals(owner),
+      where: (t) => t.authUserId.equals(authUserId),
       transaction: tx,
     );
     final fixture = productFixturesEnabled(session);
@@ -67,10 +67,9 @@ extension OutfitService on ProductService {
       if (store.balance < item.price) {
         throw ProductException(code: 'insufficientPoints');
       }
-      await PointEntry.db.insertRow(
-        session,
+      await appendPointEntry(
         PointEntry(
-          owner: owner,
+          authUserId: authUserId,
           entryKey: 'outfit:$outfitId',
           kind: 'purchase',
           amount: -item.price,
@@ -79,12 +78,11 @@ extension OutfitService on ProductService {
               : outfitPurchasePolicyVersion,
           createdAt: clock.now().toUtc(),
         ),
-        transaction: tx,
       );
       await OutfitOwnership.db.insertRow(
         session,
         OutfitOwnership(
-          owner: owner,
+          authUserId: authUserId,
           outfitId: outfitId,
           purchasedAt: clock.now().toUtc(),
         ),

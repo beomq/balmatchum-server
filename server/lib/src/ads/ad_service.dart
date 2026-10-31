@@ -26,7 +26,7 @@ class AdService {
     targetDate: i.targetDate,
     targetRevision: i.targetRevision,
     adUnit: i.adUnit,
-    userId: i.owner,
+    userId: i.authUserId.uuid,
     customData: i.nonce,
     status:
         i.status == 'pending' && !clock.now().toUtc().isBefore(i.acceptUntil)
@@ -62,7 +62,7 @@ class AdService {
     final previous = await StoredAdIntent.db.findFirstRow(
       s.session,
       where: (t) =>
-          t.owner.equals(s.owner) &
+          t.authUserId.equals(s.authUserId) &
           t.purpose.equals(purpose) &
           t.targetDate.equals(date) &
           t.targetRevision.equals(revision),
@@ -109,7 +109,7 @@ class AdService {
     final i = await StoredAdIntent.db.insertRow(
       s.session,
       StoredAdIntent(
-        owner: s.owner,
+        authUserId: s.authUserId,
         nonce: nonce,
         purpose: purpose,
         targetDate: date,
@@ -129,7 +129,7 @@ class AdService {
   Future<AdIntent> get(ProductService s, String id) async {
     final i = await StoredAdIntent.db.findFirstRow(
       s.session,
-      where: (t) => t.owner.equals(s.owner) & t.nonce.equals(id),
+      where: (t) => t.authUserId.equals(s.authUserId) & t.nonce.equals(id),
       transaction: s.tx,
     );
     if (i == null) throw AdException(code: 'intentNotFound');
@@ -144,7 +144,7 @@ class AdService {
     );
     if (candidate == null) throw AdException(code: 'intentNotFound');
     await session.db.transaction((tx) async {
-      await lockProductAccount(session, candidate.owner, tx);
+      await lockProductAccount(session, candidate.authUserId.uuid, tx);
       final i = await StoredAdIntent.db.findById(
         session,
         candidate.id!,
@@ -154,7 +154,7 @@ class AdService {
       // The intent snapshots the unit of ITS purpose and platform. Google's
       // ad_unit is the numeric ID after the slash of the unit the app loaded.
       final placement = config.placements[i.purpose];
-      if (event.owner != i.owner ||
+      if (event.owner != i.authUserId.uuid ||
           (event.unit != i.adUnit && event.unit != i.adUnit.split('/').last) ||
           event.rewardItem != i.rewardItem ||
           event.rewardAmount != i.rewardAmount ||
@@ -214,7 +214,8 @@ class AdService {
     await lockProductAccount(session, owner, tx);
     final i = await StoredAdIntent.db.findFirstRow(
       session,
-      where: (t) => t.owner.equals(owner) & t.nonce.equals(intentId),
+      where: (t) =>
+          t.authUserId.equals(authUserIdOf(owner)) & t.nonce.equals(intentId),
       transaction: tx,
     );
     if (i == null) throw AdException(code: 'intentNotFound');

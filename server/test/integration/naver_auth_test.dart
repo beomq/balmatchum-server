@@ -927,4 +927,27 @@ void main() {
       expect(revokeCount, 0);
     });
   });
+
+  test('31st beginLogin from one forwarded address is rejected', () async {
+    await start();
+    final url = Uri.parse(
+      'http://localhost:${pod.server.port}/naver/beginLogin',
+    );
+    Future<http.Response> begin(String forwarded) => http.post(
+      url,
+      headers: {
+        'content-type': 'application/json',
+        'x-forwarded-for': forwarded,
+      },
+      body: jsonEncode({'codeChallenge': _challenge}),
+    );
+    for (var i = 0; i < 30; i++) {
+      expect((await begin('198.51.100.1, 203.0.113.7')).statusCode, 200);
+    }
+    final rejected = await begin('198.51.100.2, 203.0.113.7');
+    expect(rejected.statusCode, isNot(200));
+    expect(rejected.body, contains('tooManyAttempts'));
+    expect(await NaverLoginAttempt.db.count(admin), 30);
+    expect((await begin('203.0.113.8')).statusCode, 200);
+  });
 }

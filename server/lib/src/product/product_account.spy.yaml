@@ -2,12 +2,14 @@ class: ProductAccount
 serverOnly: true
 table: product_account
 fields:
-  owner: String
+  authUser: module:serverpod_auth_core:AuthUser?, relation(onDelete=Cascade)
   streamGeneration: int, default=0
   deletionVersion: int, default=0
   equippedTheme: String, default='sunny'
   equippedOutfit: String?
+  balance: int, default=0
+  fixtureBalance: int, default=0
 indexes:
-  product_account_owner:
-    fields: owner
+  product_account_auth_user:
+    fields: authUserId
     unique: true

@@ -8,22 +8,28 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: dead_code, unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:balmatchum_server/src/generated/protocol.dart' as _iu3f2ih9;
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+    as _iacs;
 
 abstract class OutfitOwnership
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
   OutfitOwnership._({
     this.id,
-    required this.owner,
+    required this.authUserId,
+    this.authUser,
     required this.outfitId,
     required this.purchasedAt,
   });
 
   factory OutfitOwnership({
     int? id,
-    required String owner,
+    required _is.UuidValue authUserId,
+    _iacs.AuthUser? authUser,
     required String outfitId,
     required DateTime purchasedAt,
   }) = _OutfitOwnershipImpl;
@@ -31,7 +37,14 @@ abstract class OutfitOwnership
   factory OutfitOwnership.fromJson(Map<String, dynamic> jsonSerialization) {
     return OutfitOwnership(
       id: jsonSerialization['id'] as int?,
-      owner: jsonSerialization['owner'] as String,
+      authUserId: _is.UuidValueJsonExtension.fromJson(
+        jsonSerialization['authUserId'],
+      ),
+      authUser: jsonSerialization['authUser'] == null
+          ? null
+          : _iu3f2ih9.Protocol().deserialize<_iacs.AuthUser>(
+              jsonSerialization['authUser'],
+            ),
       outfitId: jsonSerialization['outfitId'] as String,
       purchasedAt: _is.DateTimeJsonExtension.fromJson(
         jsonSerialization['purchasedAt'],
@@ -46,7 +59,9 @@ abstract class OutfitOwnership
   @override
   int? id;
 
-  String owner;
+  _is.UuidValue authUserId;
+
+  _iacs.AuthUser? authUser;
 
   String outfitId;
 
@@ -60,7 +75,8 @@ abstract class OutfitOwnership
   @_is.useResult
   OutfitOwnership copyWith({
     int? id,
-    String? owner,
+    _is.UuidValue? authUserId,
+    _iacs.AuthUser? authUser,
     String? outfitId,
     DateTime? purchasedAt,
   });
@@ -69,7 +85,8 @@ abstract class OutfitOwnership
     return {
       '__className__': 'OutfitOwnership',
       if (id != null) 'id': id,
-      'owner': owner,
+      'authUserId': authUserId.toJson(),
+      if (authUser != null) 'authUser': authUser?.toJson(),
       'outfitId': outfitId,
       'purchasedAt': purchasedAt.toJson(),
     };
@@ -80,8 +97,8 @@ abstract class OutfitOwnership
     return {};
   }
 
-  static OutfitOwnershipInclude include() {
-    return OutfitOwnershipInclude._();
+  static OutfitOwnershipInclude include({_iacs.AuthUserInclude? authUser}) {
+    return OutfitOwnershipInclude._(authUser: authUser);
   }
 
   static OutfitOwnershipIncludeList includeList({
@@ -113,12 +130,14 @@ class _Undefined {}
 class _OutfitOwnershipImpl extends OutfitOwnership {
   _OutfitOwnershipImpl({
     int? id,
-    required String owner,
+    required _is.UuidValue authUserId,
+    _iacs.AuthUser? authUser,
     required String outfitId,
     required DateTime purchasedAt,
   }) : super._(
          id: id,
-         owner: owner,
+         authUserId: authUserId,
+         authUser: authUser,
          outfitId: outfitId,
          purchasedAt: purchasedAt,
        );
@@ -129,13 +148,17 @@ class _OutfitOwnershipImpl extends OutfitOwnership {
   @override
   OutfitOwnership copyWith({
     Object? id = _Undefined,
-    String? owner,
+    _is.UuidValue? authUserId,
+    Object? authUser = _Undefined,
     String? outfitId,
     DateTime? purchasedAt,
   }) {
     return OutfitOwnership(
       id: id is int? ? id : this.id,
-      owner: owner ?? this.owner,
+      authUserId: authUserId ?? this.authUserId,
+      authUser: authUser is _iacs.AuthUser?
+          ? authUser
+          : this.authUser?.copyWith(),
       outfitId: outfitId ?? this.outfitId,
       purchasedAt: purchasedAt ?? this.purchasedAt,
     );
@@ -145,8 +168,10 @@ class _OutfitOwnershipImpl extends OutfitOwnership {
 class OutfitOwnershipUpdateTable extends _is.UpdateTable<OutfitOwnershipTable> {
   OutfitOwnershipUpdateTable(super.table);
 
-  _is.ColumnValue<String, String> owner(String value) => _is.ColumnValue(
-    table.owner,
+  _is.ColumnValue<_is.UuidValue, _is.UuidValue> authUserId(
+    _is.UuidValue value,
+  ) => _is.ColumnValue(
+    table.authUserId,
     value,
   );
 
@@ -166,8 +191,8 @@ class OutfitOwnershipTable extends _is.Table<int?> {
   OutfitOwnershipTable({super.tableRelation})
     : super(tableName: 'outfit_ownership') {
     updateTable = OutfitOwnershipUpdateTable(this);
-    owner = _is.ColumnString(
-      'owner',
+    authUserId = _is.ColumnUuid(
+      'authUserId',
       this,
     );
     outfitId = _is.ColumnString(
@@ -182,26 +207,53 @@ class OutfitOwnershipTable extends _is.Table<int?> {
 
   late final OutfitOwnershipUpdateTable updateTable;
 
-  late final _is.ColumnString owner;
+  late final _is.ColumnUuid authUserId;
+
+  _iacs.AuthUserTable? _authUser;
 
   late final _is.ColumnString outfitId;
 
   late final _is.ColumnDateTime purchasedAt;
 
+  _iacs.AuthUserTable get authUser {
+    if (_authUser != null) return _authUser!;
+    _authUser = _is.createRelationTable(
+      relationFieldName: 'authUser',
+      field: OutfitOwnership.t.authUserId,
+      foreignField: _iacs.AuthUser.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _iacs.AuthUserTable(tableRelation: foreignTableRelation),
+    );
+    return _authUser!;
+  }
+
   @override
   List<_is.Column> get columns => [
     id,
-    owner,
+    authUserId,
     outfitId,
     purchasedAt,
   ];
+
+  @override
+  _is.Table? getRelationTable(String relationField) {
+    if (relationField == 'authUser') {
+      return authUser;
+    }
+    return null;
+  }
 }
 
 class OutfitOwnershipInclude extends _is.IncludeObject {
-  OutfitOwnershipInclude._();
+  OutfitOwnershipInclude._({_iacs.AuthUserInclude? authUser}) {
+    _authUser = authUser;
+  }
+
+  _iacs.AuthUserInclude? _authUser;
 
   @override
-  Map<String, _is.Include?> get includes => {};
+  Map<String, _is.Include?> get includes => {'authUser': _authUser};
 
   @override
   _is.Table<int?> get table => OutfitOwnership.t;
@@ -228,6 +280,8 @@ class OutfitOwnershipIncludeList extends _is.IncludeList {
 
 class OutfitOwnershipRepository {
   const OutfitOwnershipRepository._();
+
+  final attachRow = const OutfitOwnershipAttachRowRepository._();
 
   /// Returns a list of [OutfitOwnership]s matching the given query parameters.
   ///
@@ -259,6 +313,7 @@ class OutfitOwnershipRepository {
     _is.OrderByBuilder<OutfitOwnershipTable>? orderBy,
     _is.OrderByListBuilder<OutfitOwnershipTable>? orderByList,
     _is.Transaction? transaction,
+    OutfitOwnershipInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
@@ -269,6 +324,7 @@ class OutfitOwnershipRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -298,6 +354,7 @@ class OutfitOwnershipRepository {
     _is.OrderByBuilder<OutfitOwnershipTable>? orderBy,
     _is.OrderByListBuilder<OutfitOwnershipTable>? orderByList,
     _is.Transaction? transaction,
+    OutfitOwnershipInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
@@ -307,6 +364,7 @@ class OutfitOwnershipRepository {
       orderByList: orderByList?.call(OutfitOwnership.t),
       offset: offset,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -317,12 +375,14 @@ class OutfitOwnershipRepository {
     _is.DatabaseSession session,
     int id, {
     _is.Transaction? transaction,
+    OutfitOwnershipInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
     return session.db.findById<OutfitOwnership>(
       id,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -618,6 +678,33 @@ class OutfitOwnershipRepository {
       where: where(OutfitOwnership.t),
       lockMode: lockMode,
       lockBehavior: lockBehavior,
+      transaction: transaction,
+    );
+  }
+}
+
+class OutfitOwnershipAttachRowRepository {
+  const OutfitOwnershipAttachRowRepository._();
+
+  /// Creates a relation between the given [OutfitOwnership] and [AuthUser]
+  /// by setting the [OutfitOwnership]'s foreign key `authUserId` to refer to the [AuthUser].
+  Future<void> authUser(
+    _is.DatabaseSession session,
+    OutfitOwnership outfitOwnership,
+    _iacs.AuthUser authUser, {
+    _is.Transaction? transaction,
+  }) async {
+    if (outfitOwnership.id == null) {
+      throw ArgumentError.notNull('outfitOwnership.id');
+    }
+    if (authUser.id == null) {
+      throw ArgumentError.notNull('authUser.id');
+    }
+
+    var $outfitOwnership = outfitOwnership.copyWith(authUserId: authUser.id);
+    await session.db.updateRow<OutfitOwnership>(
+      $outfitOwnership,
+      columns: [OutfitOwnership.t.authUserId],
       transaction: transaction,
     );
   }

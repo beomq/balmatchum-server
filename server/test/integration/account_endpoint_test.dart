@@ -81,7 +81,7 @@ void main() {
       for (final table in _ownedTables) {
         result[table] = (await admin.db.unsafeQuery(
           'SELECT row_to_json(t)::text FROM "$table" t '
-          'WHERE owner = @owner ORDER BY id',
+          'WHERE "authUserId" = CAST(@owner AS uuid) ORDER BY id',
           parameters: parameters,
         )).map((r) => r[0]).toList();
       }
@@ -93,6 +93,8 @@ void main() {
       );
       for (final row in tables) {
         final table = row[0] as String;
+        // App tables listed above were already read by the same key.
+        if (result.containsKey(table)) continue;
         result[table] = (await admin.db.unsafeQuery(
           'SELECT row_to_json(t)::text FROM "$table" t '
           'WHERE "authUserId" = CAST(@owner AS uuid) ORDER BY id',
@@ -143,7 +145,7 @@ void main() {
         await PointEntry.db.insertRow(
           session,
           PointEntry(
-            owner: owner,
+            authUserId: authUserIdOf(owner),
             entryKey: 'seed',
             kind: 'quiz',
             amount: 2,
@@ -154,13 +156,17 @@ void main() {
         );
         await QuizState.db.insertRow(
           session,
-          QuizState(owner: owner, date: '2026-10-14', questionId: 'test'),
+          QuizState(
+            authUserId: authUserIdOf(owner),
+            date: '2026-10-14',
+            questionId: 'test',
+          ),
           transaction: s.tx,
         );
         await ThemeOwnership.db.insertRow(
           session,
           ThemeOwnership(
-            owner: owner,
+            authUserId: authUserIdOf(owner),
             themeId: 'cloudy',
             purchasedAt: DateTime.utc(2026),
           ),
@@ -169,7 +175,7 @@ void main() {
         await OutfitOwnership.db.insertRow(
           session,
           OutfitOwnership(
-            owner: owner,
+            authUserId: authUserIdOf(owner),
             outfitId: 'vest-low-v',
             purchasedAt: DateTime.utc(2026),
           ),
@@ -437,6 +443,55 @@ void main() {
         await empty(a.id);
       },
     );
+
+    test(
+      'lock-free read rejects an account deleted after its snapshot',
+      () async {
+        final a = await user();
+        final snapshotTaken = Completer<void>();
+        final release = Completer<void>();
+        final read = ProductService.read(a.session, (s) async {
+          snapshotTaken.complete();
+          await release.future.timeout(_bound);
+          return s.wallet();
+        });
+        await snapshotTaken.future.timeout(_bound);
+        await a.client.account.deleteAccount();
+        release.complete();
+        await expectLater(
+          read.timeout(_bound),
+          throwsA(isA<NotAuthorizedException>()),
+        );
+        await empty(a.id);
+      },
+    );
+
+    test('new user without product account reads an empty wallet', () async {
+      final a = await user();
+      expect((await a.client.product.getWallet()).balance, 0);
+    });
+
+    test('read does not wait for an uncommitted deletion', () async {
+      final a = await user();
+      await seed(a.session, a.id);
+      final purged = Completer<void>();
+      final release = Completer<void>();
+      final deletion = admin.db.transaction((tx) async {
+        await deleteAccountData(a.session, a.id.uuid, tx);
+        purged.complete();
+        await release.future.timeout(_bound);
+      });
+      try {
+        await purged.future.timeout(_bound);
+        await ProductService.read(
+          a.session,
+          (s) => s.wallet(),
+        ).timeout(_bound);
+      } finally {
+        release.complete();
+        await deletion.timeout(_bound);
+      }
+    });
   });
 }
 

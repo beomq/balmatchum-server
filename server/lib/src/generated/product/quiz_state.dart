@@ -8,15 +8,20 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: dead_code, unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:balmatchum_server/src/generated/protocol.dart' as _iu3f2ih9;
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+    as _iacs;
 
 abstract class QuizState
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
   QuizState._({
     this.id,
-    required this.owner,
+    required this.authUserId,
+    this.authUser,
     required this.date,
     required this.questionId,
     this.answerIndex,
@@ -26,7 +31,8 @@ abstract class QuizState
 
   factory QuizState({
     int? id,
-    required String owner,
+    required _is.UuidValue authUserId,
+    _iacs.AuthUser? authUser,
     required String date,
     required String questionId,
     int? answerIndex,
@@ -37,7 +43,14 @@ abstract class QuizState
   factory QuizState.fromJson(Map<String, dynamic> jsonSerialization) {
     return QuizState(
       id: jsonSerialization['id'] as int?,
-      owner: jsonSerialization['owner'] as String,
+      authUserId: _is.UuidValueJsonExtension.fromJson(
+        jsonSerialization['authUserId'],
+      ),
+      authUser: jsonSerialization['authUser'] == null
+          ? null
+          : _iu3f2ih9.Protocol().deserialize<_iacs.AuthUser>(
+              jsonSerialization['authUser'],
+            ),
       date: jsonSerialization['date'] as String,
       questionId: jsonSerialization['questionId'] as String,
       answerIndex: jsonSerialization['answerIndex'] as int?,
@@ -55,7 +68,9 @@ abstract class QuizState
   @override
   int? id;
 
-  String owner;
+  _is.UuidValue authUserId;
+
+  _iacs.AuthUser? authUser;
 
   String date;
 
@@ -75,7 +90,8 @@ abstract class QuizState
   @_is.useResult
   QuizState copyWith({
     int? id,
-    String? owner,
+    _is.UuidValue? authUserId,
+    _iacs.AuthUser? authUser,
     String? date,
     String? questionId,
     int? answerIndex,
@@ -87,7 +103,8 @@ abstract class QuizState
     return {
       '__className__': 'QuizState',
       if (id != null) 'id': id,
-      'owner': owner,
+      'authUserId': authUserId.toJson(),
+      if (authUser != null) 'authUser': authUser?.toJson(),
       'date': date,
       'questionId': questionId,
       if (answerIndex != null) 'answerIndex': answerIndex,
@@ -101,8 +118,8 @@ abstract class QuizState
     return {};
   }
 
-  static QuizStateInclude include() {
-    return QuizStateInclude._();
+  static QuizStateInclude include({_iacs.AuthUserInclude? authUser}) {
+    return QuizStateInclude._(authUser: authUser);
   }
 
   static QuizStateIncludeList includeList({
@@ -134,7 +151,8 @@ class _Undefined {}
 class _QuizStateImpl extends QuizState {
   _QuizStateImpl({
     int? id,
-    required String owner,
+    required _is.UuidValue authUserId,
+    _iacs.AuthUser? authUser,
     required String date,
     required String questionId,
     int? answerIndex,
@@ -142,7 +160,8 @@ class _QuizStateImpl extends QuizState {
     int? awardedPoints,
   }) : super._(
          id: id,
-         owner: owner,
+         authUserId: authUserId,
+         authUser: authUser,
          date: date,
          questionId: questionId,
          answerIndex: answerIndex,
@@ -156,7 +175,8 @@ class _QuizStateImpl extends QuizState {
   @override
   QuizState copyWith({
     Object? id = _Undefined,
-    String? owner,
+    _is.UuidValue? authUserId,
+    Object? authUser = _Undefined,
     String? date,
     String? questionId,
     Object? answerIndex = _Undefined,
@@ -165,7 +185,10 @@ class _QuizStateImpl extends QuizState {
   }) {
     return QuizState(
       id: id is int? ? id : this.id,
-      owner: owner ?? this.owner,
+      authUserId: authUserId ?? this.authUserId,
+      authUser: authUser is _iacs.AuthUser?
+          ? authUser
+          : this.authUser?.copyWith(),
       date: date ?? this.date,
       questionId: questionId ?? this.questionId,
       answerIndex: answerIndex is int? ? answerIndex : this.answerIndex,
@@ -178,8 +201,10 @@ class _QuizStateImpl extends QuizState {
 class QuizStateUpdateTable extends _is.UpdateTable<QuizStateTable> {
   QuizStateUpdateTable(super.table);
 
-  _is.ColumnValue<String, String> owner(String value) => _is.ColumnValue(
-    table.owner,
+  _is.ColumnValue<_is.UuidValue, _is.UuidValue> authUserId(
+    _is.UuidValue value,
+  ) => _is.ColumnValue(
+    table.authUserId,
     value,
   );
 
@@ -213,8 +238,8 @@ class QuizStateUpdateTable extends _is.UpdateTable<QuizStateTable> {
 class QuizStateTable extends _is.Table<int?> {
   QuizStateTable({super.tableRelation}) : super(tableName: 'quiz_state') {
     updateTable = QuizStateUpdateTable(this);
-    owner = _is.ColumnString(
-      'owner',
+    authUserId = _is.ColumnUuid(
+      'authUserId',
       this,
     );
     date = _is.ColumnString(
@@ -242,7 +267,9 @@ class QuizStateTable extends _is.Table<int?> {
 
   late final QuizStateUpdateTable updateTable;
 
-  late final _is.ColumnString owner;
+  late final _is.ColumnUuid authUserId;
+
+  _iacs.AuthUserTable? _authUser;
 
   late final _is.ColumnString date;
 
@@ -254,23 +281,48 @@ class QuizStateTable extends _is.Table<int?> {
 
   late final _is.ColumnInt awardedPoints;
 
+  _iacs.AuthUserTable get authUser {
+    if (_authUser != null) return _authUser!;
+    _authUser = _is.createRelationTable(
+      relationFieldName: 'authUser',
+      field: QuizState.t.authUserId,
+      foreignField: _iacs.AuthUser.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _iacs.AuthUserTable(tableRelation: foreignTableRelation),
+    );
+    return _authUser!;
+  }
+
   @override
   List<_is.Column> get columns => [
     id,
-    owner,
+    authUserId,
     date,
     questionId,
     answerIndex,
     answeredAt,
     awardedPoints,
   ];
+
+  @override
+  _is.Table? getRelationTable(String relationField) {
+    if (relationField == 'authUser') {
+      return authUser;
+    }
+    return null;
+  }
 }
 
 class QuizStateInclude extends _is.IncludeObject {
-  QuizStateInclude._();
+  QuizStateInclude._({_iacs.AuthUserInclude? authUser}) {
+    _authUser = authUser;
+  }
+
+  _iacs.AuthUserInclude? _authUser;
 
   @override
-  Map<String, _is.Include?> get includes => {};
+  Map<String, _is.Include?> get includes => {'authUser': _authUser};
 
   @override
   _is.Table<int?> get table => QuizState.t;
@@ -297,6 +349,8 @@ class QuizStateIncludeList extends _is.IncludeList {
 
 class QuizStateRepository {
   const QuizStateRepository._();
+
+  final attachRow = const QuizStateAttachRowRepository._();
 
   /// Returns a list of [QuizState]s matching the given query parameters.
   ///
@@ -328,6 +382,7 @@ class QuizStateRepository {
     _is.OrderByBuilder<QuizStateTable>? orderBy,
     _is.OrderByListBuilder<QuizStateTable>? orderByList,
     _is.Transaction? transaction,
+    QuizStateInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
@@ -338,6 +393,7 @@ class QuizStateRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -367,6 +423,7 @@ class QuizStateRepository {
     _is.OrderByBuilder<QuizStateTable>? orderBy,
     _is.OrderByListBuilder<QuizStateTable>? orderByList,
     _is.Transaction? transaction,
+    QuizStateInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
@@ -376,6 +433,7 @@ class QuizStateRepository {
       orderByList: orderByList?.call(QuizState.t),
       offset: offset,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -386,12 +444,14 @@ class QuizStateRepository {
     _is.DatabaseSession session,
     int id, {
     _is.Transaction? transaction,
+    QuizStateInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
     return session.db.findById<QuizState>(
       id,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -685,6 +745,33 @@ class QuizStateRepository {
       where: where(QuizState.t),
       lockMode: lockMode,
       lockBehavior: lockBehavior,
+      transaction: transaction,
+    );
+  }
+}
+
+class QuizStateAttachRowRepository {
+  const QuizStateAttachRowRepository._();
+
+  /// Creates a relation between the given [QuizState] and [AuthUser]
+  /// by setting the [QuizState]'s foreign key `authUserId` to refer to the [AuthUser].
+  Future<void> authUser(
+    _is.DatabaseSession session,
+    QuizState quizState,
+    _iacs.AuthUser authUser, {
+    _is.Transaction? transaction,
+  }) async {
+    if (quizState.id == null) {
+      throw ArgumentError.notNull('quizState.id');
+    }
+    if (authUser.id == null) {
+      throw ArgumentError.notNull('authUser.id');
+    }
+
+    var $quizState = quizState.copyWith(authUserId: authUser.id);
+    await session.db.updateRow<QuizState>(
+      $quizState,
+      columns: [QuizState.t.authUserId],
       transaction: transaction,
     );
   }

@@ -49,6 +49,7 @@ import 'product/daily_quiz.dart' as _i94q6xjz;
 import 'product/daily_record.dart' as _ie37ihl8;
 import 'product/daily_step_input.dart' as _i4z7ptb2;
 import 'product/day_route.dart' as _i7moag3o;
+import 'product/home_snapshot.dart' as _ikgur1h0;
 import 'product/outfit_item.dart' as _ilwrhsef;
 import 'product/outfit_ownership.dart' as _itwveuom;
 import 'product/outfit_store.dart' as _i7c03me4;
@@ -106,6 +107,7 @@ export 'product/daily_quiz.dart';
 export 'product/daily_record.dart';
 export 'product/daily_step_input.dart';
 export 'product/day_route.dart';
+export 'product/home_snapshot.dart';
 export 'product/outfit_item.dart';
 export 'product/outfit_ownership.dart';
 export 'product/outfit_store.dart';
@@ -160,10 +162,10 @@ class Protocol extends _is.DatabaseSerializationManager {
           columnDefault: 'serial',
         ),
         _isp.ColumnDefinition(
-          name: 'owner',
-          columnType: _isp.ColumnType.text,
+          name: 'authUserId',
+          columnType: _isp.ColumnType.uuid,
           isNullable: false,
-          dartType: 'String',
+          dartType: 'UuidValue',
         ),
         _isp.ColumnDefinition(
           name: 'nonce',
@@ -263,7 +265,18 @@ class Protocol extends _is.DatabaseSerializationManager {
           dartType: 'DateTime?',
         ),
       ],
-      foreignKeys: [],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'ad_intent_fk_0',
+          columns: ['authUserId'],
+          referenceTable: 'serverpod_auth_core_user',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
       indexes: [
         _isp.IndexDefinition(
           indexName: 'ad_intent_nonce',
@@ -279,12 +292,12 @@ class Protocol extends _is.DatabaseSerializationManager {
           isPrimary: false,
         ),
         _isp.IndexDefinition(
-          indexName: 'ad_intent_target',
+          indexName: 'ad_intent_auth_user_target',
           tableSpace: null,
           elements: [
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
-              definition: 'owner',
+              definition: 'authUserId',
             ),
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
@@ -333,10 +346,10 @@ class Protocol extends _is.DatabaseSerializationManager {
           columnDefault: 'serial',
         ),
         _isp.ColumnDefinition(
-          name: 'owner',
-          columnType: _isp.ColumnType.text,
+          name: 'authUserId',
+          columnType: _isp.ColumnType.uuid,
           isNullable: false,
-          dartType: 'String',
+          dartType: 'UuidValue',
         ),
         _isp.ColumnDefinition(
           name: 'binding',
@@ -352,15 +365,26 @@ class Protocol extends _is.DatabaseSerializationManager {
           columnDefault: '0',
         ),
       ],
-      foreignKeys: [],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'billing_account_fk_0',
+          columns: ['authUserId'],
+          referenceTable: 'serverpod_auth_core_user',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.restrict,
+          matchType: null,
+        ),
+      ],
       indexes: [
         _isp.IndexDefinition(
-          indexName: 'billing_account_owner',
+          indexName: 'billing_account_auth_user',
           tableSpace: null,
           elements: [
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
-              definition: 'owner',
+              definition: 'authUserId',
             ),
           ],
           type: 'btree',
@@ -501,10 +525,10 @@ class Protocol extends _is.DatabaseSerializationManager {
           columnDefault: 'serial',
         ),
         _isp.ColumnDefinition(
-          name: 'owner',
-          columnType: _isp.ColumnType.text,
+          name: 'authUserId',
+          columnType: _isp.ColumnType.uuid,
           isNullable: false,
-          dartType: 'String',
+          dartType: 'UuidValue',
         ),
         _isp.ColumnDefinition(
           name: 'identityHash',
@@ -597,7 +621,18 @@ class Protocol extends _is.DatabaseSerializationManager {
           dartType: 'bool',
         ),
       ],
-      foreignKeys: [],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'billing_purchase_fk_0',
+          columns: ['authUserId'],
+          referenceTable: 'serverpod_auth_core_user',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.restrict,
+          matchType: null,
+        ),
+      ],
       indexes: [
         _isp.IndexDefinition(
           indexName: 'billing_purchase_identity',
@@ -613,12 +648,33 @@ class Protocol extends _is.DatabaseSerializationManager {
           isPrimary: false,
         ),
         _isp.IndexDefinition(
-          indexName: 'billing_purchase_owner',
+          indexName: 'billing_purchase_auth_user_id',
           tableSpace: null,
           elements: [
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
-              definition: 'owner',
+              definition: 'authUserId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'id',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'billing_purchase_auth_user_identity',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'authUserId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'identityHash',
             ),
           ],
           type: 'btree',
@@ -699,10 +755,10 @@ class Protocol extends _is.DatabaseSerializationManager {
           columnDefault: 'serial',
         ),
         _isp.ColumnDefinition(
-          name: 'owner',
-          columnType: _isp.ColumnType.text,
+          name: 'authUserId',
+          columnType: _isp.ColumnType.uuid,
           isNullable: false,
-          dartType: 'String',
+          dartType: 'UuidValue',
         ),
         _isp.ColumnDefinition(
           name: 'breedId',
@@ -742,15 +798,26 @@ class Protocol extends _is.DatabaseSerializationManager {
           columnDefault: '1',
         ),
       ],
-      foreignKeys: [],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'dog_profile_fk_0',
+          columns: ['authUserId'],
+          referenceTable: 'serverpod_auth_core_user',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
       indexes: [
         _isp.IndexDefinition(
-          indexName: 'dog_profile_owner',
+          indexName: 'dog_profile_auth_user',
           tableSpace: null,
           elements: [
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
-              definition: 'owner',
+              definition: 'authUserId',
             ),
           ],
           type: 'btree',
@@ -852,6 +919,19 @@ class Protocol extends _is.DatabaseSerializationManager {
           isUnique: true,
           isPrimary: false,
         ),
+        _isp.IndexDefinition(
+          indexName: 'external_identity_auth_user',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'authUserId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
       ],
       managed: true,
     ),
@@ -869,10 +949,10 @@ class Protocol extends _is.DatabaseSerializationManager {
           columnDefault: 'random_v7',
         ),
         _isp.ColumnDefinition(
-          name: 'owner',
-          columnType: _isp.ColumnType.text,
+          name: 'authUserId',
+          columnType: _isp.ColumnType.uuid,
           isNullable: false,
-          dartType: 'String',
+          dartType: 'UuidValue',
         ),
         _isp.ColumnDefinition(
           name: 'clientRecordId',
@@ -899,16 +979,39 @@ class Protocol extends _is.DatabaseSerializationManager {
           dartType: 'bool',
           columnDefault: 'false',
         ),
+        _isp.ColumnDefinition(
+          name: 'firstLocalDay',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'lastLocalDay',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
       ],
-      foreignKeys: [],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'gps_record_fk_0',
+          columns: ['authUserId'],
+          referenceTable: 'serverpod_auth_core_user',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
       indexes: [
         _isp.IndexDefinition(
-          indexName: 'gps_record_owner_client_unique',
+          indexName: 'gps_record_auth_user_client',
           tableSpace: null,
           elements: [
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
-              definition: 'owner',
+              definition: 'authUserId',
             ),
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
@@ -917,6 +1020,31 @@ class Protocol extends _is.DatabaseSerializationManager {
           ],
           type: 'btree',
           isUnique: true,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'gps_record_auth_user_day',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'authUserId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'deleted',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'lastLocalDay',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'firstLocalDay',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
           isPrimary: false,
         ),
       ],
@@ -955,7 +1083,21 @@ class Protocol extends _is.DatabaseSerializationManager {
         ),
       ],
       foreignKeys: [],
-      indexes: [],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'login_attempt_expires_at',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'expiresAt',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
       managed: true,
     ),
     _isp.TableDefinition(
@@ -1010,6 +1152,10 @@ class Protocol extends _is.DatabaseSerializationManager {
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
               definition: 'authUserId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'id',
             ),
           ],
           type: 'btree',
@@ -1076,7 +1222,21 @@ class Protocol extends _is.DatabaseSerializationManager {
         ),
       ],
       foreignKeys: [],
-      indexes: [],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'naver_login_attempt_expires_at',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'expiresAt',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
       managed: true,
     ),
     _isp.TableDefinition(
@@ -1093,10 +1253,10 @@ class Protocol extends _is.DatabaseSerializationManager {
           columnDefault: 'serial',
         ),
         _isp.ColumnDefinition(
-          name: 'owner',
-          columnType: _isp.ColumnType.text,
+          name: 'authUserId',
+          columnType: _isp.ColumnType.uuid,
           isNullable: false,
-          dartType: 'String',
+          dartType: 'UuidValue',
         ),
         _isp.ColumnDefinition(
           name: 'outfitId',
@@ -1111,15 +1271,26 @@ class Protocol extends _is.DatabaseSerializationManager {
           dartType: 'DateTime',
         ),
       ],
-      foreignKeys: [],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'outfit_ownership_fk_0',
+          columns: ['authUserId'],
+          referenceTable: 'serverpod_auth_core_user',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
       indexes: [
         _isp.IndexDefinition(
-          indexName: 'outfit_ownership_key',
+          indexName: 'outfit_ownership_auth_user_key',
           tableSpace: null,
           elements: [
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
-              definition: 'owner',
+              definition: 'authUserId',
             ),
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
@@ -1147,10 +1318,10 @@ class Protocol extends _is.DatabaseSerializationManager {
           columnDefault: 'serial',
         ),
         _isp.ColumnDefinition(
-          name: 'owner',
-          columnType: _isp.ColumnType.text,
+          name: 'authUserId',
+          columnType: _isp.ColumnType.uuid,
           isNullable: false,
-          dartType: 'String',
+          dartType: 'UuidValue',
         ),
         _isp.ColumnDefinition(
           name: 'entryKey',
@@ -1207,15 +1378,26 @@ class Protocol extends _is.DatabaseSerializationManager {
           dartType: 'List<protocol:RewardSlice>?',
         ),
       ],
-      foreignKeys: [],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'point_entry_fk_0',
+          columns: ['authUserId'],
+          referenceTable: 'serverpod_auth_core_user',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
       indexes: [
         _isp.IndexDefinition(
-          indexName: 'point_entry_key',
+          indexName: 'point_entry_auth_user_key',
           tableSpace: null,
           elements: [
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
-              definition: 'owner',
+              definition: 'authUserId',
             ),
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
@@ -1224,6 +1406,23 @@ class Protocol extends _is.DatabaseSerializationManager {
           ],
           type: 'btree',
           isUnique: true,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'point_entry_auth_user_date',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'authUserId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'date',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
           isPrimary: false,
         ),
       ],
@@ -1243,10 +1442,10 @@ class Protocol extends _is.DatabaseSerializationManager {
           columnDefault: 'serial',
         ),
         _isp.ColumnDefinition(
-          name: 'owner',
-          columnType: _isp.ColumnType.text,
+          name: 'authUserId',
+          columnType: _isp.ColumnType.uuid,
           isNullable: false,
-          dartType: 'String',
+          dartType: 'UuidValue',
         ),
         _isp.ColumnDefinition(
           name: 'streamGeneration',
@@ -1275,16 +1474,41 @@ class Protocol extends _is.DatabaseSerializationManager {
           isNullable: true,
           dartType: 'String?',
         ),
+        _isp.ColumnDefinition(
+          name: 'balance',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'fixtureBalance',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
       ],
-      foreignKeys: [],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'product_account_fk_0',
+          columns: ['authUserId'],
+          referenceTable: 'serverpod_auth_core_user',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
       indexes: [
         _isp.IndexDefinition(
-          indexName: 'product_account_owner',
+          indexName: 'product_account_auth_user',
           tableSpace: null,
           elements: [
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
-              definition: 'owner',
+              definition: 'authUserId',
             ),
           ],
           type: 'btree',
@@ -1308,10 +1532,10 @@ class Protocol extends _is.DatabaseSerializationManager {
           columnDefault: 'serial',
         ),
         _isp.ColumnDefinition(
-          name: 'owner',
-          columnType: _isp.ColumnType.text,
+          name: 'authUserId',
+          columnType: _isp.ColumnType.uuid,
           isNullable: false,
-          dartType: 'String',
+          dartType: 'UuidValue',
         ),
         _isp.ColumnDefinition(
           name: 'date',
@@ -1394,15 +1618,26 @@ class Protocol extends _is.DatabaseSerializationManager {
           dartType: 'List<protocol:RewardWindow>',
         ),
       ],
-      foreignKeys: [],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'product_day_fk_0',
+          columns: ['authUserId'],
+          referenceTable: 'serverpod_auth_core_user',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
       indexes: [
         _isp.IndexDefinition(
-          indexName: 'product_day_owner_date',
+          indexName: 'product_day_auth_user_date',
           tableSpace: null,
           elements: [
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
-              definition: 'owner',
+              definition: 'authUserId',
             ),
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
@@ -1411,6 +1646,27 @@ class Protocol extends _is.DatabaseSerializationManager {
           ],
           type: 'btree',
           isUnique: true,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'product_day_auth_user_deleted',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'authUserId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'deleted',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'deletionVersion',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
           isPrimary: false,
         ),
       ],
@@ -1430,10 +1686,10 @@ class Protocol extends _is.DatabaseSerializationManager {
           columnDefault: 'serial',
         ),
         _isp.ColumnDefinition(
-          name: 'owner',
-          columnType: _isp.ColumnType.text,
+          name: 'authUserId',
+          columnType: _isp.ColumnType.uuid,
           isNullable: false,
-          dartType: 'String',
+          dartType: 'UuidValue',
         ),
         _isp.ColumnDefinition(
           name: 'requestId',
@@ -1453,16 +1709,34 @@ class Protocol extends _is.DatabaseSerializationManager {
           isNullable: false,
           dartType: 'String',
         ),
+        _isp.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+          columnDefault: 'now',
+        ),
       ],
-      foreignKeys: [],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'product_request_fk_0',
+          columns: ['authUserId'],
+          referenceTable: 'serverpod_auth_core_user',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
       indexes: [
         _isp.IndexDefinition(
-          indexName: 'product_request_key',
+          indexName: 'product_request_auth_user_key',
           tableSpace: null,
           elements: [
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
-              definition: 'owner',
+              definition: 'authUserId',
             ),
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
@@ -1471,6 +1745,19 @@ class Protocol extends _is.DatabaseSerializationManager {
           ],
           type: 'btree',
           isUnique: true,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'product_request_created_at',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'createdAt',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
           isPrimary: false,
         ),
       ],
@@ -1490,10 +1777,10 @@ class Protocol extends _is.DatabaseSerializationManager {
           columnDefault: 'serial',
         ),
         _isp.ColumnDefinition(
-          name: 'owner',
-          columnType: _isp.ColumnType.text,
+          name: 'authUserId',
+          columnType: _isp.ColumnType.uuid,
           isNullable: false,
-          dartType: 'String',
+          dartType: 'UuidValue',
         ),
         _isp.ColumnDefinition(
           name: 'date',
@@ -1518,12 +1805,6 @@ class Protocol extends _is.DatabaseSerializationManager {
           columnType: _isp.ColumnType.bigint,
           isNullable: false,
           dartType: 'int',
-        ),
-        _isp.ColumnDefinition(
-          name: 'snapshot',
-          columnType: _isp.ColumnType.text,
-          isNullable: false,
-          dartType: 'String',
         ),
         _isp.ColumnDefinition(
           name: 'policyVersion',
@@ -1557,15 +1838,26 @@ class Protocol extends _is.DatabaseSerializationManager {
           columnDefault: '0',
         ),
       ],
-      foreignKeys: [],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'quiz_assignment_fk_0',
+          columns: ['authUserId'],
+          referenceTable: 'serverpod_auth_core_user',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
       indexes: [
         _isp.IndexDefinition(
-          indexName: 'quiz_assignment_slot',
+          indexName: 'quiz_assignment_auth_user_slot',
           tableSpace: null,
           elements: [
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
-              definition: 'owner',
+              definition: 'authUserId',
             ),
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
@@ -1581,20 +1873,16 @@ class Protocol extends _is.DatabaseSerializationManager {
           isPrimary: false,
         ),
         _isp.IndexDefinition(
-          indexName: 'quiz_assignment_seen_version',
+          indexName: 'quiz_assignment_auth_user_question',
           tableSpace: null,
           elements: [
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
-              definition: 'owner',
+              definition: 'authUserId',
             ),
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
               definition: 'questionId',
-            ),
-            _isp.IndexElementDefinition(
-              type: _isp.IndexElementDefinitionType.column,
-              definition: 'version',
             ),
           ],
           type: 'btree',
@@ -1602,20 +1890,20 @@ class Protocol extends _is.DatabaseSerializationManager {
           isPrimary: false,
         ),
         _isp.IndexDefinition(
-          indexName: 'quiz_assignment_seen_question',
+          indexName: 'quiz_assignment_auth_user_id',
           tableSpace: null,
           elements: [
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
-              definition: 'owner',
+              definition: 'authUserId',
             ),
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
-              definition: 'questionId',
+              definition: 'id',
             ),
           ],
           type: 'btree',
-          isUnique: true,
+          isUnique: false,
           isPrimary: false,
         ),
       ],
@@ -1689,10 +1977,10 @@ class Protocol extends _is.DatabaseSerializationManager {
           columnDefault: 'serial',
         ),
         _isp.ColumnDefinition(
-          name: 'owner',
-          columnType: _isp.ColumnType.text,
+          name: 'authUserId',
+          columnType: _isp.ColumnType.uuid,
           isNullable: false,
-          dartType: 'String',
+          dartType: 'UuidValue',
         ),
         _isp.ColumnDefinition(
           name: 'date',
@@ -1726,15 +2014,26 @@ class Protocol extends _is.DatabaseSerializationManager {
           columnDefault: '0',
         ),
       ],
-      foreignKeys: [],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'quiz_state_fk_0',
+          columns: ['authUserId'],
+          referenceTable: 'serverpod_auth_core_user',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
       indexes: [
         _isp.IndexDefinition(
-          indexName: 'quiz_state_key',
+          indexName: 'quiz_state_auth_user_key',
           tableSpace: null,
           elements: [
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
-              definition: 'owner',
+              definition: 'authUserId',
             ),
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
@@ -1762,10 +2061,10 @@ class Protocol extends _is.DatabaseSerializationManager {
           columnDefault: 'serial',
         ),
         _isp.ColumnDefinition(
-          name: 'owner',
-          columnType: _isp.ColumnType.text,
+          name: 'authUserId',
+          columnType: _isp.ColumnType.uuid,
           isNullable: false,
-          dartType: 'String',
+          dartType: 'UuidValue',
         ),
         _isp.ColumnDefinition(
           name: 'date',
@@ -1792,15 +2091,26 @@ class Protocol extends _is.DatabaseSerializationManager {
           dartType: 'String',
         ),
       ],
-      foreignKeys: [],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'step_revision_fk_0',
+          columns: ['authUserId'],
+          referenceTable: 'serverpod_auth_core_user',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
       indexes: [
         _isp.IndexDefinition(
-          indexName: 'step_revision_key',
+          indexName: 'step_revision_auth_user_key',
           tableSpace: null,
           elements: [
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
-              definition: 'owner',
+              definition: 'authUserId',
             ),
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
@@ -1836,10 +2146,10 @@ class Protocol extends _is.DatabaseSerializationManager {
           columnDefault: 'serial',
         ),
         _isp.ColumnDefinition(
-          name: 'owner',
-          columnType: _isp.ColumnType.text,
+          name: 'authUserId',
+          columnType: _isp.ColumnType.uuid,
           isNullable: false,
-          dartType: 'String',
+          dartType: 'UuidValue',
         ),
         _isp.ColumnDefinition(
           name: 'themeId',
@@ -1854,15 +2164,26 @@ class Protocol extends _is.DatabaseSerializationManager {
           dartType: 'DateTime',
         ),
       ],
-      foreignKeys: [],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'theme_ownership_fk_0',
+          columns: ['authUserId'],
+          referenceTable: 'serverpod_auth_core_user',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
       indexes: [
         _isp.IndexDefinition(
-          indexName: 'theme_ownership_key',
+          indexName: 'theme_ownership_auth_user_key',
           tableSpace: null,
           elements: [
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
-              definition: 'owner',
+              definition: 'authUserId',
             ),
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
@@ -1985,6 +2306,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (t == _i7moag3o.DayRoute) {
       return _i7moag3o.DayRoute.fromJson(data) as T;
+    }
+    if (t == _ikgur1h0.HomeSnapshot) {
+      return _ikgur1h0.HomeSnapshot.fromJson(data) as T;
     }
     if (t == _ilwrhsef.OutfitItem) {
       return _ilwrhsef.OutfitItem.fromJson(data) as T;
@@ -2179,6 +2503,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _is.getType<_i7moag3o.DayRoute?>()) {
       return (data != null ? _i7moag3o.DayRoute.fromJson(data) : null) as T;
     }
+    if (t == _is.getType<_ikgur1h0.HomeSnapshot?>()) {
+      return (data != null ? _ikgur1h0.HomeSnapshot.fromJson(data) : null) as T;
+    }
     if (t == _is.getType<_ilwrhsef.OutfitItem?>()) {
       return (data != null ? _ilwrhsef.OutfitItem.fromJson(data) : null) as T;
     }
@@ -2313,6 +2640,12 @@ class Protocol extends _is.DatabaseSerializationManager {
               .toList()
           as T;
     }
+    if (t == List<_ie37ihl8.DailyRecord>) {
+      return (data as List)
+              .map((e) => deserialize<_ie37ihl8.DailyRecord>(e))
+              .toList()
+          as T;
+    }
     if (t == List<_ilwrhsef.OutfitItem>) {
       return (data as List)
               .map((e) => deserialize<_ilwrhsef.OutfitItem>(e))
@@ -2403,6 +2736,7 @@ class Protocol extends _is.DatabaseSerializationManager {
       _ie37ihl8.DailyRecord => 'DailyRecord',
       _i4z7ptb2.DailyStepInput => 'DailyStepInput',
       _i7moag3o.DayRoute => 'DayRoute',
+      _ikgur1h0.HomeSnapshot => 'HomeSnapshot',
       _ilwrhsef.OutfitItem => 'OutfitItem',
       _itwveuom.OutfitOwnership => 'OutfitOwnership',
       _i7c03me4.OutfitStore => 'OutfitStore',
@@ -2500,6 +2834,8 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'DailyStepInput';
       case _i7moag3o.DayRoute():
         return 'DayRoute';
+      case _ikgur1h0.HomeSnapshot():
+        return 'HomeSnapshot';
       case _ilwrhsef.OutfitItem():
         return 'OutfitItem';
       case _itwveuom.OutfitOwnership():
@@ -2665,6 +3001,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (dataClassName == 'DayRoute') {
       return deserialize<_i7moag3o.DayRoute>(data['data']);
+    }
+    if (dataClassName == 'HomeSnapshot') {
+      return deserialize<_ikgur1h0.HomeSnapshot>(data['data']);
     }
     if (dataClassName == 'OutfitItem') {
       return deserialize<_ilwrhsef.OutfitItem>(data['data']);

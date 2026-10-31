@@ -106,6 +106,7 @@ Dart 3.13.4 / Serverpod CLI 4.0.3을 사용한다. 명령별로
 예: 2026-10-14 = `[2026-10-13T15:00:00Z, 2026-10-14T15:00:00Z)`.
 
 ```dart
+client.product.getHomeSnapshot(); // HomeSnapshot, 홈 첫 진입용 단일 스냅샷
 client.product.getDay(String date); // DailyRecord
 client.product.listDays(String fromDate, String toDate); // List<DailyRecord>, 양끝 포함, 최대 93일
 client.product.getWallet(); // WalletView: balance, streamGeneration, fixtureLabel?
@@ -121,6 +122,17 @@ client.product.listThemes(); // ThemeStore
 client.product.purchaseTheme(String themeId, String requestId); // ThemeStore
 client.product.equipTheme(String themeId, String requestId); // ThemeStore
 ```
+
+`HomeSnapshot`은 홈 화면에 필요한 값을 **한 번의 읽기 트랜잭션(repeatable read, 잠금·쓰기 없음)**
+에서 만든다. 필드: `date`(서버 기준 KST 오늘, `YYYY-MM-DD`), `profile`(`getProfile()`과 같음,
+없으면 null → 온보딩), `day`(오늘 `DailyRecord`), `wallet`, `themes`, `outfits`,
+`recentDays`(`date - 30` … `date` 31개, 오래된 순, 마지막이 `day`와 같음 = 앱 `StepStreak.window`).
+'단일 스냅샷'이란 호출 도중 다른 요청이 수령·구매를 커밋해도 응답의 day·wallet·themes·outfits·
+recentDays가 모두 그 이전 값이거나 모두 이후 값이라는 뜻이다(섞이지 않음). 홈은 경로를 그리지 않으므로
+`day`와 `recentDays`의 routes는 항상 비고 GPS 기록을 읽지 않는다. 경로는 `getDay`로 읽는다.
+퀴즈는 발급 쓰기가 있을 수 있어 포함하지 않으며 `getQuiz`를 병렬로 호출한다. 앱은 기기 날짜 대신
+`date`를 오늘로 쓰고(예: 자정 직후 기기·서버 날짜 차이), 다음 날짜 계산의 기준으로 삼는다.
+탈퇴가 커밋된 뒤의 호출은 다른 조회와 같이 NotAuthorized(401)다. 기존 개별 조회 API는 유지된다.
 
 `DailyStepInput` 필수 필드: `date`, `streamGeneration`, `revision`, `windowStart`,
 `windowEnd`, `observedAt`, `availability`. `total`만 nullable이다.
@@ -150,6 +162,7 @@ points만 반환한다. 품질 임계값·거리·중복 GPS 투영은 구현하
 사용자의 새 동작에 새 requestId를 쓴다. nothingToClaim, stepsUnavailable,
 policyUnconfigured, dayDeleted는 성공 수령이 아니다. requestId를 다른 작업이나 payload에
 재사용하면 idempotencyConflict다. 구매와 적용은 별도 API이며 구매만으로 적용되지 않는다.
+requestId 재생 기록(product_request)은 30일 보존 뒤 삭제되므로 그 뒤 같은 requestId는 새 요청으로 처리된다.
 구매·적용 재시도 응답은 원래 작업의 snapshot이므로 최신 상태는 listThemes로 읽는다.
 
 ## 삭제와 잠금 선택

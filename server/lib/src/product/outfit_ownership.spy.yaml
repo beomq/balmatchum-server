@@ -2,10 +2,10 @@ class: OutfitOwnership
 serverOnly: true
 table: outfit_ownership
 fields:
-  owner: String
+  authUser: module:serverpod_auth_core:AuthUser?, relation(onDelete=Cascade)
   outfitId: String
   purchasedAt: DateTime
 indexes:
-  outfit_ownership_key:
-    fields: owner, outfitId
+  outfit_ownership_auth_user_key:
+    fields: authUserId, outfitId
     unique: true

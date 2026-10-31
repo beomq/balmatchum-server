@@ -8,20 +8,24 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: dead_code, unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:balmatchum_server/src/generated/protocol.dart' as _iu3f2ih9;
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+    as _iacs;
 
 abstract class QuizAssignment
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
   QuizAssignment._({
     this.id,
-    required this.owner,
+    required this.authUserId,
+    this.authUser,
     required this.date,
     required this.slot,
     required this.questionId,
     required this.version,
-    required this.snapshot,
     required this.policyVersion,
     required this.issuedAt,
     this.answerIndex,
@@ -31,12 +35,12 @@ abstract class QuizAssignment
 
   factory QuizAssignment({
     int? id,
-    required String owner,
+    required _is.UuidValue authUserId,
+    _iacs.AuthUser? authUser,
     required String date,
     required String slot,
     required String questionId,
     required int version,
-    required String snapshot,
     required String policyVersion,
     required DateTime issuedAt,
     int? answerIndex,
@@ -47,12 +51,18 @@ abstract class QuizAssignment
   factory QuizAssignment.fromJson(Map<String, dynamic> jsonSerialization) {
     return QuizAssignment(
       id: jsonSerialization['id'] as int?,
-      owner: jsonSerialization['owner'] as String,
+      authUserId: _is.UuidValueJsonExtension.fromJson(
+        jsonSerialization['authUserId'],
+      ),
+      authUser: jsonSerialization['authUser'] == null
+          ? null
+          : _iu3f2ih9.Protocol().deserialize<_iacs.AuthUser>(
+              jsonSerialization['authUser'],
+            ),
       date: jsonSerialization['date'] as String,
       slot: jsonSerialization['slot'] as String,
       questionId: jsonSerialization['questionId'] as String,
       version: jsonSerialization['version'] as int,
-      snapshot: jsonSerialization['snapshot'] as String,
       policyVersion: jsonSerialization['policyVersion'] as String,
       issuedAt: _is.DateTimeJsonExtension.fromJson(
         jsonSerialization['issuedAt'],
@@ -72,7 +82,9 @@ abstract class QuizAssignment
   @override
   int? id;
 
-  String owner;
+  _is.UuidValue authUserId;
+
+  _iacs.AuthUser? authUser;
 
   String date;
 
@@ -81,8 +93,6 @@ abstract class QuizAssignment
   String questionId;
 
   int version;
-
-  String snapshot;
 
   String policyVersion;
 
@@ -102,12 +112,12 @@ abstract class QuizAssignment
   @_is.useResult
   QuizAssignment copyWith({
     int? id,
-    String? owner,
+    _is.UuidValue? authUserId,
+    _iacs.AuthUser? authUser,
     String? date,
     String? slot,
     String? questionId,
     int? version,
-    String? snapshot,
     String? policyVersion,
     DateTime? issuedAt,
     int? answerIndex,
@@ -119,12 +129,12 @@ abstract class QuizAssignment
     return {
       '__className__': 'QuizAssignment',
       if (id != null) 'id': id,
-      'owner': owner,
+      'authUserId': authUserId.toJson(),
+      if (authUser != null) 'authUser': authUser?.toJson(),
       'date': date,
       'slot': slot,
       'questionId': questionId,
       'version': version,
-      'snapshot': snapshot,
       'policyVersion': policyVersion,
       'issuedAt': issuedAt.toJson(),
       if (answerIndex != null) 'answerIndex': answerIndex,
@@ -138,8 +148,8 @@ abstract class QuizAssignment
     return {};
   }
 
-  static QuizAssignmentInclude include() {
-    return QuizAssignmentInclude._();
+  static QuizAssignmentInclude include({_iacs.AuthUserInclude? authUser}) {
+    return QuizAssignmentInclude._(authUser: authUser);
   }
 
   static QuizAssignmentIncludeList includeList({
@@ -171,12 +181,12 @@ class _Undefined {}
 class _QuizAssignmentImpl extends QuizAssignment {
   _QuizAssignmentImpl({
     int? id,
-    required String owner,
+    required _is.UuidValue authUserId,
+    _iacs.AuthUser? authUser,
     required String date,
     required String slot,
     required String questionId,
     required int version,
-    required String snapshot,
     required String policyVersion,
     required DateTime issuedAt,
     int? answerIndex,
@@ -184,12 +194,12 @@ class _QuizAssignmentImpl extends QuizAssignment {
     int? awardedPoints,
   }) : super._(
          id: id,
-         owner: owner,
+         authUserId: authUserId,
+         authUser: authUser,
          date: date,
          slot: slot,
          questionId: questionId,
          version: version,
-         snapshot: snapshot,
          policyVersion: policyVersion,
          issuedAt: issuedAt,
          answerIndex: answerIndex,
@@ -203,12 +213,12 @@ class _QuizAssignmentImpl extends QuizAssignment {
   @override
   QuizAssignment copyWith({
     Object? id = _Undefined,
-    String? owner,
+    _is.UuidValue? authUserId,
+    Object? authUser = _Undefined,
     String? date,
     String? slot,
     String? questionId,
     int? version,
-    String? snapshot,
     String? policyVersion,
     DateTime? issuedAt,
     Object? answerIndex = _Undefined,
@@ -217,12 +227,14 @@ class _QuizAssignmentImpl extends QuizAssignment {
   }) {
     return QuizAssignment(
       id: id is int? ? id : this.id,
-      owner: owner ?? this.owner,
+      authUserId: authUserId ?? this.authUserId,
+      authUser: authUser is _iacs.AuthUser?
+          ? authUser
+          : this.authUser?.copyWith(),
       date: date ?? this.date,
       slot: slot ?? this.slot,
       questionId: questionId ?? this.questionId,
       version: version ?? this.version,
-      snapshot: snapshot ?? this.snapshot,
       policyVersion: policyVersion ?? this.policyVersion,
       issuedAt: issuedAt ?? this.issuedAt,
       answerIndex: answerIndex is int? ? answerIndex : this.answerIndex,
@@ -235,8 +247,10 @@ class _QuizAssignmentImpl extends QuizAssignment {
 class QuizAssignmentUpdateTable extends _is.UpdateTable<QuizAssignmentTable> {
   QuizAssignmentUpdateTable(super.table);
 
-  _is.ColumnValue<String, String> owner(String value) => _is.ColumnValue(
-    table.owner,
+  _is.ColumnValue<_is.UuidValue, _is.UuidValue> authUserId(
+    _is.UuidValue value,
+  ) => _is.ColumnValue(
+    table.authUserId,
     value,
   );
 
@@ -257,11 +271,6 @@ class QuizAssignmentUpdateTable extends _is.UpdateTable<QuizAssignmentTable> {
 
   _is.ColumnValue<int, int> version(int value) => _is.ColumnValue(
     table.version,
-    value,
-  );
-
-  _is.ColumnValue<String, String> snapshot(String value) => _is.ColumnValue(
-    table.snapshot,
     value,
   );
 
@@ -298,8 +307,8 @@ class QuizAssignmentTable extends _is.Table<int?> {
   QuizAssignmentTable({super.tableRelation})
     : super(tableName: 'quiz_assignment') {
     updateTable = QuizAssignmentUpdateTable(this);
-    owner = _is.ColumnString(
-      'owner',
+    authUserId = _is.ColumnUuid(
+      'authUserId',
       this,
     );
     date = _is.ColumnString(
@@ -316,10 +325,6 @@ class QuizAssignmentTable extends _is.Table<int?> {
     );
     version = _is.ColumnInt(
       'version',
-      this,
-    );
-    snapshot = _is.ColumnString(
-      'snapshot',
       this,
     );
     policyVersion = _is.ColumnString(
@@ -347,7 +352,9 @@ class QuizAssignmentTable extends _is.Table<int?> {
 
   late final QuizAssignmentUpdateTable updateTable;
 
-  late final _is.ColumnString owner;
+  late final _is.ColumnUuid authUserId;
+
+  _iacs.AuthUserTable? _authUser;
 
   late final _is.ColumnString date;
 
@@ -356,8 +363,6 @@ class QuizAssignmentTable extends _is.Table<int?> {
   late final _is.ColumnString questionId;
 
   late final _is.ColumnInt version;
-
-  late final _is.ColumnString snapshot;
 
   late final _is.ColumnString policyVersion;
 
@@ -369,28 +374,52 @@ class QuizAssignmentTable extends _is.Table<int?> {
 
   late final _is.ColumnInt awardedPoints;
 
+  _iacs.AuthUserTable get authUser {
+    if (_authUser != null) return _authUser!;
+    _authUser = _is.createRelationTable(
+      relationFieldName: 'authUser',
+      field: QuizAssignment.t.authUserId,
+      foreignField: _iacs.AuthUser.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _iacs.AuthUserTable(tableRelation: foreignTableRelation),
+    );
+    return _authUser!;
+  }
+
   @override
   List<_is.Column> get columns => [
     id,
-    owner,
+    authUserId,
     date,
     slot,
     questionId,
     version,
-    snapshot,
     policyVersion,
     issuedAt,
     answerIndex,
     answeredAt,
     awardedPoints,
   ];
+
+  @override
+  _is.Table? getRelationTable(String relationField) {
+    if (relationField == 'authUser') {
+      return authUser;
+    }
+    return null;
+  }
 }
 
 class QuizAssignmentInclude extends _is.IncludeObject {
-  QuizAssignmentInclude._();
+  QuizAssignmentInclude._({_iacs.AuthUserInclude? authUser}) {
+    _authUser = authUser;
+  }
+
+  _iacs.AuthUserInclude? _authUser;
 
   @override
-  Map<String, _is.Include?> get includes => {};
+  Map<String, _is.Include?> get includes => {'authUser': _authUser};
 
   @override
   _is.Table<int?> get table => QuizAssignment.t;
@@ -417,6 +446,8 @@ class QuizAssignmentIncludeList extends _is.IncludeList {
 
 class QuizAssignmentRepository {
   const QuizAssignmentRepository._();
+
+  final attachRow = const QuizAssignmentAttachRowRepository._();
 
   /// Returns a list of [QuizAssignment]s matching the given query parameters.
   ///
@@ -448,6 +479,7 @@ class QuizAssignmentRepository {
     _is.OrderByBuilder<QuizAssignmentTable>? orderBy,
     _is.OrderByListBuilder<QuizAssignmentTable>? orderByList,
     _is.Transaction? transaction,
+    QuizAssignmentInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
@@ -458,6 +490,7 @@ class QuizAssignmentRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -487,6 +520,7 @@ class QuizAssignmentRepository {
     _is.OrderByBuilder<QuizAssignmentTable>? orderBy,
     _is.OrderByListBuilder<QuizAssignmentTable>? orderByList,
     _is.Transaction? transaction,
+    QuizAssignmentInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
@@ -496,6 +530,7 @@ class QuizAssignmentRepository {
       orderByList: orderByList?.call(QuizAssignment.t),
       offset: offset,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -506,12 +541,14 @@ class QuizAssignmentRepository {
     _is.DatabaseSession session,
     int id, {
     _is.Transaction? transaction,
+    QuizAssignmentInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
     return session.db.findById<QuizAssignment>(
       id,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -805,6 +842,33 @@ class QuizAssignmentRepository {
       where: where(QuizAssignment.t),
       lockMode: lockMode,
       lockBehavior: lockBehavior,
+      transaction: transaction,
+    );
+  }
+}
+
+class QuizAssignmentAttachRowRepository {
+  const QuizAssignmentAttachRowRepository._();
+
+  /// Creates a relation between the given [QuizAssignment] and [AuthUser]
+  /// by setting the [QuizAssignment]'s foreign key `authUserId` to refer to the [AuthUser].
+  Future<void> authUser(
+    _is.DatabaseSession session,
+    QuizAssignment quizAssignment,
+    _iacs.AuthUser authUser, {
+    _is.Transaction? transaction,
+  }) async {
+    if (quizAssignment.id == null) {
+      throw ArgumentError.notNull('quizAssignment.id');
+    }
+    if (authUser.id == null) {
+      throw ArgumentError.notNull('authUser.id');
+    }
+
+    var $quizAssignment = quizAssignment.copyWith(authUserId: authUser.id);
+    await session.db.updateRow<QuizAssignment>(
+      $quizAssignment,
+      columns: [QuizAssignment.t.authUserId],
       transaction: transaction,
     );
   }

@@ -2,7 +2,7 @@ class: PointEntry
 serverOnly: true
 table: point_entry
 fields:
-  owner: String
+  authUser: module:serverpod_auth_core:AuthUser?, relation(onDelete=Cascade)
   entryKey: String
   kind: String
   date: String?
@@ -13,6 +13,8 @@ fields:
   createdAt: DateTime
   slices: List<RewardSlice>?
 indexes:
-  point_entry_key:
-    fields: owner, entryKey
+  point_entry_auth_user_key:
+    fields: authUserId, entryKey
     unique: true
+  point_entry_auth_user_date:
+    fields: authUserId, date

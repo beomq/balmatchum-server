@@ -9,6 +9,7 @@ import 'package:serverpod_auth_idp_server/core.dart';
 import '../config_password.dart';
 import 'kakao_provider.dart';
 import 'kakao_token_verifier.dart';
+import 'login_rate_limiter.dart';
 import 'social_auth.dart';
 import 'naver_client.dart';
 import 'naver_provider.dart';
@@ -48,6 +49,8 @@ void configureAuth(
     );
     return;
   }
+  // One limiter per pod: Kakao and Naver login starts share the budget.
+  final limiter = LoginRateLimiter(clock: clock);
   pod.initializeAuthServices(
     userProfileConfig: providerProfileConfig,
     tokenManagerBuilders: [
@@ -63,6 +66,7 @@ void configureAuth(
       if (naver != null)
         NaverProviderBuilder(
           config: naver,
+          limiter: limiter,
           clock: clock,
           cleanupSessions: cleanupSessions,
         ),
@@ -92,6 +96,7 @@ void configureAuth(
                       return jsonDecode(response.body) as Map<String, dynamic>;
                     },
               ),
+        limiter: limiter,
         clock: clock,
         cleanupSessions: cleanupSessions,
       ),
