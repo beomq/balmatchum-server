@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:balmatchum_client/balmatchum_client.dart' as api;
@@ -936,4 +937,211 @@ void main() {
       );
     },
   );
+
+  group('revision-backed assignments', () {
+    Future<Map<String, dynamic>> revision(String id, int version) async =>
+        jsonDecode(
+              (await QuizContentRevision.db.findFirstRow(
+                admin,
+                where: (t) =>
+                    t.questionId.equals(id) & t.version.equals(version),
+              ))!.snapshot,
+            )
+            as Map<String, dynamic>;
+
+    QuizAssignment answered(String owner, int question, String date) =>
+        QuizAssignment(
+          owner: owner,
+          authUserId: authUserIdOf(owner),
+          date: date,
+          slot: 'free',
+          questionId: 'test-question-$question',
+          version: 1,
+          policyVersion: quizFixturePolicy,
+          issuedAt: now,
+          answerIndex: 0,
+          answeredAt: now,
+        );
+
+    test(
+      'new rows store no snapshot and reads return the revision body',
+      () async {
+        final a = await user();
+        final t = await eligible(a.session);
+        final i = await verified(a.session, t);
+        final extra = await at(
+          () => quiz.unlockExtra(
+            a.session,
+            t.date,
+            t.extraRevision!,
+            i.id,
+            'revision-unlock',
+          ),
+        );
+        final rows = await QuizAssignment.db.find(
+          admin,
+          where: (q) => q.owner.equals(a.owner),
+        );
+        expect(rows, hasLength(2));
+        expect(rows.map((r) => r.snapshot), everyElement(isNull));
+        final graded = await answer(a.session, extra);
+        final today = await at(() => quiz.getToday(a.session));
+        final history = await quiz.listHistory(a.session, null);
+        expect(history, hasLength(2));
+        final reviews = [
+          for (final r in rows) await quiz.review(a.session, r.id!),
+        ];
+        for (final q in [
+          today.free!,
+          today.extra!,
+          graded,
+          ...history,
+          ...reviews,
+        ]) {
+          final body = await revision(q.questionId, q.version);
+          expect(q.question, body['question']);
+          expect(q.choices, body['choices']);
+          expect(q.conditions, body['conditions']);
+          expect(q.reviewedAt, body['reviewedAt']);
+          expect(q.reviewedBy, body['reviewedBy']);
+          expect(q.correctIndex, body['correctIndex']);
+          expect(q.explanation, body['explanation']);
+          expect(q.source, body['source']);
+        }
+      },
+    );
+
+    test('rows that still carry a snapshot read back identically', () async {
+      final a = await user();
+      final body = await revision('test-question-2', 1);
+      final legacy = await QuizAssignment.db.insertRow(
+        admin,
+        answered(a.owner, 2, '2026-10-18').copyWith(snapshot: jsonEncode(body)),
+      );
+      final withCopy = await quiz.review(a.session, legacy.id!);
+      final historyWithCopy = await quiz.listHistory(a.session, null);
+      await QuizAssignment.db.updateRow(admin, legacy.copyWith(snapshot: null));
+      expect(
+        (await QuizAssignment.db.findById(admin, legacy.id!))!.snapshot,
+        isNull,
+      );
+      final fromRevision = await quiz.review(a.session, legacy.id!);
+      expect(withCopy.toJson(), fromRevision.toJson());
+      expect(
+        historyWithCopy.single.toJson(),
+        (await quiz.listHistory(a.session, null)).single.toJson(),
+      );
+      expect(withCopy.question, body['question']);
+    });
+
+    test(
+      'issuing a question without a content revision is contentUnavailable',
+      () async {
+        final a = await user();
+        // Installed in memory only, so no quiz_content_revision row exists.
+        QuizBank.instances[pod] = QuizBank.parse(
+          fixturePack([fixtureQuestion(99)]),
+        );
+        await expectLater(
+          at(() => quiz.getToday(a.session)),
+          error('contentUnavailable'),
+        );
+        expect(
+          await QuizAssignment.db.count(
+            admin,
+            where: (t) => t.owner.equals(a.owner),
+          ),
+          0,
+        );
+      },
+    );
+
+    test('malformed revision JSON fails in the existing decode path', () async {
+      final a = await user();
+      await QuizContentRevision.db.insertRow(
+        admin,
+        QuizContentRevision(
+          questionId: 'test-question-malformed',
+          version: 1,
+          snapshot: '{not json',
+        ),
+      );
+      final row = await QuizAssignment.db.insertRow(
+        admin,
+        answered(
+          a.owner,
+          0,
+          '2026-10-18',
+        ).copyWith(questionId: 'test-question-malformed'),
+      );
+      await expectLater(quiz.review(a.session, row.id!), throwsFormatException);
+      await expectLater(
+        quiz.listHistory(a.session, null),
+        throwsFormatException,
+      );
+    });
+
+    test(
+      '30-row history page reads revisions in one query, not per row',
+      () async {
+        await configureQuizBank(pod, bank: fixtureBank(30));
+        final a = await user();
+        for (var i = 1; i <= 30; i++) {
+          await QuizAssignment.db.insertRow(
+            admin,
+            answered(a.owner, i, '2026-09-${i.toString().padLeft(2, '0')}'),
+          );
+        }
+        final original = pod.runtimeSettings;
+        await pod.updateRuntimeSettings(
+          original.copyWith(
+            logSettings: original.logSettings.copyWith(
+              logAllSessions: true,
+              logAllQueries: true,
+            ),
+          ),
+        );
+        final before =
+            (await admin.db.unsafeQuery(
+                  'SELECT COALESCE(MAX(id), 0) FROM serverpod_session_log',
+                )).first.first
+                as int;
+        final logged = await pod.createSession(enableLogging: true);
+        final List<QuizQuestion> page;
+        try {
+          page = await logged.db.transaction(
+            (tx) => QuizService(
+              ProductService(
+                logged,
+                a.owner,
+                tx,
+                ProductAccount(owner: a.owner),
+              ),
+            ).history(null),
+          );
+        } finally {
+          // Closing awaits the session log flush, so the rows are persisted.
+          await logged.close();
+          await pod.updateRuntimeSettings(original);
+        }
+        final queries = await admin.db.unsafeQuery(
+          'SELECT q.query FROM serverpod_query_log q '
+          'JOIN serverpod_session_log s ON s.id = q."sessionLogId" '
+          'WHERE s.id > @before ORDER BY q."sessionLogId", q."order"',
+          parameters: QueryParameters.named({'before': before}),
+        );
+        stdout.writeln(
+          'QUERY-COUNT history rows=${page.length} '
+          'serverpod_query_log rows=${queries.length}',
+        );
+        for (final q in queries) {
+          stdout.writeln('QUERY-COUNT query: ${q.first}');
+        }
+        expect(page, hasLength(30));
+        expect(page.map((q) => q.questionId).toSet(), hasLength(30));
+        expect(queries, isNotEmpty);
+        expect(queries.length, lessThanOrEqualTo(3));
+      },
+    );
+  });
 }

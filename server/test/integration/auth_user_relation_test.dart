@@ -97,7 +97,21 @@ void main() {
     final id = login.authUserId;
     final owner = id.uuid;
     session.updateAuthenticated(AuthenticationInfo(owner, {}, authId: 'test'));
-    QuizBank.instances[pod] = fixtureBank();
+    final bank = fixtureBank();
+    // Issuance requires each question's revision row; configureQuizBank
+    // refuses fixtures outside test run mode, so seed the rows directly.
+    for (final snapshot in bank.snapshots) {
+      final q = jsonDecode(snapshot) as Map<String, dynamic>;
+      await QuizContentRevision.db.insertRow(
+        session,
+        QuizContentRevision(
+          questionId: q['questionId'] as String,
+          version: q['version'] as int,
+          snapshot: snapshot,
+        ),
+      );
+    }
+    QuizBank.instances[pod] = bank;
     final date = localDate(now);
     final gps = GpsRecordInput(
       schemaVersion: 1,
