@@ -335,6 +335,71 @@ void main() {
       expect(s.profile, isNull);
     });
 
+    for (final (label, owner) in [
+      ('SQL-shaped owner', "00000000-0000-0000-0000-000000000000' OR TRUE --"),
+      ('plain non-UUID owner', 'not-a-uuid'),
+      ('unknown UUID owner', '00000000-0000-0000-0000-000000000000'),
+    ]) {
+      test('rejects $label without returning another user snapshot', () async {
+        final victim = await user();
+        final victimId = victim.session.authenticated!.userIdentifier;
+        await ProfileEndpoint().createProfile(
+          victim.session,
+          ProfileInput(
+            breedId: 'jindo',
+            name: '피해자',
+            sex: 'male',
+            dailyGoal: 7000,
+          ),
+          'profile',
+        );
+        await ProductService.run(
+          victim.session,
+          (s) => s.appendPointEntry(
+            PointEntry(
+              owner: victimId,
+              entryKey: 'victim-credit',
+              kind: 'steps',
+              amount: 31337,
+              policyVersion: stepPolicyVersion,
+              createdAt: DateTime.utc(2026, 10, 14),
+            ),
+          ),
+        );
+        // Positive control: the victim's own snapshot does carry the data.
+        final own = await _at(() => endpoint.getHomeSnapshot(victim.session));
+        expect(own.wallet.balance, 31337);
+        expect(own.profile!.name, '피해자');
+        final accounts = await ProductAccount.db.count(admin);
+
+        final probe = await pod.createSession(enableLogging: false);
+        sessions.add(probe);
+        probe.updateAuthenticated(
+          AuthenticationInfo(owner, {}, authId: 'test'),
+        );
+        Object? outcome;
+        try {
+          outcome = await _at(() => endpoint.getHomeSnapshot(probe));
+        } on NotAuthorizedException catch (e) {
+          outcome = e;
+        }
+        stdout.writeln(
+          'T15_PROBE label="$label" outcome=${outcome.runtimeType} '
+          'reason=${outcome is NotAuthorizedException ? outcome.reason : '-'}',
+        );
+        expect(
+          outcome,
+          isA<NotAuthorizedException>().having(
+            (e) => e.reason,
+            'reason',
+            AuthenticationFailureReason.unauthenticated,
+          ),
+        );
+        // Read-only rejection: no account row was created for the probe.
+        expect(await ProductAccount.db.count(admin), accounts);
+      });
+    }
+
     test('call after a committed deletion is not authorized', () async {
       final a = await user();
       await a.client.account.deleteAccount();
