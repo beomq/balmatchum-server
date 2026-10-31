@@ -57,18 +57,23 @@ Future<bool> _accepts(int port) async {
 /// One `dart run bin/main.dart` with output captured line by line.
 class _Server {
   _Server._(this.process, this.port, this.label) {
-    void pipe(Stream<List<int>> stream, List<String> into, String name) {
-      stream.transform(utf8.decoder).transform(const LineSplitter()).listen((
-        line,
-      ) {
-        into.add(line);
-        _log('$label $name| $line');
-        if (line == _passed && !_ready.isCompleted) _ready.complete(true);
-      });
+    Future<void> pipe(
+      Stream<List<int>> stream,
+      List<String> into,
+      String name,
+    ) {
+      return stream
+          .transform(utf8.decoder)
+          .transform(const LineSplitter())
+          .forEach((line) {
+            into.add(line);
+            _log('$label $name| $line');
+            if (line == _passed && !_ready.isCompleted) _ready.complete(true);
+          });
     }
 
-    pipe(process.stdout, stdoutLines, 'out');
-    pipe(process.stderr, stderrLines, 'err');
+    _stdoutDone = pipe(process.stdout, stdoutLines, 'out');
+    _stderrDone = pipe(process.stderr, stderrLines, 'err');
     process.exitCode.then((code) {
       if (!_ready.isCompleted) _ready.complete(false);
     });
@@ -94,23 +99,32 @@ class _Server {
   final stdoutLines = <String>[];
   final stderrLines = <String>[];
   final _ready = Completer<bool>();
+  late final Future<void> _stdoutDone;
+  late final Future<void> _stderrDone;
 
   /// Completes true once the schema check passed, false if the process
   /// exited first.
   Future<bool> get ready => _ready.future.timeout(const Duration(minutes: 3));
 
-  Future<int> get exitCode =>
-      process.exitCode.timeout(const Duration(minutes: 3));
+  /// Process exit alone does not guarantee that buffered output was delivered.
+  Future<int> get exitCode async {
+    final code = await process.exitCode.timeout(const Duration(minutes: 3));
+    await Future.wait([
+      _stdoutDone.timeout(const Duration(minutes: 3)),
+      _stderrDone.timeout(const Duration(minutes: 3)),
+    ]);
+    return code;
+  }
 
   /// Graceful SIGTERM, escalating to SIGKILL so nothing outlives the test.
   Future<int> stop() async {
     process.kill(ProcessSignal.sigterm);
     try {
-      return await process.exitCode.timeout(const Duration(seconds: 60));
+      await process.exitCode.timeout(const Duration(seconds: 60));
     } on TimeoutException {
       process.kill(ProcessSignal.sigkill);
-      return process.exitCode;
     }
+    return exitCode;
   }
 }
 
@@ -145,6 +159,8 @@ void main() {
     final passed = await server.ready;
     final open = await _accepts(server.port);
     _log('A schema check passed=$passed port ${server.port} accepts=$open');
+    final code = await server.stop();
+    servers.remove(server);
     expect(passed, isTrue, reason: server.stderrLines.join('\n'));
     expect(open, isTrue);
 
@@ -172,8 +188,6 @@ void main() {
     expect(backfill, [_user, 30, 20756, 20757]);
     expect(guard, isEmpty);
 
-    final code = await server.stop();
-    servers.remove(server);
     _log(
       'A stopped exitCode=$code port accepts=${await _accepts(server.port)}',
     );
