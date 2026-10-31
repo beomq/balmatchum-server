@@ -15,6 +15,8 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     hide Protocol;
 import 'package:test/test.dart';
 
+import '../test_utils/kakao_test_keys.dart';
+
 class _Token implements api.ClientAuthKeyProvider {
   _Token(this.value);
   final String value;
@@ -67,7 +69,10 @@ void main() {
     );
     configureAuth(
       pod,
+      audience: 'test-native-key',
+      issuer: 'https://kauth.kakao.com',
       sessionPepper: 'public-account-coverage-test-only',
+      loadJwks: () async => KakaoTestKeys.jwks(),
       providerPassword: (key) => _naver[key],
     );
     try {
@@ -93,26 +98,60 @@ void main() {
 
   test('deleteAccount removes the user from every user-column table', () async {
     final tables = _userTables();
-    // ignore: avoid_print
-    print('user-column tables (${tables.length}): $tables');
+    printOnFailure(tables.keys.join(','));
     expect(tables.length, greaterThanOrEqualTo(16));
+    expect(
+      tables.keys,
+      containsAll([
+        'ad_intent',
+        'billing_account',
+        'billing_purchase',
+        'dog_profile',
+        'external_identity',
+        'gps_record',
+        'naver_grant',
+        'outfit_ownership',
+        'point_entry',
+        'product_account',
+        'product_day',
+        'product_request',
+        'quiz_assignment',
+        'quiz_state',
+        'step_revision',
+        'theme_ownership',
+      ]),
+      reason: tables.keys.join(','),
+    );
     expect(tables, containsPair('naver_grant', 'authUserId'));
     expect(tables, containsPair('external_identity', 'authUserId'));
 
-    final auth = AuthServices.instance;
-    final id = (await auth.authUsers.create(admin)).id;
-    final owner = id.uuid;
-    final token = await auth.tokenManager.issueToken(
-      admin,
-      authUserId: id,
-      method: 'coverage-test',
-    );
+    // Kakao login fixture creates the AuthUser and its external_identity row.
+    final client = api.Client('http://localhost:${pod.server.port}/');
     final session = await pod.createSession(enableLogging: false);
-    final client = api.Client('http://localhost:${pod.server.port}/')
-      ..authKeyProvider = _Token(token.token);
     try {
+      final attempt = await client.kakao.beginLogin(provider: 'kakao');
+      final now = DateTime.now().toUtc();
+      final login = await client.kakao.loginKakao(
+        attemptId: attempt.attemptId,
+        idToken: KakaoTestKeys.sign({
+          'iss': 'https://kauth.kakao.com',
+          'aud': 'test-native-key',
+          'sub': 'coverage-subject',
+          'nonce': attempt.nonce,
+          'iat': now.millisecondsSinceEpoch ~/ 1000,
+          'exp':
+              now.add(const Duration(minutes: 10)).millisecondsSinceEpoch ~/
+              1000,
+        }),
+      );
+      final id = login.authUserId;
+      final owner = id.uuid;
+      client.authKeyProvider = _Token(login.token);
       session.updateAuthenticated(
-        await auth.authenticationHandler(session, token.token),
+        await AuthServices.instance.authenticationHandler(
+          session,
+          login.token,
+        ),
       );
 
       // Endpoint fixtures: profile, product account/request, steps, GPS.
@@ -232,17 +271,6 @@ void main() {
           authUserId: id,
           clientId: 'test-naver-client',
           refreshToken: 'coverage-refresh',
-        ),
-      );
-      await ExternalIdentity.db.insertRow(
-        admin,
-        ExternalIdentity(
-          provider: 'kakao',
-          issuer: 'https://kauth.kakao.com',
-          audience: 'test',
-          subjectNamespace: 'oidc',
-          subject: owner,
-          authUserId: id,
         ),
       );
 
