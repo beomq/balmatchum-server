@@ -268,6 +268,13 @@ void main() {
         2,
       );
       expect(await points(a.owner), 4);
+      final account = (await ProductAccount.db.findFirstRow(
+        admin,
+        where: (t) => t.owner.equals(a.owner),
+      ))!;
+      expect(account.balance, 0);
+      expect(account.fixtureBalance, 0);
+      expect(await reconcilePointBalances(admin), isEmpty);
     },
   );
 

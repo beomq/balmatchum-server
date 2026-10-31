@@ -47,6 +47,130 @@ class _Token implements api.ClientAuthKeyProvider {
 }
 
 void main() {
+  test('all library ledger inserts use the balance helper', () async {
+    final inserts = <String>[];
+    await for (final entity in Directory('lib').list(recursive: true)) {
+      if (entity is! File || !entity.path.endsWith('.dart')) continue;
+      final source = await entity.readAsString();
+      for (final match in RegExp(
+        r'PointEntry\s*\.\s*db\s*\.\s*insert\w*\s*\(',
+      ).allMatches(source)) {
+        inserts.add('${entity.path}:${match.start}');
+      }
+    }
+    expect(inserts, hasLength(1));
+    expect(inserts.single, startsWith('lib/src/product/product_service.dart:'));
+  });
+
+  withServerpod('Materialized point balances', (builder, endpoints) {
+    late Session session;
+    late String owner;
+
+    setUp(() async {
+      owner = const Uuid().v4();
+      session = builder
+          .copyWith(
+            authentication: AuthenticationOverride.authenticationInfo(
+              owner,
+              {},
+            ),
+          )
+          .build();
+      await AuthUser.db.insertRow(
+        session,
+        AuthUser(id: UuidValue.fromString(owner), scopeNames: {}),
+      );
+    });
+
+    PointEntry entry(String policy, int amount) => PointEntry(
+      owner: owner,
+      entryKey: policy,
+      kind: 'test-credit',
+      amount: amount,
+      policyVersion: policy,
+      createdAt: fixedNow,
+    );
+
+    test(
+      'policy routing preserves both ledger sums and legacy reads',
+      () async {
+        for (final (policy, amount) in [
+          (stepPolicyVersion, 7),
+          (quizPolicyVersion, 2),
+          (themePurchasePolicyVersion, -3),
+          (outfitPurchasePolicyVersion, -3),
+          (productFixtureLabel, 10),
+          (quizFixturePolicy, 99),
+          ('legacy', 100),
+        ]) {
+          await ProductService.run(session, (s) async {
+            await s.appendPointEntry(entry(policy, amount));
+            expect(await s.balance(), s.account.balance);
+            expect(await s.balance(fixture: true), s.account.fixtureBalance);
+          });
+          expect(await reconcilePointBalances(session), isEmpty);
+        }
+        final account = (await ProductAccount.db.findFirstRow(
+          session,
+          where: (t) => t.owner.equals(owner),
+        ))!;
+        expect(account.balance, 3);
+        expect(account.fixtureBalance, 10);
+      },
+    );
+
+    test(
+      'insert boundary failure rolls back ledger and both columns',
+      () async {
+        // Keep the account outside the transaction being deliberately aborted.
+        await ProductService.run(session, (s) async {});
+        for (final policy in [stepPolicyVersion, productFixtureLabel]) {
+          await expectLater(
+            ProductService.run(
+              session,
+              (s) => s.appendPointEntry(
+                entry(policy, 7),
+                afterInsert: () async {
+                  expect(
+                    await PointEntry.db.count(session, transaction: s.tx),
+                    1,
+                  );
+                  throw StateError(
+                    'injected immediately after ledger insertion',
+                  );
+                },
+              ),
+            ),
+            throwsStateError,
+          );
+          expect(await PointEntry.db.count(session), 0);
+          expect(await reconcilePointBalances(session), isEmpty);
+        }
+      },
+    );
+
+    test(
+      'reconcile detects column drift and a ledger without an account',
+      () async {
+        await ProductService.run(
+          session,
+          (s) => s.appendPointEntry(entry(stepPolicyVersion, 7)),
+        );
+        final account = (await ProductAccount.db.findFirstRow(
+          session,
+          where: (t) => t.owner.equals(owner),
+        ))!;
+        account.fixtureBalance = 1;
+        await ProductAccount.db.updateRow(session, account);
+        final drift = await reconcilePointBalances(session);
+        expect(drift, hasLength(1));
+        expect(drift.single, [owner, 7, 7, 1, 0]);
+        await ProductAccount.db.deleteRow(session, account);
+        expect(await reconcilePointBalances(session), hasLength(1));
+      },
+    );
+  });
+
   withServerpod('Production steps and fixture authentication', (
     builder,
     endpoints,
@@ -909,6 +1033,111 @@ void main() {
       });
     });
 
+    test('fixture quiz and purchases update only the fixture column', () async {
+      final s = await ready(steps: 700);
+      final id = s.authenticated!.userIdentifier;
+      await ProductService.run(
+        s,
+        (service) => service.appendPointEntry(
+          PointEntry(
+            owner: id,
+            entryKey: 'fixture-fund',
+            kind: 'fixture',
+            amount: 10,
+            policyVersion: productFixtureLabel,
+            createdAt: fixedNow,
+          ),
+        ),
+      );
+      await DogProfile.db.insertRow(
+        s,
+        DogProfile(
+          owner: id,
+          breedId: 'shih-tzu',
+          name: 'Fixture dog',
+          sex: 'female',
+          dailyGoal: 5000,
+          firstMetAt: fixedNow,
+        ),
+      );
+      Future<void> invariant(int fixture) async {
+        final account = (await ProductAccount.db.findFirstRow(
+          s,
+          where: (t) => t.owner.equals(id),
+        ))!;
+        expect(account.balance, 0);
+        expect(account.fixtureBalance, fixture);
+        expect(
+          (await reconcilePointBalances(s)).where((row) => row.first == id),
+          isEmpty,
+        );
+      }
+
+      await invariant(10);
+      expect(
+        (await at(
+          () => endpoint.answerQuiz(s, date, 0, 'fixture-answer'),
+        )).awardedPoints,
+        2,
+      );
+      await invariant(12);
+      expect(
+        (await endpoint.purchaseTheme(s, 'cloudy', 'fixture-theme')).balance,
+        9,
+      );
+      await invariant(9);
+      expect(
+        (await endpoint.purchaseOutfit(
+          s,
+          'vest-low-v',
+          'fixture-outfit',
+        )).balance,
+        6,
+      );
+      await invariant(6);
+    });
+
+    test('claim failure rolls back day request ledger and balance', () async {
+      final s = await ready(steps: 700);
+      await expectLater(
+        at(
+          () => ProductService.run(s, (service) async {
+            await service.claim(date, 'rollback-claim', 1);
+            throw StateError('injected before transaction commit');
+          }),
+        ),
+        throwsStateError,
+      );
+      final id = s.authenticated!.userIdentifier;
+      final account = (await ProductAccount.db.findFirstRow(
+        s,
+        where: (t) => t.owner.equals(id),
+      ))!;
+      expect(account.balance, 0);
+      expect(
+        await PointEntry.db.count(
+          s,
+          where: (t) => t.owner.equals(id),
+        ),
+        0,
+      );
+      expect(
+        await ProductRequest.db.count(
+          s,
+          where: (t) =>
+              t.owner.equals(id) & t.requestId.equals('rollback-claim'),
+        ),
+        0,
+      );
+      final day = await at(() => endpoint.getDay(s, date));
+      expect(day.revision, 1);
+      expect(day.claimablePoints, 7);
+      expect(
+        (await reconcilePointBalances(s)).where((row) => row.first == id),
+        isEmpty,
+      );
+    });
+
     test('parallel claims produce exactly one immutable grant', () async {
       final a = await ready();
       final b = await owner(a.authenticated!.userIdentifier);
@@ -944,6 +1173,51 @@ void main() {
         1,
       );
     });
+
+    test(
+      'held concurrent claims serialize materialized balance updates',
+      () async {
+        final a = await ready(steps: 700);
+        await at(
+          () => endpoint.submitSteps(a, snapshot(300, on: '2026-10-13')),
+        );
+        final b = await owner(a.authenticated!.userIdentifier);
+        final locked = Completer<void>();
+        final release = Completer<void>();
+        final first = at(
+          () => ProductService.run(a, (s) async {
+            locked.complete();
+            await release.future.timeout(const Duration(seconds: 10));
+            return s.claim(date, 'held-first', 1);
+          }),
+        );
+        await locked.future.timeout(const Duration(seconds: 10));
+        final second = at(
+          () => endpoint.claimDay(b, '2026-10-13', 'held-second', 1),
+        );
+        try {
+          release.complete();
+          final grants = await Future.wait([
+            first,
+            second,
+          ]).timeout(const Duration(seconds: 10));
+          expect(grants.map((g) => g.amount), [7, 3]);
+          final account = (await ProductAccount.db.findFirstRow(
+            a,
+            where: (t) => t.owner.equals(a.authenticated!.userIdentifier),
+          ))!;
+          expect(account.balance, 10);
+          expect(
+            (await reconcilePointBalances(
+              a,
+            )).where((row) => row.first == account.owner),
+            isEmpty,
+          );
+        } finally {
+          if (!release.isCompleted) release.complete();
+        }
+      },
+    );
 
     test(
       'downward correction keeps paid high water and incremental grants',

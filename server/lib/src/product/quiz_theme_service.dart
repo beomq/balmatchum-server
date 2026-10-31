@@ -95,8 +95,7 @@ extension QuizThemeService on ProductService {
       value.answeredAt = clock.now().toUtc();
       value.awardedPoints = answerIndex == 0 ? 2 : 0;
       if (value.awardedPoints > 0) {
-        await PointEntry.db.insertRow(
-          session,
+        await appendPointEntry(
           PointEntry(
             owner: owner,
             entryKey: 'quiz:$date',
@@ -106,7 +105,6 @@ extension QuizThemeService on ProductService {
             policyVersion: productFixtureLabel,
             createdAt: value.answeredAt!,
           ),
-          transaction: tx,
         );
       }
       await QuizState.db.updateRow(session, value, transaction: tx);
@@ -156,8 +154,7 @@ extension QuizThemeService on ProductService {
       if (store.balance < item.price!) {
         throw ProductException(code: 'insufficientPoints');
       }
-      await PointEntry.db.insertRow(
-        session,
+      await appendPointEntry(
         PointEntry(
           owner: owner,
           entryKey: 'theme:$themeId',
@@ -168,7 +165,6 @@ extension QuizThemeService on ProductService {
               : themePurchasePolicyVersion,
           createdAt: clock.now().toUtc(),
         ),
-        transaction: tx,
       );
       await ThemeOwnership.db.insertRow(
         session,

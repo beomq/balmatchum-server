@@ -228,8 +228,7 @@ class QuizService {
       a.answerIndex = answerIndex;
       a.answeredAt = clock.now().toUtc();
       a.awardedPoints = 2;
-      await PointEntry.db.insertRow(
-        s.session,
+      await s.appendPointEntry(
         PointEntry(
           owner: s.owner,
           entryKey: 'quiz-assignment:${a.id}',
@@ -239,7 +238,6 @@ class QuizService {
           policyVersion: a.policyVersion,
           createdAt: a.answeredAt!,
         ),
-        transaction: s.tx,
       );
       await QuizAssignment.db.updateRow(s.session, a, transaction: s.tx);
     }
