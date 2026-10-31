@@ -8,10 +8,13 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: dead_code, unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:balmatchum_server/src/generated/protocol.dart' as _iu3f2ih9;
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+    as _iacs;
 import '../records/gps_record_input.dart' as _i7qho75c;
 
 abstract class StoredGpsRecord
@@ -19,19 +22,27 @@ abstract class StoredGpsRecord
   StoredGpsRecord._({
     this.id,
     required this.owner,
+    this.authUserId,
+    this.authUser,
     required this.clientRecordId,
     required this.persistedAt,
     this.payload,
     bool? deleted,
+    this.firstLocalDay,
+    this.lastLocalDay,
   }) : deleted = deleted ?? false;
 
   factory StoredGpsRecord({
     _is.UuidValue? id,
     required String owner,
+    _is.UuidValue? authUserId,
+    _iacs.AuthUser? authUser,
     required _is.UuidValue clientRecordId,
     required DateTime persistedAt,
     _i7qho75c.GpsRecordInput? payload,
     bool? deleted,
+    int? firstLocalDay,
+    int? lastLocalDay,
   }) = _StoredGpsRecordImpl;
 
   factory StoredGpsRecord.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -40,6 +51,16 @@ abstract class StoredGpsRecord
           ? null
           : _is.UuidValueJsonExtension.fromJson(jsonSerialization['id']),
       owner: jsonSerialization['owner'] as String,
+      authUserId: jsonSerialization['authUserId'] == null
+          ? null
+          : _is.UuidValueJsonExtension.fromJson(
+              jsonSerialization['authUserId'],
+            ),
+      authUser: jsonSerialization['authUser'] == null
+          ? null
+          : _iu3f2ih9.Protocol().deserialize<_iacs.AuthUser>(
+              jsonSerialization['authUser'],
+            ),
       clientRecordId: _is.UuidValueJsonExtension.fromJson(
         jsonSerialization['clientRecordId'],
       ),
@@ -54,6 +75,8 @@ abstract class StoredGpsRecord
       deleted: jsonSerialization['deleted'] == null
           ? null
           : _is.BoolJsonExtension.fromJson(jsonSerialization['deleted']),
+      firstLocalDay: jsonSerialization['firstLocalDay'] as int?,
+      lastLocalDay: jsonSerialization['lastLocalDay'] as int?,
     );
   }
 
@@ -66,6 +89,10 @@ abstract class StoredGpsRecord
 
   String owner;
 
+  _is.UuidValue? authUserId;
+
+  _iacs.AuthUser? authUser;
+
   _is.UuidValue clientRecordId;
 
   DateTime persistedAt;
@@ -73,6 +100,10 @@ abstract class StoredGpsRecord
   _i7qho75c.GpsRecordInput? payload;
 
   bool deleted;
+
+  int? firstLocalDay;
+
+  int? lastLocalDay;
 
   @override
   _is.Table<_is.UuidValue?> get table => t;
@@ -83,10 +114,14 @@ abstract class StoredGpsRecord
   StoredGpsRecord copyWith({
     _is.UuidValue? id,
     String? owner,
+    _is.UuidValue? authUserId,
+    _iacs.AuthUser? authUser,
     _is.UuidValue? clientRecordId,
     DateTime? persistedAt,
     _i7qho75c.GpsRecordInput? payload,
     bool? deleted,
+    int? firstLocalDay,
+    int? lastLocalDay,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -94,10 +129,14 @@ abstract class StoredGpsRecord
       '__className__': 'StoredGpsRecord',
       if (id != null) 'id': id?.toJson(),
       'owner': owner,
+      if (authUserId != null) 'authUserId': authUserId?.toJson(),
+      if (authUser != null) 'authUser': authUser?.toJson(),
       'clientRecordId': clientRecordId.toJson(),
       'persistedAt': persistedAt.toJson(),
       if (payload != null) 'payload': payload?.toJson(),
       'deleted': deleted,
+      if (firstLocalDay != null) 'firstLocalDay': firstLocalDay,
+      if (lastLocalDay != null) 'lastLocalDay': lastLocalDay,
     };
   }
 
@@ -106,8 +145,8 @@ abstract class StoredGpsRecord
     return {};
   }
 
-  static StoredGpsRecordInclude include() {
-    return StoredGpsRecordInclude._();
+  static StoredGpsRecordInclude include({_iacs.AuthUserInclude? authUser}) {
+    return StoredGpsRecordInclude._(authUser: authUser);
   }
 
   static StoredGpsRecordIncludeList includeList({
@@ -140,17 +179,25 @@ class _StoredGpsRecordImpl extends StoredGpsRecord {
   _StoredGpsRecordImpl({
     _is.UuidValue? id,
     required String owner,
+    _is.UuidValue? authUserId,
+    _iacs.AuthUser? authUser,
     required _is.UuidValue clientRecordId,
     required DateTime persistedAt,
     _i7qho75c.GpsRecordInput? payload,
     bool? deleted,
+    int? firstLocalDay,
+    int? lastLocalDay,
   }) : super._(
          id: id,
          owner: owner,
+         authUserId: authUserId,
+         authUser: authUser,
          clientRecordId: clientRecordId,
          persistedAt: persistedAt,
          payload: payload,
          deleted: deleted,
+         firstLocalDay: firstLocalDay,
+         lastLocalDay: lastLocalDay,
        );
 
   /// Returns a shallow copy of this [StoredGpsRecord]
@@ -160,20 +207,30 @@ class _StoredGpsRecordImpl extends StoredGpsRecord {
   StoredGpsRecord copyWith({
     Object? id = _Undefined,
     String? owner,
+    Object? authUserId = _Undefined,
+    Object? authUser = _Undefined,
     _is.UuidValue? clientRecordId,
     DateTime? persistedAt,
     Object? payload = _Undefined,
     bool? deleted,
+    Object? firstLocalDay = _Undefined,
+    Object? lastLocalDay = _Undefined,
   }) {
     return StoredGpsRecord(
       id: id is _is.UuidValue? ? id : this.id,
       owner: owner ?? this.owner,
+      authUserId: authUserId is _is.UuidValue? ? authUserId : this.authUserId,
+      authUser: authUser is _iacs.AuthUser?
+          ? authUser
+          : this.authUser?.copyWith(),
       clientRecordId: clientRecordId ?? this.clientRecordId,
       persistedAt: persistedAt ?? this.persistedAt,
       payload: payload is _i7qho75c.GpsRecordInput?
           ? payload
           : this.payload?.copyWith(),
       deleted: deleted ?? this.deleted,
+      firstLocalDay: firstLocalDay is int? ? firstLocalDay : this.firstLocalDay,
+      lastLocalDay: lastLocalDay is int? ? lastLocalDay : this.lastLocalDay,
     );
   }
 }
@@ -183,6 +240,13 @@ class StoredGpsRecordUpdateTable extends _is.UpdateTable<StoredGpsRecordTable> {
 
   _is.ColumnValue<String, String> owner(String value) => _is.ColumnValue(
     table.owner,
+    value,
+  );
+
+  _is.ColumnValue<_is.UuidValue, _is.UuidValue> authUserId(
+    _is.UuidValue? value,
+  ) => _is.ColumnValue(
+    table.authUserId,
     value,
   );
 
@@ -210,6 +274,16 @@ class StoredGpsRecordUpdateTable extends _is.UpdateTable<StoredGpsRecordTable> {
     table.deleted,
     value,
   );
+
+  _is.ColumnValue<int, int> firstLocalDay(int? value) => _is.ColumnValue(
+    table.firstLocalDay,
+    value,
+  );
+
+  _is.ColumnValue<int, int> lastLocalDay(int? value) => _is.ColumnValue(
+    table.lastLocalDay,
+    value,
+  );
 }
 
 class StoredGpsRecordTable extends _is.Table<_is.UuidValue?> {
@@ -217,6 +291,10 @@ class StoredGpsRecordTable extends _is.Table<_is.UuidValue?> {
     updateTable = StoredGpsRecordUpdateTable(this);
     owner = _is.ColumnString(
       'owner',
+      this,
+    );
+    authUserId = _is.ColumnUuid(
+      'authUserId',
       this,
     );
     clientRecordId = _is.ColumnUuid(
@@ -236,11 +314,23 @@ class StoredGpsRecordTable extends _is.Table<_is.UuidValue?> {
       this,
       hasDefault: true,
     );
+    firstLocalDay = _is.ColumnInt(
+      'firstLocalDay',
+      this,
+    );
+    lastLocalDay = _is.ColumnInt(
+      'lastLocalDay',
+      this,
+    );
   }
 
   late final StoredGpsRecordUpdateTable updateTable;
 
   late final _is.ColumnString owner;
+
+  late final _is.ColumnUuid authUserId;
+
+  _iacs.AuthUserTable? _authUser;
 
   late final _is.ColumnUuid clientRecordId;
 
@@ -250,22 +340,54 @@ class StoredGpsRecordTable extends _is.Table<_is.UuidValue?> {
 
   late final _is.ColumnBool deleted;
 
+  late final _is.ColumnInt firstLocalDay;
+
+  late final _is.ColumnInt lastLocalDay;
+
+  _iacs.AuthUserTable get authUser {
+    if (_authUser != null) return _authUser!;
+    _authUser = _is.createRelationTable(
+      relationFieldName: 'authUser',
+      field: StoredGpsRecord.t.authUserId,
+      foreignField: _iacs.AuthUser.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _iacs.AuthUserTable(tableRelation: foreignTableRelation),
+    );
+    return _authUser!;
+  }
+
   @override
   List<_is.Column> get columns => [
     id,
     owner,
+    authUserId,
     clientRecordId,
     persistedAt,
     payload,
     deleted,
+    firstLocalDay,
+    lastLocalDay,
   ];
+
+  @override
+  _is.Table? getRelationTable(String relationField) {
+    if (relationField == 'authUser') {
+      return authUser;
+    }
+    return null;
+  }
 }
 
 class StoredGpsRecordInclude extends _is.IncludeObject {
-  StoredGpsRecordInclude._();
+  StoredGpsRecordInclude._({_iacs.AuthUserInclude? authUser}) {
+    _authUser = authUser;
+  }
+
+  _iacs.AuthUserInclude? _authUser;
 
   @override
-  Map<String, _is.Include?> get includes => {};
+  Map<String, _is.Include?> get includes => {'authUser': _authUser};
 
   @override
   _is.Table<_is.UuidValue?> get table => StoredGpsRecord.t;
@@ -292,6 +414,10 @@ class StoredGpsRecordIncludeList extends _is.IncludeList {
 
 class StoredGpsRecordRepository {
   const StoredGpsRecordRepository._();
+
+  final attachRow = const StoredGpsRecordAttachRowRepository._();
+
+  final detachRow = const StoredGpsRecordDetachRowRepository._();
 
   /// Returns a list of [StoredGpsRecord]s matching the given query parameters.
   ///
@@ -323,6 +449,7 @@ class StoredGpsRecordRepository {
     _is.OrderByBuilder<StoredGpsRecordTable>? orderBy,
     _is.OrderByListBuilder<StoredGpsRecordTable>? orderByList,
     _is.Transaction? transaction,
+    StoredGpsRecordInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
@@ -333,6 +460,7 @@ class StoredGpsRecordRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -362,6 +490,7 @@ class StoredGpsRecordRepository {
     _is.OrderByBuilder<StoredGpsRecordTable>? orderBy,
     _is.OrderByListBuilder<StoredGpsRecordTable>? orderByList,
     _is.Transaction? transaction,
+    StoredGpsRecordInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
@@ -371,6 +500,7 @@ class StoredGpsRecordRepository {
       orderByList: orderByList?.call(StoredGpsRecord.t),
       offset: offset,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -381,12 +511,14 @@ class StoredGpsRecordRepository {
     _is.DatabaseSession session,
     _is.UuidValue id, {
     _is.Transaction? transaction,
+    StoredGpsRecordInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
     return session.db.findById<StoredGpsRecord>(
       id,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -682,6 +814,59 @@ class StoredGpsRecordRepository {
       where: where(StoredGpsRecord.t),
       lockMode: lockMode,
       lockBehavior: lockBehavior,
+      transaction: transaction,
+    );
+  }
+}
+
+class StoredGpsRecordAttachRowRepository {
+  const StoredGpsRecordAttachRowRepository._();
+
+  /// Creates a relation between the given [StoredGpsRecord] and [AuthUser]
+  /// by setting the [StoredGpsRecord]'s foreign key `authUserId` to refer to the [AuthUser].
+  Future<void> authUser(
+    _is.DatabaseSession session,
+    StoredGpsRecord storedGpsRecord,
+    _iacs.AuthUser authUser, {
+    _is.Transaction? transaction,
+  }) async {
+    if (storedGpsRecord.id == null) {
+      throw ArgumentError.notNull('storedGpsRecord.id');
+    }
+    if (authUser.id == null) {
+      throw ArgumentError.notNull('authUser.id');
+    }
+
+    var $storedGpsRecord = storedGpsRecord.copyWith(authUserId: authUser.id);
+    await session.db.updateRow<StoredGpsRecord>(
+      $storedGpsRecord,
+      columns: [StoredGpsRecord.t.authUserId],
+      transaction: transaction,
+    );
+  }
+}
+
+class StoredGpsRecordDetachRowRepository {
+  const StoredGpsRecordDetachRowRepository._();
+
+  /// Detaches the relation between this [StoredGpsRecord] and the [AuthUser] set in `authUser`
+  /// by setting the [StoredGpsRecord]'s foreign key `authUserId` to `null`.
+  ///
+  /// This removes the association between the two models without deleting
+  /// the related record.
+  Future<void> authUser(
+    _is.DatabaseSession session,
+    StoredGpsRecord storedGpsRecord, {
+    _is.Transaction? transaction,
+  }) async {
+    if (storedGpsRecord.id == null) {
+      throw ArgumentError.notNull('storedGpsRecord.id');
+    }
+
+    var $storedGpsRecord = storedGpsRecord.copyWith(authUserId: null);
+    await session.db.updateRow<StoredGpsRecord>(
+      $storedGpsRecord,
+      columns: [StoredGpsRecord.t.authUserId],
       transaction: transaction,
     );
   }

@@ -8,10 +8,13 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: dead_code, unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:balmatchum_server/src/generated/protocol.dart' as _iu3f2ih9;
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+    as _iacs;
 import '../product/reward_slice.dart' as _i03s1ada;
 
 abstract class PointEntry
@@ -19,6 +22,8 @@ abstract class PointEntry
   PointEntry._({
     this.id,
     required this.owner,
+    this.authUserId,
+    this.authUser,
     required this.entryKey,
     required this.kind,
     this.date,
@@ -33,6 +38,8 @@ abstract class PointEntry
   factory PointEntry({
     int? id,
     required String owner,
+    _is.UuidValue? authUserId,
+    _iacs.AuthUser? authUser,
     required String entryKey,
     required String kind,
     String? date,
@@ -48,6 +55,16 @@ abstract class PointEntry
     return PointEntry(
       id: jsonSerialization['id'] as int?,
       owner: jsonSerialization['owner'] as String,
+      authUserId: jsonSerialization['authUserId'] == null
+          ? null
+          : _is.UuidValueJsonExtension.fromJson(
+              jsonSerialization['authUserId'],
+            ),
+      authUser: jsonSerialization['authUser'] == null
+          ? null
+          : _iu3f2ih9.Protocol().deserialize<_iacs.AuthUser>(
+              jsonSerialization['authUser'],
+            ),
       entryKey: jsonSerialization['entryKey'] as String,
       kind: jsonSerialization['kind'] as String,
       date: jsonSerialization['date'] as String?,
@@ -74,6 +91,10 @@ abstract class PointEntry
   int? id;
 
   String owner;
+
+  _is.UuidValue? authUserId;
+
+  _iacs.AuthUser? authUser;
 
   String entryKey;
 
@@ -102,6 +123,8 @@ abstract class PointEntry
   PointEntry copyWith({
     int? id,
     String? owner,
+    _is.UuidValue? authUserId,
+    _iacs.AuthUser? authUser,
     String? entryKey,
     String? kind,
     String? date,
@@ -118,6 +141,8 @@ abstract class PointEntry
       '__className__': 'PointEntry',
       if (id != null) 'id': id,
       'owner': owner,
+      if (authUserId != null) 'authUserId': authUserId?.toJson(),
+      if (authUser != null) 'authUser': authUser?.toJson(),
       'entryKey': entryKey,
       'kind': kind,
       if (date != null) 'date': date,
@@ -136,8 +161,8 @@ abstract class PointEntry
     return {};
   }
 
-  static PointEntryInclude include() {
-    return PointEntryInclude._();
+  static PointEntryInclude include({_iacs.AuthUserInclude? authUser}) {
+    return PointEntryInclude._(authUser: authUser);
   }
 
   static PointEntryIncludeList includeList({
@@ -170,6 +195,8 @@ class _PointEntryImpl extends PointEntry {
   _PointEntryImpl({
     int? id,
     required String owner,
+    _is.UuidValue? authUserId,
+    _iacs.AuthUser? authUser,
     required String entryKey,
     required String kind,
     String? date,
@@ -182,6 +209,8 @@ class _PointEntryImpl extends PointEntry {
   }) : super._(
          id: id,
          owner: owner,
+         authUserId: authUserId,
+         authUser: authUser,
          entryKey: entryKey,
          kind: kind,
          date: date,
@@ -200,6 +229,8 @@ class _PointEntryImpl extends PointEntry {
   PointEntry copyWith({
     Object? id = _Undefined,
     String? owner,
+    Object? authUserId = _Undefined,
+    Object? authUser = _Undefined,
     String? entryKey,
     String? kind,
     Object? date = _Undefined,
@@ -213,6 +244,10 @@ class _PointEntryImpl extends PointEntry {
     return PointEntry(
       id: id is int? ? id : this.id,
       owner: owner ?? this.owner,
+      authUserId: authUserId is _is.UuidValue? ? authUserId : this.authUserId,
+      authUser: authUser is _iacs.AuthUser?
+          ? authUser
+          : this.authUser?.copyWith(),
       entryKey: entryKey ?? this.entryKey,
       kind: kind ?? this.kind,
       date: date is String? ? date : this.date,
@@ -233,6 +268,13 @@ class PointEntryUpdateTable extends _is.UpdateTable<PointEntryTable> {
 
   _is.ColumnValue<String, String> owner(String value) => _is.ColumnValue(
     table.owner,
+    value,
+  );
+
+  _is.ColumnValue<_is.UuidValue, _is.UuidValue> authUserId(
+    _is.UuidValue? value,
+  ) => _is.ColumnValue(
+    table.authUserId,
     value,
   );
 
@@ -292,6 +334,10 @@ class PointEntryTable extends _is.Table<int?> {
       'owner',
       this,
     );
+    authUserId = _is.ColumnUuid(
+      'authUserId',
+      this,
+    );
     entryKey = _is.ColumnString(
       'entryKey',
       this,
@@ -334,6 +380,10 @@ class PointEntryTable extends _is.Table<int?> {
 
   late final _is.ColumnString owner;
 
+  late final _is.ColumnUuid authUserId;
+
+  _iacs.AuthUserTable? _authUser;
+
   late final _is.ColumnString entryKey;
 
   late final _is.ColumnString kind;
@@ -352,10 +402,24 @@ class PointEntryTable extends _is.Table<int?> {
 
   late final _is.ColumnSerializable<List<_i03s1ada.RewardSlice>> slices;
 
+  _iacs.AuthUserTable get authUser {
+    if (_authUser != null) return _authUser!;
+    _authUser = _is.createRelationTable(
+      relationFieldName: 'authUser',
+      field: PointEntry.t.authUserId,
+      foreignField: _iacs.AuthUser.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _iacs.AuthUserTable(tableRelation: foreignTableRelation),
+    );
+    return _authUser!;
+  }
+
   @override
   List<_is.Column> get columns => [
     id,
     owner,
+    authUserId,
     entryKey,
     kind,
     date,
@@ -366,13 +430,25 @@ class PointEntryTable extends _is.Table<int?> {
     createdAt,
     slices,
   ];
+
+  @override
+  _is.Table? getRelationTable(String relationField) {
+    if (relationField == 'authUser') {
+      return authUser;
+    }
+    return null;
+  }
 }
 
 class PointEntryInclude extends _is.IncludeObject {
-  PointEntryInclude._();
+  PointEntryInclude._({_iacs.AuthUserInclude? authUser}) {
+    _authUser = authUser;
+  }
+
+  _iacs.AuthUserInclude? _authUser;
 
   @override
-  Map<String, _is.Include?> get includes => {};
+  Map<String, _is.Include?> get includes => {'authUser': _authUser};
 
   @override
   _is.Table<int?> get table => PointEntry.t;
@@ -399,6 +475,10 @@ class PointEntryIncludeList extends _is.IncludeList {
 
 class PointEntryRepository {
   const PointEntryRepository._();
+
+  final attachRow = const PointEntryAttachRowRepository._();
+
+  final detachRow = const PointEntryDetachRowRepository._();
 
   /// Returns a list of [PointEntry]s matching the given query parameters.
   ///
@@ -430,6 +510,7 @@ class PointEntryRepository {
     _is.OrderByBuilder<PointEntryTable>? orderBy,
     _is.OrderByListBuilder<PointEntryTable>? orderByList,
     _is.Transaction? transaction,
+    PointEntryInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
@@ -440,6 +521,7 @@ class PointEntryRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -469,6 +551,7 @@ class PointEntryRepository {
     _is.OrderByBuilder<PointEntryTable>? orderBy,
     _is.OrderByListBuilder<PointEntryTable>? orderByList,
     _is.Transaction? transaction,
+    PointEntryInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
@@ -478,6 +561,7 @@ class PointEntryRepository {
       orderByList: orderByList?.call(PointEntry.t),
       offset: offset,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -488,12 +572,14 @@ class PointEntryRepository {
     _is.DatabaseSession session,
     int id, {
     _is.Transaction? transaction,
+    PointEntryInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
     return session.db.findById<PointEntry>(
       id,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -787,6 +873,59 @@ class PointEntryRepository {
       where: where(PointEntry.t),
       lockMode: lockMode,
       lockBehavior: lockBehavior,
+      transaction: transaction,
+    );
+  }
+}
+
+class PointEntryAttachRowRepository {
+  const PointEntryAttachRowRepository._();
+
+  /// Creates a relation between the given [PointEntry] and [AuthUser]
+  /// by setting the [PointEntry]'s foreign key `authUserId` to refer to the [AuthUser].
+  Future<void> authUser(
+    _is.DatabaseSession session,
+    PointEntry pointEntry,
+    _iacs.AuthUser authUser, {
+    _is.Transaction? transaction,
+  }) async {
+    if (pointEntry.id == null) {
+      throw ArgumentError.notNull('pointEntry.id');
+    }
+    if (authUser.id == null) {
+      throw ArgumentError.notNull('authUser.id');
+    }
+
+    var $pointEntry = pointEntry.copyWith(authUserId: authUser.id);
+    await session.db.updateRow<PointEntry>(
+      $pointEntry,
+      columns: [PointEntry.t.authUserId],
+      transaction: transaction,
+    );
+  }
+}
+
+class PointEntryDetachRowRepository {
+  const PointEntryDetachRowRepository._();
+
+  /// Detaches the relation between this [PointEntry] and the [AuthUser] set in `authUser`
+  /// by setting the [PointEntry]'s foreign key `authUserId` to `null`.
+  ///
+  /// This removes the association between the two models without deleting
+  /// the related record.
+  Future<void> authUser(
+    _is.DatabaseSession session,
+    PointEntry pointEntry, {
+    _is.Transaction? transaction,
+  }) async {
+    if (pointEntry.id == null) {
+      throw ArgumentError.notNull('pointEntry.id');
+    }
+
+    var $pointEntry = pointEntry.copyWith(authUserId: null);
+    await session.db.updateRow<PointEntry>(
+      $pointEntry,
+      columns: [PointEntry.t.authUserId],
       transaction: transaction,
     );
   }

@@ -15,7 +15,7 @@ class QuizService {
   final QuizBank? bank;
 
   QuizQuestion view(QuizAssignment a) {
-    final q = jsonDecode(a.snapshot) as Map<String, dynamic>;
+    final q = jsonDecode(a.snapshot!) as Map<String, dynamic>;
     final answered = a.answerIndex != null;
     return QuizQuestion(
       assignmentId: a.id!,
@@ -213,7 +213,7 @@ class QuizService {
     if (a.questionId != questionId || a.version != version) {
       throw ProductException(code: 'staleQuestion');
     }
-    final q = jsonDecode(a.snapshot) as Map<String, dynamic>;
+    final q = jsonDecode(a.snapshot!) as Map<String, dynamic>;
     if (answerIndex < 0 || answerIndex >= (q['choices'] as List).length) {
       throw ProductException(code: 'invalidAnswer');
     }

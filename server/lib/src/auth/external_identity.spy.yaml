@@ -12,3 +12,5 @@ indexes:
   external_identity_provider_subject:
     fields: provider, issuer, audience, subjectNamespace, subject
     unique: true
+  external_identity_auth_user:
+    fields: authUserId

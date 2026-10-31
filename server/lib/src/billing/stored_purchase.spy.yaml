@@ -3,6 +3,7 @@ serverOnly: true
 table: billing_purchase
 fields:
   owner: String
+  authUser: module:serverpod_auth_core:AuthUser?, relation(optional, onDelete=Restrict)
   identityHash: String
   store: String
   environment: String
@@ -24,3 +25,7 @@ indexes:
     unique: true
   billing_purchase_owner:
     fields: owner
+  billing_purchase_auth_user_id:
+    fields: authUserId, id
+  billing_purchase_auth_user_identity:
+    fields: authUserId, identityHash

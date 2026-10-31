@@ -7,4 +7,4 @@ fields:
   refreshToken: String
 indexes:
   naver_grant_owner:
-    fields: authUserId
+    fields: authUserId, id

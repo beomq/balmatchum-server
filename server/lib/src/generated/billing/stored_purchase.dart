@@ -8,15 +8,21 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: dead_code, unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:balmatchum_server/src/generated/protocol.dart' as _iu3f2ih9;
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+    as _iacs;
 
 abstract class StoredPurchase
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
   StoredPurchase._({
     this.id,
     required this.owner,
+    this.authUserId,
+    this.authUser,
     required this.identityHash,
     required this.store,
     required this.environment,
@@ -37,6 +43,8 @@ abstract class StoredPurchase
   factory StoredPurchase({
     int? id,
     required String owner,
+    _is.UuidValue? authUserId,
+    _iacs.AuthUser? authUser,
     required String identityHash,
     required String store,
     required String environment,
@@ -58,6 +66,16 @@ abstract class StoredPurchase
     return StoredPurchase(
       id: jsonSerialization['id'] as int?,
       owner: jsonSerialization['owner'] as String,
+      authUserId: jsonSerialization['authUserId'] == null
+          ? null
+          : _is.UuidValueJsonExtension.fromJson(
+              jsonSerialization['authUserId'],
+            ),
+      authUser: jsonSerialization['authUser'] == null
+          ? null
+          : _iu3f2ih9.Protocol().deserialize<_iacs.AuthUser>(
+              jsonSerialization['authUser'],
+            ),
       identityHash: jsonSerialization['identityHash'] as String,
       store: jsonSerialization['store'] as String,
       environment: jsonSerialization['environment'] as String,
@@ -101,6 +119,10 @@ abstract class StoredPurchase
 
   String owner;
 
+  _is.UuidValue? authUserId;
+
+  _iacs.AuthUser? authUser;
+
   String identityHash;
 
   String store;
@@ -140,6 +162,8 @@ abstract class StoredPurchase
   StoredPurchase copyWith({
     int? id,
     String? owner,
+    _is.UuidValue? authUserId,
+    _iacs.AuthUser? authUser,
     String? identityHash,
     String? store,
     String? environment,
@@ -162,6 +186,8 @@ abstract class StoredPurchase
       '__className__': 'StoredPurchase',
       if (id != null) 'id': id,
       'owner': owner,
+      if (authUserId != null) 'authUserId': authUserId?.toJson(),
+      if (authUser != null) 'authUser': authUser?.toJson(),
       'identityHash': identityHash,
       'store': store,
       'environment': environment,
@@ -185,8 +211,8 @@ abstract class StoredPurchase
     return {};
   }
 
-  static StoredPurchaseInclude include() {
-    return StoredPurchaseInclude._();
+  static StoredPurchaseInclude include({_iacs.AuthUserInclude? authUser}) {
+    return StoredPurchaseInclude._(authUser: authUser);
   }
 
   static StoredPurchaseIncludeList includeList({
@@ -219,6 +245,8 @@ class _StoredPurchaseImpl extends StoredPurchase {
   _StoredPurchaseImpl({
     int? id,
     required String owner,
+    _is.UuidValue? authUserId,
+    _iacs.AuthUser? authUser,
     required String identityHash,
     required String store,
     required String environment,
@@ -237,6 +265,8 @@ class _StoredPurchaseImpl extends StoredPurchase {
   }) : super._(
          id: id,
          owner: owner,
+         authUserId: authUserId,
+         authUser: authUser,
          identityHash: identityHash,
          store: store,
          environment: environment,
@@ -261,6 +291,8 @@ class _StoredPurchaseImpl extends StoredPurchase {
   StoredPurchase copyWith({
     Object? id = _Undefined,
     String? owner,
+    Object? authUserId = _Undefined,
+    Object? authUser = _Undefined,
     String? identityHash,
     String? store,
     String? environment,
@@ -280,6 +312,10 @@ class _StoredPurchaseImpl extends StoredPurchase {
     return StoredPurchase(
       id: id is int? ? id : this.id,
       owner: owner ?? this.owner,
+      authUserId: authUserId is _is.UuidValue? ? authUserId : this.authUserId,
+      authUser: authUser is _iacs.AuthUser?
+          ? authUser
+          : this.authUser?.copyWith(),
       identityHash: identityHash ?? this.identityHash,
       store: store ?? this.store,
       environment: environment ?? this.environment,
@@ -309,6 +345,13 @@ class StoredPurchaseUpdateTable extends _is.UpdateTable<StoredPurchaseTable> {
 
   _is.ColumnValue<String, String> owner(String value) => _is.ColumnValue(
     table.owner,
+    value,
+  );
+
+  _is.ColumnValue<_is.UuidValue, _is.UuidValue> authUserId(
+    _is.UuidValue? value,
+  ) => _is.ColumnValue(
+    table.authUserId,
     value,
   );
 
@@ -404,6 +447,10 @@ class StoredPurchaseTable extends _is.Table<int?> {
       'owner',
       this,
     );
+    authUserId = _is.ColumnUuid(
+      'authUserId',
+      this,
+    );
     identityHash = _is.ColumnString(
       'identityHash',
       this,
@@ -470,6 +517,10 @@ class StoredPurchaseTable extends _is.Table<int?> {
 
   late final _is.ColumnString owner;
 
+  late final _is.ColumnUuid authUserId;
+
+  _iacs.AuthUserTable? _authUser;
+
   late final _is.ColumnString identityHash;
 
   late final _is.ColumnString store;
@@ -500,10 +551,24 @@ class StoredPurchaseTable extends _is.Table<int?> {
 
   late final _is.ColumnBool acknowledgementPending;
 
+  _iacs.AuthUserTable get authUser {
+    if (_authUser != null) return _authUser!;
+    _authUser = _is.createRelationTable(
+      relationFieldName: 'authUser',
+      field: StoredPurchase.t.authUserId,
+      foreignField: _iacs.AuthUser.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _iacs.AuthUserTable(tableRelation: foreignTableRelation),
+    );
+    return _authUser!;
+  }
+
   @override
   List<_is.Column> get columns => [
     id,
     owner,
+    authUserId,
     identityHash,
     store,
     environment,
@@ -520,13 +585,25 @@ class StoredPurchaseTable extends _is.Table<int?> {
     revokedAt,
     acknowledgementPending,
   ];
+
+  @override
+  _is.Table? getRelationTable(String relationField) {
+    if (relationField == 'authUser') {
+      return authUser;
+    }
+    return null;
+  }
 }
 
 class StoredPurchaseInclude extends _is.IncludeObject {
-  StoredPurchaseInclude._();
+  StoredPurchaseInclude._({_iacs.AuthUserInclude? authUser}) {
+    _authUser = authUser;
+  }
+
+  _iacs.AuthUserInclude? _authUser;
 
   @override
-  Map<String, _is.Include?> get includes => {};
+  Map<String, _is.Include?> get includes => {'authUser': _authUser};
 
   @override
   _is.Table<int?> get table => StoredPurchase.t;
@@ -553,6 +630,10 @@ class StoredPurchaseIncludeList extends _is.IncludeList {
 
 class StoredPurchaseRepository {
   const StoredPurchaseRepository._();
+
+  final attachRow = const StoredPurchaseAttachRowRepository._();
+
+  final detachRow = const StoredPurchaseDetachRowRepository._();
 
   /// Returns a list of [StoredPurchase]s matching the given query parameters.
   ///
@@ -584,6 +665,7 @@ class StoredPurchaseRepository {
     _is.OrderByBuilder<StoredPurchaseTable>? orderBy,
     _is.OrderByListBuilder<StoredPurchaseTable>? orderByList,
     _is.Transaction? transaction,
+    StoredPurchaseInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
@@ -594,6 +676,7 @@ class StoredPurchaseRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -623,6 +706,7 @@ class StoredPurchaseRepository {
     _is.OrderByBuilder<StoredPurchaseTable>? orderBy,
     _is.OrderByListBuilder<StoredPurchaseTable>? orderByList,
     _is.Transaction? transaction,
+    StoredPurchaseInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
@@ -632,6 +716,7 @@ class StoredPurchaseRepository {
       orderByList: orderByList?.call(StoredPurchase.t),
       offset: offset,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -642,12 +727,14 @@ class StoredPurchaseRepository {
     _is.DatabaseSession session,
     int id, {
     _is.Transaction? transaction,
+    StoredPurchaseInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
     return session.db.findById<StoredPurchase>(
       id,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -941,6 +1028,59 @@ class StoredPurchaseRepository {
       where: where(StoredPurchase.t),
       lockMode: lockMode,
       lockBehavior: lockBehavior,
+      transaction: transaction,
+    );
+  }
+}
+
+class StoredPurchaseAttachRowRepository {
+  const StoredPurchaseAttachRowRepository._();
+
+  /// Creates a relation between the given [StoredPurchase] and [AuthUser]
+  /// by setting the [StoredPurchase]'s foreign key `authUserId` to refer to the [AuthUser].
+  Future<void> authUser(
+    _is.DatabaseSession session,
+    StoredPurchase storedPurchase,
+    _iacs.AuthUser authUser, {
+    _is.Transaction? transaction,
+  }) async {
+    if (storedPurchase.id == null) {
+      throw ArgumentError.notNull('storedPurchase.id');
+    }
+    if (authUser.id == null) {
+      throw ArgumentError.notNull('authUser.id');
+    }
+
+    var $storedPurchase = storedPurchase.copyWith(authUserId: authUser.id);
+    await session.db.updateRow<StoredPurchase>(
+      $storedPurchase,
+      columns: [StoredPurchase.t.authUserId],
+      transaction: transaction,
+    );
+  }
+}
+
+class StoredPurchaseDetachRowRepository {
+  const StoredPurchaseDetachRowRepository._();
+
+  /// Detaches the relation between this [StoredPurchase] and the [AuthUser] set in `authUser`
+  /// by setting the [StoredPurchase]'s foreign key `authUserId` to `null`.
+  ///
+  /// This removes the association between the two models without deleting
+  /// the related record.
+  Future<void> authUser(
+    _is.DatabaseSession session,
+    StoredPurchase storedPurchase, {
+    _is.Transaction? transaction,
+  }) async {
+    if (storedPurchase.id == null) {
+      throw ArgumentError.notNull('storedPurchase.id');
+    }
+
+    var $storedPurchase = storedPurchase.copyWith(authUserId: null);
+    await session.db.updateRow<StoredPurchase>(
+      $storedPurchase,
+      columns: [StoredPurchase.t.authUserId],
       transaction: transaction,
     );
   }

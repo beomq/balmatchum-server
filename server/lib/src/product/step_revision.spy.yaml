@@ -3,6 +3,7 @@ serverOnly: true
 table: step_revision
 fields:
   owner: String
+  authUser: module:serverpod_auth_core:AuthUser?, relation(optional, onDelete=Cascade)
   date: String
   generation: int
   revision: int
@@ -10,4 +11,7 @@ fields:
 indexes:
   step_revision_key:
     fields: owner, date, generation, revision
+    unique: true
+  step_revision_auth_user_key:
+    fields: authUserId, date, generation, revision
     unique: true

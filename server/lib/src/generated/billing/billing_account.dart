@@ -8,15 +8,21 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: dead_code, unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:balmatchum_server/src/generated/protocol.dart' as _iu3f2ih9;
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+    as _iacs;
 
 abstract class BillingAccount
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
   BillingAccount._({
     this.id,
     required this.owner,
+    this.authUserId,
+    this.authUser,
     required this.binding,
     int? sequence,
   }) : sequence = sequence ?? 0;
@@ -24,6 +30,8 @@ abstract class BillingAccount
   factory BillingAccount({
     int? id,
     required String owner,
+    _is.UuidValue? authUserId,
+    _iacs.AuthUser? authUser,
     required String binding,
     int? sequence,
   }) = _BillingAccountImpl;
@@ -32,6 +40,16 @@ abstract class BillingAccount
     return BillingAccount(
       id: jsonSerialization['id'] as int?,
       owner: jsonSerialization['owner'] as String,
+      authUserId: jsonSerialization['authUserId'] == null
+          ? null
+          : _is.UuidValueJsonExtension.fromJson(
+              jsonSerialization['authUserId'],
+            ),
+      authUser: jsonSerialization['authUser'] == null
+          ? null
+          : _iu3f2ih9.Protocol().deserialize<_iacs.AuthUser>(
+              jsonSerialization['authUser'],
+            ),
       binding: jsonSerialization['binding'] as String,
       sequence: jsonSerialization['sequence'] as int?,
     );
@@ -46,6 +64,10 @@ abstract class BillingAccount
 
   String owner;
 
+  _is.UuidValue? authUserId;
+
+  _iacs.AuthUser? authUser;
+
   String binding;
 
   int sequence;
@@ -59,6 +81,8 @@ abstract class BillingAccount
   BillingAccount copyWith({
     int? id,
     String? owner,
+    _is.UuidValue? authUserId,
+    _iacs.AuthUser? authUser,
     String? binding,
     int? sequence,
   });
@@ -68,6 +92,8 @@ abstract class BillingAccount
       '__className__': 'BillingAccount',
       if (id != null) 'id': id,
       'owner': owner,
+      if (authUserId != null) 'authUserId': authUserId?.toJson(),
+      if (authUser != null) 'authUser': authUser?.toJson(),
       'binding': binding,
       'sequence': sequence,
     };
@@ -78,8 +104,8 @@ abstract class BillingAccount
     return {};
   }
 
-  static BillingAccountInclude include() {
-    return BillingAccountInclude._();
+  static BillingAccountInclude include({_iacs.AuthUserInclude? authUser}) {
+    return BillingAccountInclude._(authUser: authUser);
   }
 
   static BillingAccountIncludeList includeList({
@@ -112,11 +138,15 @@ class _BillingAccountImpl extends BillingAccount {
   _BillingAccountImpl({
     int? id,
     required String owner,
+    _is.UuidValue? authUserId,
+    _iacs.AuthUser? authUser,
     required String binding,
     int? sequence,
   }) : super._(
          id: id,
          owner: owner,
+         authUserId: authUserId,
+         authUser: authUser,
          binding: binding,
          sequence: sequence,
        );
@@ -128,12 +158,18 @@ class _BillingAccountImpl extends BillingAccount {
   BillingAccount copyWith({
     Object? id = _Undefined,
     String? owner,
+    Object? authUserId = _Undefined,
+    Object? authUser = _Undefined,
     String? binding,
     int? sequence,
   }) {
     return BillingAccount(
       id: id is int? ? id : this.id,
       owner: owner ?? this.owner,
+      authUserId: authUserId is _is.UuidValue? ? authUserId : this.authUserId,
+      authUser: authUser is _iacs.AuthUser?
+          ? authUser
+          : this.authUser?.copyWith(),
       binding: binding ?? this.binding,
       sequence: sequence ?? this.sequence,
     );
@@ -145,6 +181,13 @@ class BillingAccountUpdateTable extends _is.UpdateTable<BillingAccountTable> {
 
   _is.ColumnValue<String, String> owner(String value) => _is.ColumnValue(
     table.owner,
+    value,
+  );
+
+  _is.ColumnValue<_is.UuidValue, _is.UuidValue> authUserId(
+    _is.UuidValue? value,
+  ) => _is.ColumnValue(
+    table.authUserId,
     value,
   );
 
@@ -167,6 +210,10 @@ class BillingAccountTable extends _is.Table<int?> {
       'owner',
       this,
     );
+    authUserId = _is.ColumnUuid(
+      'authUserId',
+      this,
+    );
     binding = _is.ColumnString(
       'binding',
       this,
@@ -182,24 +229,54 @@ class BillingAccountTable extends _is.Table<int?> {
 
   late final _is.ColumnString owner;
 
+  late final _is.ColumnUuid authUserId;
+
+  _iacs.AuthUserTable? _authUser;
+
   late final _is.ColumnString binding;
 
   late final _is.ColumnInt sequence;
+
+  _iacs.AuthUserTable get authUser {
+    if (_authUser != null) return _authUser!;
+    _authUser = _is.createRelationTable(
+      relationFieldName: 'authUser',
+      field: BillingAccount.t.authUserId,
+      foreignField: _iacs.AuthUser.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _iacs.AuthUserTable(tableRelation: foreignTableRelation),
+    );
+    return _authUser!;
+  }
 
   @override
   List<_is.Column> get columns => [
     id,
     owner,
+    authUserId,
     binding,
     sequence,
   ];
+
+  @override
+  _is.Table? getRelationTable(String relationField) {
+    if (relationField == 'authUser') {
+      return authUser;
+    }
+    return null;
+  }
 }
 
 class BillingAccountInclude extends _is.IncludeObject {
-  BillingAccountInclude._();
+  BillingAccountInclude._({_iacs.AuthUserInclude? authUser}) {
+    _authUser = authUser;
+  }
+
+  _iacs.AuthUserInclude? _authUser;
 
   @override
-  Map<String, _is.Include?> get includes => {};
+  Map<String, _is.Include?> get includes => {'authUser': _authUser};
 
   @override
   _is.Table<int?> get table => BillingAccount.t;
@@ -226,6 +303,10 @@ class BillingAccountIncludeList extends _is.IncludeList {
 
 class BillingAccountRepository {
   const BillingAccountRepository._();
+
+  final attachRow = const BillingAccountAttachRowRepository._();
+
+  final detachRow = const BillingAccountDetachRowRepository._();
 
   /// Returns a list of [BillingAccount]s matching the given query parameters.
   ///
@@ -257,6 +338,7 @@ class BillingAccountRepository {
     _is.OrderByBuilder<BillingAccountTable>? orderBy,
     _is.OrderByListBuilder<BillingAccountTable>? orderByList,
     _is.Transaction? transaction,
+    BillingAccountInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
@@ -267,6 +349,7 @@ class BillingAccountRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -296,6 +379,7 @@ class BillingAccountRepository {
     _is.OrderByBuilder<BillingAccountTable>? orderBy,
     _is.OrderByListBuilder<BillingAccountTable>? orderByList,
     _is.Transaction? transaction,
+    BillingAccountInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
@@ -305,6 +389,7 @@ class BillingAccountRepository {
       orderByList: orderByList?.call(BillingAccount.t),
       offset: offset,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -315,12 +400,14 @@ class BillingAccountRepository {
     _is.DatabaseSession session,
     int id, {
     _is.Transaction? transaction,
+    BillingAccountInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
     return session.db.findById<BillingAccount>(
       id,
       transaction: transaction,
+      include: include,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
     );
@@ -614,6 +701,59 @@ class BillingAccountRepository {
       where: where(BillingAccount.t),
       lockMode: lockMode,
       lockBehavior: lockBehavior,
+      transaction: transaction,
+    );
+  }
+}
+
+class BillingAccountAttachRowRepository {
+  const BillingAccountAttachRowRepository._();
+
+  /// Creates a relation between the given [BillingAccount] and [AuthUser]
+  /// by setting the [BillingAccount]'s foreign key `authUserId` to refer to the [AuthUser].
+  Future<void> authUser(
+    _is.DatabaseSession session,
+    BillingAccount billingAccount,
+    _iacs.AuthUser authUser, {
+    _is.Transaction? transaction,
+  }) async {
+    if (billingAccount.id == null) {
+      throw ArgumentError.notNull('billingAccount.id');
+    }
+    if (authUser.id == null) {
+      throw ArgumentError.notNull('authUser.id');
+    }
+
+    var $billingAccount = billingAccount.copyWith(authUserId: authUser.id);
+    await session.db.updateRow<BillingAccount>(
+      $billingAccount,
+      columns: [BillingAccount.t.authUserId],
+      transaction: transaction,
+    );
+  }
+}
+
+class BillingAccountDetachRowRepository {
+  const BillingAccountDetachRowRepository._();
+
+  /// Detaches the relation between this [BillingAccount] and the [AuthUser] set in `authUser`
+  /// by setting the [BillingAccount]'s foreign key `authUserId` to `null`.
+  ///
+  /// This removes the association between the two models without deleting
+  /// the related record.
+  Future<void> authUser(
+    _is.DatabaseSession session,
+    BillingAccount billingAccount, {
+    _is.Transaction? transaction,
+  }) async {
+    if (billingAccount.id == null) {
+      throw ArgumentError.notNull('billingAccount.id');
+    }
+
+    var $billingAccount = billingAccount.copyWith(authUserId: null);
+    await session.db.updateRow<BillingAccount>(
+      $billingAccount,
+      columns: [BillingAccount.t.authUserId],
       transaction: transaction,
     );
   }
