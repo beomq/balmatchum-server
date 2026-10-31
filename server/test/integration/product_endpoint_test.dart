@@ -724,6 +724,29 @@ void main() {
       },
     );
 
+    test('calendar range matches each day read one by one', () async {
+      final a = await ready();
+      await ready(steps: 4000);
+      await at(
+        () => endpoint.submitSteps(a, snapshot(3000, on: '2026-10-12')),
+      );
+      await at(() => endpoint.submitSteps(a, snapshot(500, on: '2026-10-13')));
+      final today = await at(() => endpoint.getDay(a, date));
+      await at(() => endpoint.claimDay(a, date, 'claim', today.revision));
+      await endpoint.deleteDay(a, '2026-10-13', 'delete');
+      const dates = ['2026-10-11', '2026-10-12', '2026-10-13', date];
+      final range = await at(() => endpoint.listDays(a, dates.first, date));
+      final single = [
+        for (final d in dates) await at(() => endpoint.getDay(a, d)),
+      ];
+      expect(range.map((d) => d.steps), [null, 3000, null, 7000]);
+      expect(range.last.grantedPoints, 70);
+      expect(
+        range.map((d) => d.toJson()).toList(),
+        single.map((d) => d.toJson()).toList(),
+      );
+    });
+
     test(
       '100 step threshold, daily cap and goal-independent increments',
       () async {
