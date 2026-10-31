@@ -150,6 +150,7 @@ points만 반환한다. 품질 임계값·거리·중복 GPS 투영은 구현하
 사용자의 새 동작에 새 requestId를 쓴다. nothingToClaim, stepsUnavailable,
 policyUnconfigured, dayDeleted는 성공 수령이 아니다. requestId를 다른 작업이나 payload에
 재사용하면 idempotencyConflict다. 구매와 적용은 별도 API이며 구매만으로 적용되지 않는다.
+requestId 재생 기록(product_request)은 30일 보존 뒤 삭제되므로 그 뒤 같은 requestId는 새 요청으로 처리된다.
 구매·적용 재시도 응답은 원래 작업의 snapshot이므로 최신 상태는 listThemes로 읽는다.
 
 ## 삭제와 잠금 선택
