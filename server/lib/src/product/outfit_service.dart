@@ -83,6 +83,7 @@ extension OutfitService on ProductService {
         session,
         OutfitOwnership(
           owner: owner,
+          authUserId: authUserIdOf(owner),
           outfitId: outfitId,
           purchasedAt: clock.now().toUtc(),
         ),

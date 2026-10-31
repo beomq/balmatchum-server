@@ -110,6 +110,7 @@ class AdService {
       s.session,
       StoredAdIntent(
         owner: s.owner,
+        authUserId: authUserIdOf(s.owner),
         nonce: nonce,
         purpose: purpose,
         targetDate: date,

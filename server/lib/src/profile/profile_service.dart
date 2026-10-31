@@ -116,6 +116,7 @@ extension ProfileService on ProductService {
       session,
       DogProfile(
         owner: owner,
+        authUserId: authUserIdOf(owner),
         breedId: input.breedId,
         name: name,
         sex: input.sex,

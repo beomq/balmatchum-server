@@ -19,6 +19,10 @@ const outfitPurchasePolicyVersion = 'outfit-purchase-v1-20261027';
 const stepsPerPoint = 100;
 const dailyBaseCap = 100;
 
+/// AuthUser foreign key written next to the legacy `owner` column by every
+/// user-row insert, so the dual write has one place to change.
+UuidValue authUserIdOf(String owner) => UuidValue.fromString(owner);
+
 bool productFixturesEnabled(Session session) {
   final config = session.server.serverpod.config;
   final database = config.database;
@@ -90,7 +94,7 @@ Future<ProductAccount> lockProductAccount(
   }
   await ProductAccount.db.insert(
     session,
-    [ProductAccount(owner: owner)],
+    [ProductAccount(owner: owner, authUserId: authUserIdOf(owner))],
     ignoreConflicts: true,
     transaction: tx,
   );
@@ -213,6 +217,7 @@ class ProductService {
 
   Future<void> saveDay(ProductDay value) async {
     if (value.id == null) {
+      value.authUserId = authUserIdOf(owner);
       await ProductDay.db.insertRow(session, value, transaction: tx);
     } else {
       await ProductDay.db.updateRow(session, value, transaction: tx);
@@ -243,6 +248,7 @@ class ProductService {
       session,
       ProductRequest(
         owner: owner,
+        authUserId: authUserIdOf(owner),
         requestId: requestId,
         digest: digest(payload),
         result: jsonEncode(result),
@@ -257,6 +263,7 @@ class ProductService {
     // Test-only failure injection at the boundary between the two writes.
     Future<void> Function()? afterInsert,
   }) async {
+    entry.authUserId = authUserIdOf(owner);
     final inserted = await PointEntry.db.insertRow(
       session,
       entry,
@@ -546,6 +553,7 @@ class ProductService {
       session,
       StepRevision(
         owner: owner,
+        authUserId: authUserIdOf(owner),
         date: input.date,
         generation: input.streamGeneration,
         revision: input.revision,
