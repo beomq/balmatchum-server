@@ -314,7 +314,8 @@ class WardrobeCatalog {
     gifts: {
       '2026-12': MonthlyGift.set('holiday'),
       '2027-01': MonthlyGift.set('winter'),
-      // Seollal 2027 is Feb 7.
+      // Opens Feb 1 like every month. Seollal 2027 is Feb 7 (KASI 2027
+      // 월력요항, korea.kr press release newsId=156768474).
       '2027-02': MonthlyGift.set('seollal'),
     },
   );

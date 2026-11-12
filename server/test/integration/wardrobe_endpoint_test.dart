@@ -642,7 +642,9 @@ void main() {
       expect(await claim(kst(2026, 12, 1)), '2026-12');
       expect(await claim(kst(2026, 12, 31, 23, 59, 59)), isNull);
       expect(await claim(kst(2027, 1, 1)), '2027-01');
-      expect(await claim(kst(2027, 2, 7)), '2027-02');
+      expect(await claim(kst(2027, 1, 31, 23, 59, 59)), isNull);
+      // Like every month, February's gift opens on the 1st, not on Seollal.
+      expect(await claim(kst(2027, 2, 1)), '2027-02');
 
       final holiday = setOf(
         await wardrobe(kst(2026, 12, 31, 23, 59, 59)),
