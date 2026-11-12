@@ -65,6 +65,12 @@ ALTER TABLE ONLY "season_grant"
 -- colour SKU), and the single equipped outfit -> the torso slot. The old
 -- ledger key outfit:vest-low-v stays as it is.
 --
+DELETE FROM "outfit_ownership" legacy
+    USING "outfit_ownership" current
+    WHERE legacy."outfitId" = 'vest-low-v'
+      AND current."authUserId" = legacy."authUserId"
+      AND current."outfitId" = 'vest'
+      AND current."colourId" = 'classic';
 UPDATE "outfit_ownership"
     SET "outfitId" = 'vest', "colourId" = 'classic', "source" = 'migration'
     WHERE "outfitId" = 'vest-low-v';

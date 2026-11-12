@@ -13,6 +13,7 @@ const _scratch = 'balmatchum_wardrobe_migration';
 const _previous = 'migrations/20261112092351704-photo-composite/definition.sql';
 const _wearer = '0190b000-0000-7000-8000-00000000000a';
 const _owner = '0190b000-0000-7000-8000-00000000000b';
+const _both = '0190b000-0000-7000-8000-00000000000c';
 
 String _wardrobeMigration() => Directory('migrations')
     .listSync()
@@ -28,11 +29,13 @@ void main() {
     await scratch.runFile(_previous);
     await scratch.runSql('''
 INSERT INTO "serverpod_auth_core_user" ("id", "createdAt", "scopeNames", "blocked")
-  VALUES ('$_wearer', now(), '[]', false), ('$_owner', now(), '[]', false);
+  VALUES ('$_wearer', now(), '[]', false), ('$_owner', now(), '[]', false),
+  ('$_both', now(), '[]', false);
 INSERT INTO "product_account" ("authUserId", "equippedOutfit")
   VALUES ('$_wearer', 'vest-low-v'), ('$_owner', NULL);
 INSERT INTO "outfit_ownership" ("authUserId", "outfitId", "purchasedAt")
-  VALUES ('$_wearer', 'vest-low-v', now()), ('$_owner', 'vest-low-v', now());
+  VALUES ('$_wearer', 'vest-low-v', now()), ('$_owner', 'vest-low-v', now()),
+  ('$_both', 'vest-low-v', now()), ('$_both', 'vest', now());
 INSERT INTO "theme_ownership" ("authUserId", "themeId", "purchasedAt")
   VALUES ('$_owner', 'cloudy', now());
 ''');
@@ -55,6 +58,16 @@ INSERT INTO "theme_ownership" ("authUserId", "themeId", "purchasedAt")
         "WHERE \"outfitId\" = 'vest-low-v'",
       ),
       0,
+    );
+  });
+
+  test('a user holding both vest ids keeps exactly one vest/classic', () async {
+    expect(
+      await scratch.count(
+        "SELECT count(*)::int FROM outfit_ownership WHERE \"authUserId\" = "
+        "'$_both' AND \"outfitId\" = 'vest' AND \"colourId\" = 'classic'",
+      ),
+      1,
     );
   });
 
