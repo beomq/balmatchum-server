@@ -94,6 +94,7 @@ scloud db backup restore <snapshot-id>                               # 확인 �
 | 결제 Apple | `billingAppleBundleId`, `billingAppleIssuerId`, `billingAppleKeyId`, `billingApplePrivateKey`, `billingAppleEnvironment`, `billingAppleProducts` | 첫 출시 필수, 6개 완전 묶음 |
 | 결제 Google | `billingGooglePackageName`, `billingGoogleClientEmail`, `billingGoogleKeyId`, `billingGooglePrivateKey`, `billingGoogleEnvironment`, `billingGoogleProducts` | 첫 출시 필수, 6개 완전 묶음 |
 | AdMob SSV | `admobPlacements` | 첫 출시 필수, 아래 JSON과 콘솔 값 일치 |
+| 사진(S3) | `awsAccessKeyId`, `awsSecretAccessKey`, `awsRegion`, `photosBucket` | 4개 완전 묶음. 없으면 사진만 꺼짐. 아래 "사진 저장소(S3)" |
 
 ### 비밀 파일 도우미
 
@@ -169,6 +170,49 @@ reward item은 공백과 `~`가 없는 ASCII(예: `daily_reward`, `extra_quiz`)�
 앱은 `createIntent`에 실행 OS를 보내고 서버는 그 플랫폼 단위를 인텐트로 반환합니다.
 이 계약을 쓰는 클라이언트 pin으로 앱을 갱신해야 합니다(ADMOB_SSV_API.md).
 기존 pending 인텐트가 있으므로 단위 교체는 영향 확인 후 수행합니다.
+
+### 사진 저장소(S3)
+
+앱 사진은 비공개 S3 버킷에 presigned URL로 직접 올립니다([사진 API](PHOTO_API.md),
+[개인정보 안내 초안](PHOTO_PRIVACY_DRAFT.md)).
+
+| 항목 | dev | 운영 |
+| --- | --- | --- |
+| 버킷 | `balmatchum-photos-dev` | `balmatchum-photos-prod` |
+| 리전 | `ap-southeast-2`(시드니) | `ap-southeast-2`(시드니) |
+| IAM 사용자 | 해당 버킷만 Put/Get/Delete object + ListBucket | 동일(운영 버킷만) |
+| 로컬 키 위치 | AWS CLI 프로필 `balmatchum-dev` | AWS CLI 프로필 `balmatchum-prod`(소유자 맥) |
+
+키 값은 채팅·명령 인자·Git·로그에 남기지 않습니다. 소유자가 운영 입력 시 아래와 같이
+비밀 파일 도우미와 같은 방식(파일 600, 디렉터리 700, 사용 후 삭제)으로 넣습니다.
+
+```sh
+# 소유자 실행. Git work tree 밖의 비공개 디렉터리에서
+D=/absolute/private/photos-prod; mkdir -m 700 "$D" && cd "$D"
+(umask 077
+ aws configure get aws_access_key_id --profile balmatchum-prod > awsAccessKeyId
+ aws configure get aws_secret_access_key --profile balmatchum-prod > awsSecretAccessKey
+ printf 'ap-southeast-2' > awsRegion
+ printf 'balmatchum-photos-prod' > photosBucket)
+for k in awsAccessKeyId awsSecretAccessKey awsRegion photosBucket; do
+  scloud password set --project balmatchum-prod --name "$k" --from-file "$D/$k" >/dev/null || echo "FAILED $k"
+done
+scloud password list --project balmatchum-prod   # 4개 이름 확인(값은 표시되지 않음)
+rm -P "$D"/* && rmdir "$D"
+```
+
+- 네 개는 한 묶음입니다. 일부만 넣으면 서버가 `Invalid photo storage configuration: missing ...`로 시작하지 않습니다.
+  네 개 모두 없으면 서버는 정상 기동하고 사진 API만 `notConfigured`를 반환합니다.
+- 값은 파일 끝 개행이 있어도 `configPassword`가 다듬습니다.
+- 키 교체: IAM에서 새 액세스 키를 만들고 위 명령으로 두 키를 다시 넣은 뒤 재배포하고, 정상 동작을 확인한 다음 이전 키를 비활성화합니다.
+  이미 발급된 URL은 최대 10분 뒤 만료됩니다.
+- 배포 후 확인: `scloud log`에 `Invalid photo storage configuration`이 없고, 실제 앱 로그인 후 사진 한 장을
+  올려 "올린 사진"에 보이는지 확인하고 지웁니다. 운영 버킷 확인은 소유자만 합니다:
+  `aws s3 ls s3://balmatchum-photos-prod/photos/ --profile balmatchum-prod`.
+- 버킷 설정 권장(소유자 콘솔): 퍼블릭 액세스 차단 유지, 버전 관리 끔(삭제가 실제 파기가 되도록), 기본 암호화(SSE-S3) 유지.
+  앱은 브라우저가 아니므로 CORS 설정은 필요 없습니다.
+- 미확정 업로드는 서버 주기 정리(1시간)가 지우고, 계정 삭제는 `photos/<authUserId>/` 전체를 지웁니다.
+- 비용: AWS 무료 플랜은 요청 수(PUT/LIST, GET)와 저장량에 한도가 있습니다. 출시 전 사용량 알림(Budgets)을 설정합니다.
 
 일반 변수(평문, `scloud variable set`):
 
