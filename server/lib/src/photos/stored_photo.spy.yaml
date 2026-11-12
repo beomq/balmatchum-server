@@ -9,6 +9,10 @@ fields:
   byteSize: int
   width: int?
   height: int?
+  # original (the picked photo) or composite (the saved picture made from it).
+  kind: String, default='original'
+  # The original a composite was made from, when it was uploaded.
+  originalId: UuidValue?
   # pending until confirmUpload has seen the object; then ready.
   status: String
   createdAt: DateTime

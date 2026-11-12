@@ -24,6 +24,9 @@ const photoMaxPending = 5;
 /// Confirmed photos one account may keep.
 const photoMaxStored = 500;
 
+/// What a photo is: the picked photo, or the saved picture made from it.
+const photoKinds = {'original', 'composite'};
+
 /// Upper bound for the app-reported pixel size.
 const photoMaxDimension = 10000;
 
@@ -40,17 +43,37 @@ class PhotoEndpoint extends Endpoint {
 
   /// Reserves a photo and returns where to PUT its bytes. S3 itself rejects a
   /// body of another length or content type because both headers are signed.
+  ///
+  /// [kind] is `original` (default) or `composite`; a composite may name the
+  /// caller's own [originalId] it was made from. Both count toward the same
+  /// limits.
   Future<PhotoUploadTicket> createUpload(
     Session session,
     String contentType,
-    int byteSize,
-  ) async {
+    int byteSize, {
+    String? kind,
+    UuidValue? originalId,
+  }) async {
     final (owner, store) = _context(session);
+    final photoKind = kind ?? 'original';
+    if (!photoKinds.contains(photoKind)) {
+      throw PhotoException(code: 'invalidKind');
+    }
     if (contentType != photoContentType) {
       throw PhotoException(code: 'unsupportedType');
     }
     if (byteSize <= 0 || byteSize > photoMaxBytes) {
       throw PhotoException(code: 'invalidSize');
+    }
+    if (originalId != null) {
+      if (photoKind != 'composite') {
+        throw PhotoException(code: 'invalidOriginal');
+      }
+      // Another account's photo is reported as missing, never as present.
+      final original = await _owned(session, owner, originalId);
+      if (original.kind != 'original' || original.status != 'ready') {
+        throw PhotoException(code: 'invalidOriginal');
+      }
     }
     final now = clock.now().toUtc();
     final photoId = const Uuid().v7obj();
@@ -89,6 +112,8 @@ class PhotoEndpoint extends Endpoint {
           objectKey: key,
           contentType: contentType,
           byteSize: byteSize,
+          kind: photoKind,
+          originalId: originalId,
           status: 'pending',
           createdAt: now,
         ),
@@ -164,12 +189,26 @@ class PhotoEndpoint extends Endpoint {
   }
 
   /// Removes the object first: a row is never deleted while its object may
-  /// remain, so a failed call can simply be retried.
+  /// remain, so a failed call can simply be retried. Composites made from a
+  /// deleted original stay, unlinked.
   Future<void> deletePhoto(Session session, UuidValue photoId) async {
     final (owner, store) = _context(session);
     final photo = await _owned(session, owner, photoId);
     await _storage(session, () => store.delete(photo.objectKey));
-    await StoredPhoto.db.deleteRow(session, photo);
+    await session.db.transaction((tx) async {
+      final linked = await StoredPhoto.db.find(
+        session,
+        where: (t) =>
+            t.authUserId.equals(owner) & t.originalId.equals(photo.id),
+        transaction: tx,
+      );
+      await StoredPhoto.db.update(
+        session,
+        [for (final c in linked) c.copyWith(originalId: null)],
+        transaction: tx,
+      );
+      await StoredPhoto.db.deleteRow(session, photo, transaction: tx);
+    });
   }
 
   (UuidValue, PhotoObjectStore) _context(Session session) {
@@ -195,6 +234,8 @@ class PhotoEndpoint extends Endpoint {
 
   PhotoView _view(PhotoObjectStore store, StoredPhoto photo) => PhotoView(
     photoId: photo.id!,
+    kind: photo.kind,
+    originalId: photo.originalId,
     contentType: photo.contentType,
     byteSize: photo.byteSize,
     width: photo.width,
