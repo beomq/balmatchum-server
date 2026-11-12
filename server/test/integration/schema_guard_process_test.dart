@@ -140,7 +140,6 @@ void main() {
         'still running=$killed',
       );
     }
-    // The first scratch may have launched PostgreSQL; stop it last.
     for (final scratch in scratches.reversed) {
       await scratch.dispose(_tag);
     }

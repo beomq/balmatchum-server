@@ -50,7 +50,6 @@ class ScratchDatabase {
     this.usesSchema,
     this._admin,
     this.db,
-    this._stop,
   );
 
   final String name;
@@ -60,7 +59,6 @@ class ScratchDatabase {
   final bool usesSchema;
   final pg.Connection? _admin;
   final pg.Connection db;
-  final Future<void> Function()? _stop;
 
   static Future<ScratchDatabase> create(String name, String tag) async {
     final project =
@@ -116,7 +114,6 @@ class ScratchDatabase {
       useSchema,
       useSchema ? null : admin,
       db,
-      embedded?.stop,
     );
     final stale = await scratch.count(
       'SELECT count(*)::int FROM information_schema.tables '
@@ -136,8 +133,10 @@ class ScratchDatabase {
   Future<void> runSql(String sql) =>
       db.execute(sql, queryMode: pg.QueryMode.simple);
 
-  /// Drops the scratch target and stops PostgreSQL only if this process
-  /// launched it.
+  /// Drops the scratch target only. The embedded PostgreSQL is shared by every
+  /// test file in this `dart test` process and ends with it (it is started
+  /// without `detach`), as `withServerpod` leaves it; stopping it here cut off
+  /// whichever file was still connecting.
   Future<void> dispose(String tag) async {
     if (usesSchema) {
       await db.execute('DROP SCHEMA IF EXISTS "$name" CASCADE');
@@ -156,6 +155,5 @@ class ScratchDatabase {
       scratchLog(tag, 'cleanup: scratch database remaining=${left.first[0]}');
       await admin.close();
     }
-    await _stop?.call();
   }
 }
