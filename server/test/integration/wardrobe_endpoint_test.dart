@@ -656,38 +656,37 @@ void main() {
     });
 
     test(
-      'a lifetime purchase is not a subscription for season gifts',
+      'a lifetime purchase receives season gifts like a subscription',
       () async {
         await as('maltese');
         await subscribe(kst(2026, 11, 1), null, kind: 'lifetime');
 
         await at(holidayRelease, () => grantReleasedSeasonSets(session));
-        final granted = await at(
-          holidayOpen,
-          () => ProductService.run(
-            session,
-            (s) => s.grantOpenSeasonSets('subscribe'),
-          ),
-        );
         final store = await wardrobe(holidayOpen);
 
-        expect(granted, isEmpty);
-        expect(store.subscriber, isFalse);
-        expect(setOf(store, 'holiday').season!.granted, isFalse);
-        await expectLater(
-          at(
-            holidayOpen,
-            () => endpoints.wardrobe.purchaseSet(
-              owner,
-              'holiday',
-              'tomato',
-              request(),
-            ),
-          ),
-          productError('subscriptionRequired'),
-        );
+        expect(store.subscriber, isTrue);
+        expect(setOf(store, 'holiday').season!.granted, isTrue);
+        expect(itemOf(store, 'santa-cape').ownedColours, hasLength(3));
+        expect(await debits(), isEmpty);
       },
     );
+
+    test('a revoked lifetime purchase receives nothing', () async {
+      await as('maltese');
+      final lifetime = await subscribe(
+        kst(2026, 11, 1),
+        null,
+        kind: 'lifetime',
+      );
+      lifetime.revokedAt = kst(2026, 11, 20);
+      await StoredPurchase.db.updateRow(session, lifetime);
+
+      await at(holidayRelease, () => grantReleasedSeasonSets(session));
+      final store = await wardrobe(holidayOpen);
+
+      expect(store.subscriber, isFalse);
+      expect(setOf(store, 'holiday').season!.granted, isFalse);
+    });
 
     test(
       'a failed gift write still returns the verified entitlement',

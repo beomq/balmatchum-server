@@ -14,7 +14,8 @@ import 'wardrobe_catalog.dart';
 /// and equipping never checks the subscription. Someone who subscribes after
 /// the window has closed does not receive that set.
 extension SeasonGrants on ProductService {
-  /// An active paid subscription by the server's stored purchase observation.
+  /// An active subscription or lifetime purchase by the server's stored
+  /// purchase observation.
   Future<bool> subscriberActive() async {
     final rows = await StoredPurchase.db.find(
       session,
@@ -92,11 +93,12 @@ extension SeasonGrants on ProductService {
   }
 }
 
-/// Season sets are a gift for paid subscribers only. A lifetime purchase is a
-/// different product (DESIGN.md 6 names subscribers; BILLING_API.md keeps
-/// `subscription` and `lifetime` apart), so it does not count here.
+/// Season sets are a gift for paying members: an active subscription or a
+/// lifetime purchase (owner decision 2026-11-12). A lifetime purchase never
+/// expires, so its holder keeps receiving them.
 bool activeSubscription(StoredPurchase row, DateTime now) =>
-    row.kind == 'subscription' && storedPurchaseActive(row, now);
+    const {'subscription', 'lifetime'}.contains(row.kind) &&
+    storedPurchaseActive(row, now);
 
 /// Maintenance job: once a season window opens, hand the set to everyone whose
 /// subscription is active by the stored observation. Idempotent and resumable:
