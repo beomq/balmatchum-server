@@ -16,29 +16,33 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as _iacs;
 
-/// A season set handed to a paid subscriber, at most once per user and set.
-abstract class SeasonGrant
+/// A monthly gift handed to a paying member, at most once per user and month.
+abstract class GiftGrant
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
-  SeasonGrant._({
+  GiftGrant._({
     this.id,
     required this.authUserId,
     this.authUser,
-    required this.setId,
+    required this.month,
+    this.setId,
+    this.itemId,
     required this.grantedAt,
     required this.reason,
   });
 
-  factory SeasonGrant({
+  factory GiftGrant({
     int? id,
     required _is.UuidValue authUserId,
     _iacs.AuthUser? authUser,
-    required String setId,
+    required String month,
+    String? setId,
+    String? itemId,
     required DateTime grantedAt,
     required String reason,
-  }) = _SeasonGrantImpl;
+  }) = _GiftGrantImpl;
 
-  factory SeasonGrant.fromJson(Map<String, dynamic> jsonSerialization) {
-    return SeasonGrant(
+  factory GiftGrant.fromJson(Map<String, dynamic> jsonSerialization) {
+    return GiftGrant(
       id: jsonSerialization['id'] as int?,
       authUserId: _is.UuidValueJsonExtension.fromJson(
         jsonSerialization['authUserId'],
@@ -48,7 +52,9 @@ abstract class SeasonGrant
           : _iu3f2ih9.Protocol().deserialize<_iacs.AuthUser>(
               jsonSerialization['authUser'],
             ),
-      setId: jsonSerialization['setId'] as String,
+      month: jsonSerialization['month'] as String,
+      setId: jsonSerialization['setId'] as String?,
+      itemId: jsonSerialization['itemId'] as String?,
       grantedAt: _is.DateTimeJsonExtension.fromJson(
         jsonSerialization['grantedAt'],
       ),
@@ -56,9 +62,9 @@ abstract class SeasonGrant
     );
   }
 
-  static final t = SeasonGrantTable();
+  static final t = GiftGrantTable();
 
-  static const db = SeasonGrantRepository._();
+  static const db = GiftGrantRepository._();
 
   @override
   int? id;
@@ -67,35 +73,45 @@ abstract class SeasonGrant
 
   _iacs.AuthUser? authUser;
 
-  String setId;
+  /// KST month of the gift, yyyy-MM.
+  String month;
+
+  /// Exactly one of setId / itemId: what the gift was.
+  String? setId;
+
+  String? itemId;
 
   DateTime grantedAt;
 
-  /// release (window-open sweep) or subscribe (became active in the window).
+  /// release (monthly sweep) or subscribe (became a member in the month).
   String reason;
 
   @override
   _is.Table<int?> get table => t;
 
-  /// Returns a shallow copy of this [SeasonGrant]
+  /// Returns a shallow copy of this [GiftGrant]
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
-  SeasonGrant copyWith({
+  GiftGrant copyWith({
     int? id,
     _is.UuidValue? authUserId,
     _iacs.AuthUser? authUser,
+    String? month,
     String? setId,
+    String? itemId,
     DateTime? grantedAt,
     String? reason,
   });
   @override
   Map<String, dynamic> toJson() {
     return {
-      '__className__': 'SeasonGrant',
+      '__className__': 'GiftGrant',
       if (id != null) 'id': id,
       'authUserId': authUserId.toJson(),
       if (authUser != null) 'authUser': authUser?.toJson(),
-      'setId': setId,
+      'month': month,
+      if (setId != null) 'setId': setId,
+      if (itemId != null) 'itemId': itemId,
       'grantedAt': grantedAt.toJson(),
       'reason': reason,
     };
@@ -106,24 +122,24 @@ abstract class SeasonGrant
     return {};
   }
 
-  static SeasonGrantInclude include({_iacs.AuthUserInclude? authUser}) {
-    return SeasonGrantInclude._(authUser: authUser);
+  static GiftGrantInclude include({_iacs.AuthUserInclude? authUser}) {
+    return GiftGrantInclude._(authUser: authUser);
   }
 
-  static SeasonGrantIncludeList includeList({
-    _is.WhereExpressionBuilder<SeasonGrantTable>? where,
+  static GiftGrantIncludeList includeList({
+    _is.WhereExpressionBuilder<GiftGrantTable>? where,
     int? limit,
     int? offset,
-    _is.OrderByBuilder<SeasonGrantTable>? orderBy,
-    _is.OrderByListBuilder<SeasonGrantTable>? orderByList,
-    SeasonGrantInclude? include,
+    _is.OrderByBuilder<GiftGrantTable>? orderBy,
+    _is.OrderByListBuilder<GiftGrantTable>? orderByList,
+    GiftGrantInclude? include,
   }) {
-    return SeasonGrantIncludeList._(
+    return GiftGrantIncludeList._(
       where: where,
       limit: limit,
       offset: offset,
-      orderBy: orderBy?.call(SeasonGrant.t),
-      orderByList: orderByList?.call(SeasonGrant.t),
+      orderBy: orderBy?.call(GiftGrant.t),
+      orderByList: orderByList?.call(GiftGrant.t),
       include: include,
     );
   }
@@ -136,50 +152,58 @@ abstract class SeasonGrant
 
 class _Undefined {}
 
-class _SeasonGrantImpl extends SeasonGrant {
-  _SeasonGrantImpl({
+class _GiftGrantImpl extends GiftGrant {
+  _GiftGrantImpl({
     int? id,
     required _is.UuidValue authUserId,
     _iacs.AuthUser? authUser,
-    required String setId,
+    required String month,
+    String? setId,
+    String? itemId,
     required DateTime grantedAt,
     required String reason,
   }) : super._(
          id: id,
          authUserId: authUserId,
          authUser: authUser,
+         month: month,
          setId: setId,
+         itemId: itemId,
          grantedAt: grantedAt,
          reason: reason,
        );
 
-  /// Returns a shallow copy of this [SeasonGrant]
+  /// Returns a shallow copy of this [GiftGrant]
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
   @override
-  SeasonGrant copyWith({
+  GiftGrant copyWith({
     Object? id = _Undefined,
     _is.UuidValue? authUserId,
     Object? authUser = _Undefined,
-    String? setId,
+    String? month,
+    Object? setId = _Undefined,
+    Object? itemId = _Undefined,
     DateTime? grantedAt,
     String? reason,
   }) {
-    return SeasonGrant(
+    return GiftGrant(
       id: id is int? ? id : this.id,
       authUserId: authUserId ?? this.authUserId,
       authUser: authUser is _iacs.AuthUser?
           ? authUser
           : this.authUser?.copyWith(),
-      setId: setId ?? this.setId,
+      month: month ?? this.month,
+      setId: setId is String? ? setId : this.setId,
+      itemId: itemId is String? ? itemId : this.itemId,
       grantedAt: grantedAt ?? this.grantedAt,
       reason: reason ?? this.reason,
     );
   }
 }
 
-class SeasonGrantUpdateTable extends _is.UpdateTable<SeasonGrantTable> {
-  SeasonGrantUpdateTable(super.table);
+class GiftGrantUpdateTable extends _is.UpdateTable<GiftGrantTable> {
+  GiftGrantUpdateTable(super.table);
 
   _is.ColumnValue<_is.UuidValue, _is.UuidValue> authUserId(
     _is.UuidValue value,
@@ -188,8 +212,18 @@ class SeasonGrantUpdateTable extends _is.UpdateTable<SeasonGrantTable> {
     value,
   );
 
-  _is.ColumnValue<String, String> setId(String value) => _is.ColumnValue(
+  _is.ColumnValue<String, String> month(String value) => _is.ColumnValue(
+    table.month,
+    value,
+  );
+
+  _is.ColumnValue<String, String> setId(String? value) => _is.ColumnValue(
     table.setId,
+    value,
+  );
+
+  _is.ColumnValue<String, String> itemId(String? value) => _is.ColumnValue(
+    table.itemId,
     value,
   );
 
@@ -205,15 +239,23 @@ class SeasonGrantUpdateTable extends _is.UpdateTable<SeasonGrantTable> {
   );
 }
 
-class SeasonGrantTable extends _is.Table<int?> {
-  SeasonGrantTable({super.tableRelation}) : super(tableName: 'season_grant') {
-    updateTable = SeasonGrantUpdateTable(this);
+class GiftGrantTable extends _is.Table<int?> {
+  GiftGrantTable({super.tableRelation}) : super(tableName: 'gift_grant') {
+    updateTable = GiftGrantUpdateTable(this);
     authUserId = _is.ColumnUuid(
       'authUserId',
       this,
     );
+    month = _is.ColumnString(
+      'month',
+      this,
+    );
     setId = _is.ColumnString(
       'setId',
+      this,
+    );
+    itemId = _is.ColumnString(
+      'itemId',
       this,
     );
     grantedAt = _is.ColumnDateTime(
@@ -226,24 +268,30 @@ class SeasonGrantTable extends _is.Table<int?> {
     );
   }
 
-  late final SeasonGrantUpdateTable updateTable;
+  late final GiftGrantUpdateTable updateTable;
 
   late final _is.ColumnUuid authUserId;
 
   _iacs.AuthUserTable? _authUser;
 
+  /// KST month of the gift, yyyy-MM.
+  late final _is.ColumnString month;
+
+  /// Exactly one of setId / itemId: what the gift was.
   late final _is.ColumnString setId;
+
+  late final _is.ColumnString itemId;
 
   late final _is.ColumnDateTime grantedAt;
 
-  /// release (window-open sweep) or subscribe (became active in the window).
+  /// release (monthly sweep) or subscribe (became a member in the month).
   late final _is.ColumnString reason;
 
   _iacs.AuthUserTable get authUser {
     if (_authUser != null) return _authUser!;
     _authUser = _is.createRelationTable(
       relationFieldName: 'authUser',
-      field: SeasonGrant.t.authUserId,
+      field: GiftGrant.t.authUserId,
       foreignField: _iacs.AuthUser.t.id,
       tableRelation: tableRelation,
       createTable: (foreignTableRelation) =>
@@ -256,7 +304,9 @@ class SeasonGrantTable extends _is.Table<int?> {
   List<_is.Column> get columns => [
     id,
     authUserId,
+    month,
     setId,
+    itemId,
     grantedAt,
     reason,
   ];
@@ -270,8 +320,8 @@ class SeasonGrantTable extends _is.Table<int?> {
   }
 }
 
-class SeasonGrantInclude extends _is.IncludeObject {
-  SeasonGrantInclude._({_iacs.AuthUserInclude? authUser}) {
+class GiftGrantInclude extends _is.IncludeObject {
+  GiftGrantInclude._({_iacs.AuthUserInclude? authUser}) {
     _authUser = authUser;
   }
 
@@ -281,34 +331,34 @@ class SeasonGrantInclude extends _is.IncludeObject {
   Map<String, _is.Include?> get includes => {'authUser': _authUser};
 
   @override
-  _is.Table<int?> get table => SeasonGrant.t;
+  _is.Table<int?> get table => GiftGrant.t;
 }
 
-class SeasonGrantIncludeList extends _is.IncludeList {
-  SeasonGrantIncludeList._({
-    _is.WhereExpressionBuilder<SeasonGrantTable>? where,
+class GiftGrantIncludeList extends _is.IncludeList {
+  GiftGrantIncludeList._({
+    _is.WhereExpressionBuilder<GiftGrantTable>? where,
     super.limit,
     super.offset,
     super.orderBy,
     super.orderByList,
     super.include,
   }) {
-    super.where = where?.call(SeasonGrant.t);
+    super.where = where?.call(GiftGrant.t);
   }
 
   @override
   Map<String, _is.Include?> get includes => include?.includes ?? {};
 
   @override
-  _is.Table<int?> get table => SeasonGrant.t;
+  _is.Table<int?> get table => GiftGrant.t;
 }
 
-class SeasonGrantRepository {
-  const SeasonGrantRepository._();
+class GiftGrantRepository {
+  const GiftGrantRepository._();
 
-  final attachRow = const SeasonGrantAttachRowRepository._();
+  final attachRow = const GiftGrantAttachRowRepository._();
 
-  /// Returns a list of [SeasonGrant]s matching the given query parameters.
+  /// Returns a list of [GiftGrant]s matching the given query parameters.
   ///
   /// Use [where] to specify which items to include in the return value.
   /// If none is specified, all items will be returned.
@@ -330,22 +380,22 @@ class SeasonGrantRepository {
   ///   limit: 100,
   /// );
   /// ```
-  Future<List<SeasonGrant>> find(
+  Future<List<GiftGrant>> find(
     _is.DatabaseSession session, {
-    _is.WhereExpressionBuilder<SeasonGrantTable>? where,
+    _is.WhereExpressionBuilder<GiftGrantTable>? where,
     int? limit,
     int? offset,
-    _is.OrderByBuilder<SeasonGrantTable>? orderBy,
-    _is.OrderByListBuilder<SeasonGrantTable>? orderByList,
+    _is.OrderByBuilder<GiftGrantTable>? orderBy,
+    _is.OrderByListBuilder<GiftGrantTable>? orderByList,
     _is.Transaction? transaction,
-    SeasonGrantInclude? include,
+    GiftGrantInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
-    return session.db.find<SeasonGrant>(
-      where: where?.call(SeasonGrant.t),
-      orderBy: orderBy?.call(SeasonGrant.t),
-      orderByList: orderByList?.call(SeasonGrant.t),
+    return session.db.find<GiftGrant>(
+      where: where?.call(GiftGrant.t),
+      orderBy: orderBy?.call(GiftGrant.t),
+      orderByList: orderByList?.call(GiftGrant.t),
       limit: limit,
       offset: offset,
       transaction: transaction,
@@ -355,7 +405,7 @@ class SeasonGrantRepository {
     );
   }
 
-  /// Returns the first matching [SeasonGrant] matching the given query parameters.
+  /// Returns the first matching [GiftGrant] matching the given query parameters.
   ///
   /// Use [where] to specify which items to include in the return value.
   /// If none is specified, all items will be returned.
@@ -372,21 +422,21 @@ class SeasonGrantRepository {
   ///   orderBy: (t) => t.age,
   /// );
   /// ```
-  Future<SeasonGrant?> findFirstRow(
+  Future<GiftGrant?> findFirstRow(
     _is.DatabaseSession session, {
-    _is.WhereExpressionBuilder<SeasonGrantTable>? where,
+    _is.WhereExpressionBuilder<GiftGrantTable>? where,
     int? offset,
-    _is.OrderByBuilder<SeasonGrantTable>? orderBy,
-    _is.OrderByListBuilder<SeasonGrantTable>? orderByList,
+    _is.OrderByBuilder<GiftGrantTable>? orderBy,
+    _is.OrderByListBuilder<GiftGrantTable>? orderByList,
     _is.Transaction? transaction,
-    SeasonGrantInclude? include,
+    GiftGrantInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
-    return session.db.findFirstRow<SeasonGrant>(
-      where: where?.call(SeasonGrant.t),
-      orderBy: orderBy?.call(SeasonGrant.t),
-      orderByList: orderByList?.call(SeasonGrant.t),
+    return session.db.findFirstRow<GiftGrant>(
+      where: where?.call(GiftGrant.t),
+      orderBy: orderBy?.call(GiftGrant.t),
+      orderByList: orderByList?.call(GiftGrant.t),
       offset: offset,
       transaction: transaction,
       include: include,
@@ -395,16 +445,16 @@ class SeasonGrantRepository {
     );
   }
 
-  /// Finds a single [SeasonGrant] by its [id] or null if no such row exists.
-  Future<SeasonGrant?> findById(
+  /// Finds a single [GiftGrant] by its [id] or null if no such row exists.
+  Future<GiftGrant?> findById(
     _is.DatabaseSession session,
     int id, {
     _is.Transaction? transaction,
-    SeasonGrantInclude? include,
+    GiftGrantInclude? include,
     _is.LockMode? lockMode,
     _is.LockBehavior? lockBehavior,
   }) async {
-    return session.db.findById<SeasonGrant>(
+    return session.db.findById<GiftGrant>(
       id,
       transaction: transaction,
       include: include,
@@ -413,9 +463,9 @@ class SeasonGrantRepository {
     );
   }
 
-  /// Inserts all [SeasonGrant]s in the list and returns the inserted rows.
+  /// Inserts all [GiftGrant]s in the list and returns the inserted rows.
   ///
-  /// The returned [SeasonGrant]s will have their `id` fields set.
+  /// The returned [GiftGrant]s will have their `id` fields set.
   ///
   /// This is an atomic operation, meaning that if one of the rows fails to
   /// insert, none of the rows will be inserted.
@@ -427,14 +477,14 @@ class SeasonGrantRepository {
   /// If [noReturn] is set to `true`, the inserted rows are not read back from
   /// the database and an empty list is returned. This avoids the overhead of
   /// transferring and deserializing the rows when the result is not needed.
-  Future<List<SeasonGrant>> insert(
+  Future<List<GiftGrant>> insert(
     _is.DatabaseSession session,
-    List<SeasonGrant> rows, {
+    List<GiftGrant> rows, {
     _is.Transaction? transaction,
     bool ignoreConflicts = false,
     bool noReturn = false,
   }) async {
-    return session.db.insert<SeasonGrant>(
+    return session.db.insert<GiftGrant>(
       rows,
       transaction: transaction,
       ignoreConflicts: ignoreConflicts,
@@ -442,21 +492,21 @@ class SeasonGrantRepository {
     );
   }
 
-  /// Inserts a single [SeasonGrant] and returns the inserted row.
+  /// Inserts a single [GiftGrant] and returns the inserted row.
   ///
-  /// The returned [SeasonGrant] will have its `id` field set.
-  Future<SeasonGrant> insertRow(
+  /// The returned [GiftGrant] will have its `id` field set.
+  Future<GiftGrant> insertRow(
     _is.DatabaseSession session,
-    SeasonGrant row, {
+    GiftGrant row, {
     _is.Transaction? transaction,
   }) async {
-    return session.db.insertRow<SeasonGrant>(
+    return session.db.insertRow<GiftGrant>(
       row,
       transaction: transaction,
     );
   }
 
-  /// Upserts all [SeasonGrant]s in the list and returns the resulting rows.
+  /// Upserts all [GiftGrant]s in the list and returns the resulting rows.
   ///
   /// If a row conflicts on the given [conflictColumns], the existing row is
   /// updated with the new values. Otherwise, a new row is inserted.
@@ -468,7 +518,7 @@ class SeasonGrantRepository {
   /// given expression. Conflicting rows that don't match are skipped and not
   /// returned, so the resulting list may be shorter than [rows].
   ///
-  /// The returned [SeasonGrant]s will have their `id` fields set.
+  /// The returned [GiftGrant]s will have their `id` fields set.
   ///
   /// This is an atomic operation, meaning that if one of the rows fails,
   /// none of the rows will be affected.
@@ -476,26 +526,26 @@ class SeasonGrantRepository {
   /// If [noReturn] is set to `true`, the resulting rows are not read back from
   /// the database and an empty list is returned. This avoids the overhead of
   /// transferring and deserializing the rows when the result is not needed.
-  Future<List<SeasonGrant>> upsert(
+  Future<List<GiftGrant>> upsert(
     _is.DatabaseSession session,
-    List<SeasonGrant> rows, {
-    required _is.ColumnSelections<SeasonGrantTable> conflictColumns,
-    _is.ColumnSelections<SeasonGrantTable>? updateColumns,
-    _is.WhereExpressionBuilder<SeasonGrantTable>? updateWhere,
+    List<GiftGrant> rows, {
+    required _is.ColumnSelections<GiftGrantTable> conflictColumns,
+    _is.ColumnSelections<GiftGrantTable>? updateColumns,
+    _is.WhereExpressionBuilder<GiftGrantTable>? updateWhere,
     _is.Transaction? transaction,
     bool noReturn = false,
   }) async {
-    return session.db.upsert<SeasonGrant>(
+    return session.db.upsert<GiftGrant>(
       rows,
-      conflictColumns: conflictColumns(SeasonGrant.t),
-      updateColumns: updateColumns?.call(SeasonGrant.t),
-      updateWhere: updateWhere?.call(SeasonGrant.t),
+      conflictColumns: conflictColumns(GiftGrant.t),
+      updateColumns: updateColumns?.call(GiftGrant.t),
+      updateWhere: updateWhere?.call(GiftGrant.t),
       transaction: transaction,
       noReturn: noReturn,
     );
   }
 
-  /// Upserts a single [SeasonGrant] and returns the resulting row.
+  /// Upserts a single [GiftGrant] and returns the resulting row.
   ///
   /// If the row conflicts on the given [conflictColumns], the existing row is
   /// updated. Otherwise, a new row is inserted.
@@ -507,25 +557,25 @@ class SeasonGrantRepository {
   /// row matches the expression. Returns `null` if no row was affected — for
   /// example when [updateWhere] does not match the conflicting row.
   ///
-  /// The returned [SeasonGrant] will have its `id` field set.
-  Future<SeasonGrant?> upsertRow(
+  /// The returned [GiftGrant] will have its `id` field set.
+  Future<GiftGrant?> upsertRow(
     _is.DatabaseSession session,
-    SeasonGrant row, {
-    required _is.ColumnSelections<SeasonGrantTable> conflictColumns,
-    _is.ColumnSelections<SeasonGrantTable>? updateColumns,
-    _is.WhereExpressionBuilder<SeasonGrantTable>? updateWhere,
+    GiftGrant row, {
+    required _is.ColumnSelections<GiftGrantTable> conflictColumns,
+    _is.ColumnSelections<GiftGrantTable>? updateColumns,
+    _is.WhereExpressionBuilder<GiftGrantTable>? updateWhere,
     _is.Transaction? transaction,
   }) async {
-    return session.db.upsertRow<SeasonGrant>(
+    return session.db.upsertRow<GiftGrant>(
       row,
-      conflictColumns: conflictColumns(SeasonGrant.t),
-      updateColumns: updateColumns?.call(SeasonGrant.t),
-      updateWhere: updateWhere?.call(SeasonGrant.t),
+      conflictColumns: conflictColumns(GiftGrant.t),
+      updateColumns: updateColumns?.call(GiftGrant.t),
+      updateWhere: updateWhere?.call(GiftGrant.t),
       transaction: transaction,
     );
   }
 
-  /// Updates all [SeasonGrant]s in the list and returns the updated rows. If
+  /// Updates all [GiftGrant]s in the list and returns the updated rows. If
   /// [columns] is provided, only those columns will be updated. Defaults to
   /// all columns.
   /// This is an atomic operation, meaning that if one of the rows fails to
@@ -534,82 +584,82 @@ class SeasonGrantRepository {
   /// If [noReturn] is set to `true`, the updated rows are not read back from
   /// the database and an empty list is returned. This avoids the overhead of
   /// transferring and deserializing the rows when the result is not needed.
-  Future<List<SeasonGrant>> update(
+  Future<List<GiftGrant>> update(
     _is.DatabaseSession session,
-    List<SeasonGrant> rows, {
-    _is.ColumnSelections<SeasonGrantTable>? columns,
+    List<GiftGrant> rows, {
+    _is.ColumnSelections<GiftGrantTable>? columns,
     _is.Transaction? transaction,
     bool noReturn = false,
   }) async {
-    return session.db.update<SeasonGrant>(
+    return session.db.update<GiftGrant>(
       rows,
-      columns: columns?.call(SeasonGrant.t),
+      columns: columns?.call(GiftGrant.t),
       transaction: transaction,
       noReturn: noReturn,
     );
   }
 
-  /// Updates a single [SeasonGrant]. The row needs to have its id set.
+  /// Updates a single [GiftGrant]. The row needs to have its id set.
   /// Optionally, a list of [columns] can be provided to only update those
   /// columns. Defaults to all columns.
-  Future<SeasonGrant> updateRow(
+  Future<GiftGrant> updateRow(
     _is.DatabaseSession session,
-    SeasonGrant row, {
-    _is.ColumnSelections<SeasonGrantTable>? columns,
+    GiftGrant row, {
+    _is.ColumnSelections<GiftGrantTable>? columns,
     _is.Transaction? transaction,
   }) async {
-    return session.db.updateRow<SeasonGrant>(
+    return session.db.updateRow<GiftGrant>(
       row,
-      columns: columns?.call(SeasonGrant.t),
+      columns: columns?.call(GiftGrant.t),
       transaction: transaction,
     );
   }
 
-  /// Updates a single [SeasonGrant] by its [id] with the specified [columnValues].
+  /// Updates a single [GiftGrant] by its [id] with the specified [columnValues].
   /// Returns the updated row or null if no row with the given id exists.
-  Future<SeasonGrant?> updateById(
+  Future<GiftGrant?> updateById(
     _is.DatabaseSession session,
     int id, {
-    required _is.ColumnValueListBuilder<SeasonGrantUpdateTable> columnValues,
+    required _is.ColumnValueListBuilder<GiftGrantUpdateTable> columnValues,
     _is.Transaction? transaction,
   }) async {
-    return session.db.updateById<SeasonGrant>(
+    return session.db.updateById<GiftGrant>(
       id,
-      columnValues: columnValues(SeasonGrant.t.updateTable),
+      columnValues: columnValues(GiftGrant.t.updateTable),
       transaction: transaction,
     );
   }
 
-  /// Updates all [SeasonGrant]s matching the [where] expression with the specified [columnValues].
+  /// Updates all [GiftGrant]s matching the [where] expression with the specified [columnValues].
   /// Returns the list of updated rows.
   ///
   /// If [noReturn] is set to `true`, the updated rows are not read back from
   /// the database and an empty list is returned. This avoids the overhead of
   /// transferring and deserializing the rows when the result is not needed.
-  Future<List<SeasonGrant>> updateWhere(
+  Future<List<GiftGrant>> updateWhere(
     _is.DatabaseSession session, {
-    required _is.ColumnValueListBuilder<SeasonGrantUpdateTable> columnValues,
-    required _is.WhereExpressionBuilder<SeasonGrantTable> where,
+    required _is.ColumnValueListBuilder<GiftGrantUpdateTable> columnValues,
+    required _is.WhereExpressionBuilder<GiftGrantTable> where,
     int? limit,
     int? offset,
-    _is.OrderByBuilder<SeasonGrantTable>? orderBy,
-    _is.OrderByListBuilder<SeasonGrantTable>? orderByList,
+    _is.OrderByBuilder<GiftGrantTable>? orderBy,
+    _is.OrderByListBuilder<GiftGrantTable>? orderByList,
     _is.Transaction? transaction,
     bool noReturn = false,
   }) async {
-    return session.db.updateWhere<SeasonGrant>(
-      columnValues: columnValues(SeasonGrant.t.updateTable),
-      where: where(SeasonGrant.t),
+    return session.db.updateWhere<GiftGrant>(
+      columnValues: columnValues(GiftGrant.t.updateTable),
+      where: where(GiftGrant.t),
       limit: limit,
       offset: offset,
-      orderBy: orderBy?.call(SeasonGrant.t),
-      orderByList: orderByList?.call(SeasonGrant.t),
+      orderBy: orderBy?.call(GiftGrant.t),
+      orderByList: orderByList?.call(GiftGrant.t),
       transaction: transaction,
       noReturn: noReturn,
     );
   }
 
-  /// Deletes all [SeasonGrant]s in the list and returns the deleted rows.
+  /// Deletes all [GiftGrant]s in the list and returns the deleted rows.
   ///
   /// To specify the order of the returned rows use [orderBy] or [orderByList]
   /// when sorting by multiple columns.
@@ -620,30 +670,30 @@ class SeasonGrantRepository {
   /// If [noReturn] is set to `true`, the deleted rows are not read back from
   /// the database and an empty list is returned. This avoids the overhead of
   /// transferring and deserializing the rows when the result is not needed.
-  Future<List<SeasonGrant>> delete(
+  Future<List<GiftGrant>> delete(
     _is.DatabaseSession session,
-    List<SeasonGrant> rows, {
-    _is.OrderByBuilder<SeasonGrantTable>? orderBy,
-    _is.OrderByListBuilder<SeasonGrantTable>? orderByList,
+    List<GiftGrant> rows, {
+    _is.OrderByBuilder<GiftGrantTable>? orderBy,
+    _is.OrderByListBuilder<GiftGrantTable>? orderByList,
     _is.Transaction? transaction,
     bool noReturn = false,
   }) async {
-    return session.db.delete<SeasonGrant>(
+    return session.db.delete<GiftGrant>(
       rows,
-      orderBy: orderBy?.call(SeasonGrant.t),
-      orderByList: orderByList?.call(SeasonGrant.t),
+      orderBy: orderBy?.call(GiftGrant.t),
+      orderByList: orderByList?.call(GiftGrant.t),
       transaction: transaction,
       noReturn: noReturn,
     );
   }
 
-  /// Deletes a single [SeasonGrant].
-  Future<SeasonGrant> deleteRow(
+  /// Deletes a single [GiftGrant].
+  Future<GiftGrant> deleteRow(
     _is.DatabaseSession session,
-    SeasonGrant row, {
+    GiftGrant row, {
     _is.Transaction? transaction,
   }) async {
-    return session.db.deleteRow<SeasonGrant>(
+    return session.db.deleteRow<GiftGrant>(
       row,
       transaction: transaction,
     );
@@ -657,18 +707,18 @@ class SeasonGrantRepository {
   /// If [noReturn] is set to `true`, the deleted rows are not read back from
   /// the database and an empty list is returned. This avoids the overhead of
   /// transferring and deserializing the rows when the result is not needed.
-  Future<List<SeasonGrant>> deleteWhere(
+  Future<List<GiftGrant>> deleteWhere(
     _is.DatabaseSession session, {
-    required _is.WhereExpressionBuilder<SeasonGrantTable> where,
-    _is.OrderByBuilder<SeasonGrantTable>? orderBy,
-    _is.OrderByListBuilder<SeasonGrantTable>? orderByList,
+    required _is.WhereExpressionBuilder<GiftGrantTable> where,
+    _is.OrderByBuilder<GiftGrantTable>? orderBy,
+    _is.OrderByListBuilder<GiftGrantTable>? orderByList,
     _is.Transaction? transaction,
     bool noReturn = false,
   }) async {
-    return session.db.deleteWhere<SeasonGrant>(
-      where: where(SeasonGrant.t),
-      orderBy: orderBy?.call(SeasonGrant.t),
-      orderByList: orderByList?.call(SeasonGrant.t),
+    return session.db.deleteWhere<GiftGrant>(
+      where: where(GiftGrant.t),
+      orderBy: orderBy?.call(GiftGrant.t),
+      orderByList: orderByList?.call(GiftGrant.t),
       transaction: transaction,
       noReturn: noReturn,
     );
@@ -678,27 +728,27 @@ class SeasonGrantRepository {
   /// will return the count of all rows in the table.
   Future<int> count(
     _is.DatabaseSession session, {
-    _is.WhereExpressionBuilder<SeasonGrantTable>? where,
+    _is.WhereExpressionBuilder<GiftGrantTable>? where,
     int? limit,
     _is.Transaction? transaction,
   }) async {
-    return session.db.count<SeasonGrant>(
-      where: where?.call(SeasonGrant.t),
+    return session.db.count<GiftGrant>(
+      where: where?.call(GiftGrant.t),
       limit: limit,
       transaction: transaction,
     );
   }
 
-  /// Acquires row-level locks on [SeasonGrant] rows matching the [where] expression.
+  /// Acquires row-level locks on [GiftGrant] rows matching the [where] expression.
   Future<void> lockRows(
     _is.DatabaseSession session, {
-    required _is.WhereExpressionBuilder<SeasonGrantTable> where,
+    required _is.WhereExpressionBuilder<GiftGrantTable> where,
     required _is.LockMode lockMode,
     required _is.Transaction transaction,
     _is.LockBehavior lockBehavior = _is.LockBehavior.wait,
   }) async {
-    return session.db.lockRows<SeasonGrant>(
-      where: where(SeasonGrant.t),
+    return session.db.lockRows<GiftGrant>(
+      where: where(GiftGrant.t),
       lockMode: lockMode,
       lockBehavior: lockBehavior,
       transaction: transaction,
@@ -706,28 +756,28 @@ class SeasonGrantRepository {
   }
 }
 
-class SeasonGrantAttachRowRepository {
-  const SeasonGrantAttachRowRepository._();
+class GiftGrantAttachRowRepository {
+  const GiftGrantAttachRowRepository._();
 
-  /// Creates a relation between the given [SeasonGrant] and [AuthUser]
-  /// by setting the [SeasonGrant]'s foreign key `authUserId` to refer to the [AuthUser].
+  /// Creates a relation between the given [GiftGrant] and [AuthUser]
+  /// by setting the [GiftGrant]'s foreign key `authUserId` to refer to the [AuthUser].
   Future<void> authUser(
     _is.DatabaseSession session,
-    SeasonGrant seasonGrant,
+    GiftGrant giftGrant,
     _iacs.AuthUser authUser, {
     _is.Transaction? transaction,
   }) async {
-    if (seasonGrant.id == null) {
-      throw ArgumentError.notNull('seasonGrant.id');
+    if (giftGrant.id == null) {
+      throw ArgumentError.notNull('giftGrant.id');
     }
     if (authUser.id == null) {
       throw ArgumentError.notNull('authUser.id');
     }
 
-    var $seasonGrant = seasonGrant.copyWith(authUserId: authUser.id);
-    await session.db.updateRow<SeasonGrant>(
-      $seasonGrant,
-      columns: [SeasonGrant.t.authUserId],
+    var $giftGrant = giftGrant.copyWith(authUserId: authUser.id);
+    await session.db.updateRow<GiftGrant>(
+      $giftGrant,
+      columns: [GiftGrant.t.authUserId],
       transaction: transaction,
     );
   }

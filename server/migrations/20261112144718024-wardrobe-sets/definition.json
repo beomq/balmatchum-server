@@ -982,6 +982,110 @@
     },
     {
       "__className__": "serverpod.TableDefinition",
+      "name": "gift_grant",
+      "dartName": "GiftGrant",
+      "module": "balmatchum",
+      "schema": "public",
+      "columns": [
+        {
+          "__className__": "serverpod.ColumnDefinition",
+          "name": "id",
+          "fieldName": "id",
+          "columnType": 6,
+          "isNullable": false,
+          "columnDefault": "serial",
+          "dartType": "int?"
+        },
+        {
+          "__className__": "serverpod.ColumnDefinition",
+          "name": "authUserId",
+          "fieldName": "authUserId",
+          "columnType": 7,
+          "isNullable": false,
+          "dartType": "UuidValue"
+        },
+        {
+          "__className__": "serverpod.ColumnDefinition",
+          "name": "month",
+          "fieldName": "month",
+          "columnType": 0,
+          "isNullable": false,
+          "dartType": "String"
+        },
+        {
+          "__className__": "serverpod.ColumnDefinition",
+          "name": "setId",
+          "fieldName": "setId",
+          "columnType": 0,
+          "isNullable": true,
+          "dartType": "String?"
+        },
+        {
+          "__className__": "serverpod.ColumnDefinition",
+          "name": "itemId",
+          "fieldName": "itemId",
+          "columnType": 0,
+          "isNullable": true,
+          "dartType": "String?"
+        },
+        {
+          "__className__": "serverpod.ColumnDefinition",
+          "name": "grantedAt",
+          "fieldName": "grantedAt",
+          "columnType": 4,
+          "isNullable": false,
+          "dartType": "DateTime"
+        },
+        {
+          "__className__": "serverpod.ColumnDefinition",
+          "name": "reason",
+          "fieldName": "reason",
+          "columnType": 0,
+          "isNullable": false,
+          "dartType": "String"
+        }
+      ],
+      "foreignKeys": [
+        {
+          "__className__": "serverpod.ForeignKeyDefinition",
+          "constraintName": "gift_grant_fk_0",
+          "columns": [
+            "authUserId"
+          ],
+          "referenceTable": "serverpod_auth_core_user",
+          "referenceTableSchema": "public",
+          "referenceColumns": [
+            "id"
+          ],
+          "onUpdate": 3,
+          "onDelete": 4
+        }
+      ],
+      "indexes": [
+        {
+          "__className__": "serverpod.IndexDefinition",
+          "indexName": "gift_grant_auth_user_month",
+          "elements": [
+            {
+              "__className__": "serverpod.IndexElementDefinition",
+              "type": 0,
+              "definition": "authUserId"
+            },
+            {
+              "__className__": "serverpod.IndexElementDefinition",
+              "type": 0,
+              "definition": "month"
+            }
+          ],
+          "type": "btree",
+          "isUnique": true,
+          "isPrimary": false
+        }
+      ],
+      "managed": true
+    },
+    {
+      "__className__": "serverpod.TableDefinition",
       "name": "gps_record",
       "dartName": "StoredGpsRecord",
       "module": "balmatchum",
@@ -2639,94 +2743,6 @@
               "__className__": "serverpod.IndexElementDefinition",
               "type": 0,
               "definition": "date"
-            }
-          ],
-          "type": "btree",
-          "isUnique": true,
-          "isPrimary": false
-        }
-      ],
-      "managed": true
-    },
-    {
-      "__className__": "serverpod.TableDefinition",
-      "name": "season_grant",
-      "dartName": "SeasonGrant",
-      "module": "balmatchum",
-      "schema": "public",
-      "columns": [
-        {
-          "__className__": "serverpod.ColumnDefinition",
-          "name": "id",
-          "fieldName": "id",
-          "columnType": 6,
-          "isNullable": false,
-          "columnDefault": "serial",
-          "dartType": "int?"
-        },
-        {
-          "__className__": "serverpod.ColumnDefinition",
-          "name": "authUserId",
-          "fieldName": "authUserId",
-          "columnType": 7,
-          "isNullable": false,
-          "dartType": "UuidValue"
-        },
-        {
-          "__className__": "serverpod.ColumnDefinition",
-          "name": "setId",
-          "fieldName": "setId",
-          "columnType": 0,
-          "isNullable": false,
-          "dartType": "String"
-        },
-        {
-          "__className__": "serverpod.ColumnDefinition",
-          "name": "grantedAt",
-          "fieldName": "grantedAt",
-          "columnType": 4,
-          "isNullable": false,
-          "dartType": "DateTime"
-        },
-        {
-          "__className__": "serverpod.ColumnDefinition",
-          "name": "reason",
-          "fieldName": "reason",
-          "columnType": 0,
-          "isNullable": false,
-          "dartType": "String"
-        }
-      ],
-      "foreignKeys": [
-        {
-          "__className__": "serverpod.ForeignKeyDefinition",
-          "constraintName": "season_grant_fk_0",
-          "columns": [
-            "authUserId"
-          ],
-          "referenceTable": "serverpod_auth_core_user",
-          "referenceTableSchema": "public",
-          "referenceColumns": [
-            "id"
-          ],
-          "onUpdate": 3,
-          "onDelete": 4
-        }
-      ],
-      "indexes": [
-        {
-          "__className__": "serverpod.IndexDefinition",
-          "indexName": "season_grant_auth_user_set",
-          "elements": [
-            {
-              "__className__": "serverpod.IndexElementDefinition",
-              "type": 0,
-              "definition": "authUserId"
-            },
-            {
-              "__className__": "serverpod.IndexElementDefinition",
-              "type": 0,
-              "definition": "setId"
             }
           ],
           "type": "btree",
@@ -6138,7 +6154,7 @@
     {
       "__className__": "serverpod.DatabaseMigrationVersionModel",
       "module": "balmatchum",
-      "version": "20261112142250762-wardrobe-sets"
+      "version": "20261112144718024-wardrobe-sets"
     },
     {
       "__className__": "serverpod.DatabaseMigrationVersion",

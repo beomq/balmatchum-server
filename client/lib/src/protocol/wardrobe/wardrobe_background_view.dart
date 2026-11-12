@@ -53,7 +53,7 @@ abstract class WardrobeBackgroundView
 
   bool owned;
 
-  /// False for a season background, which comes only with its set.
+  /// False for a gift-only set's background, which comes only with it.
   bool sellable;
 
   String? setId;

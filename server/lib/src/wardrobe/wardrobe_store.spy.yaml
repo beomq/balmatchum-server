@@ -13,6 +13,7 @@ fields:
   completeColour: String?
   breedId: String?
   balance: int
-  ### A paid subscription is active by the server's stored observation.
+  ### A subscription or lifetime purchase is active by the server's stored
+  ### observation: this user receives the monthly gifts.
   subscriber: bool
   fixtureLabel: String?

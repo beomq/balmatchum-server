@@ -170,6 +170,22 @@ CREATE UNIQUE INDEX "external_identity_provider_subject" ON "external_identity" 
 CREATE INDEX "external_identity_auth_user" ON "external_identity" USING btree ("authUserId");
 
 --
+-- Class GiftGrant as table gift_grant
+--
+CREATE TABLE "gift_grant" (
+    "id" bigserial PRIMARY KEY,
+    "authUserId" uuid NOT NULL,
+    "month" text NOT NULL,
+    "setId" text,
+    "itemId" text,
+    "grantedAt" timestamp without time zone NOT NULL,
+    "reason" text NOT NULL
+);
+
+-- Indexes
+CREATE UNIQUE INDEX "gift_grant_auth_user_month" ON "gift_grant" USING btree ("authUserId", "month");
+
+--
 -- Class StoredGpsRecord as table gps_record
 --
 CREATE TABLE "gps_record" (
@@ -410,20 +426,6 @@ CREATE TABLE "quiz_state" (
 
 -- Indexes
 CREATE UNIQUE INDEX "quiz_state_auth_user_key" ON "quiz_state" USING btree ("authUserId", "date");
-
---
--- Class SeasonGrant as table season_grant
---
-CREATE TABLE "season_grant" (
-    "id" bigserial PRIMARY KEY,
-    "authUserId" uuid NOT NULL,
-    "setId" text NOT NULL,
-    "grantedAt" timestamp without time zone NOT NULL,
-    "reason" text NOT NULL
-);
-
--- Indexes
-CREATE UNIQUE INDEX "season_grant_auth_user_set" ON "season_grant" USING btree ("authUserId", "setId");
 
 --
 -- Class StepRevision as table step_revision
@@ -1024,6 +1026,16 @@ ALTER TABLE ONLY "external_identity"
     ON UPDATE NO ACTION;
 
 --
+-- Foreign relations for "gift_grant" table
+--
+ALTER TABLE ONLY "gift_grant"
+    ADD CONSTRAINT "gift_grant_fk_0"
+    FOREIGN KEY("authUserId")
+    REFERENCES "serverpod_auth_core_user"("id")
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION;
+
+--
 -- Foreign relations for "gps_record" table
 --
 ALTER TABLE ONLY "gps_record"
@@ -1128,16 +1140,6 @@ ALTER TABLE ONLY "quiz_assignment"
 --
 ALTER TABLE ONLY "quiz_state"
     ADD CONSTRAINT "quiz_state_fk_0"
-    FOREIGN KEY("authUserId")
-    REFERENCES "serverpod_auth_core_user"("id")
-    ON DELETE CASCADE
-    ON UPDATE NO ACTION;
-
---
--- Foreign relations for "season_grant" table
---
-ALTER TABLE ONLY "season_grant"
-    ADD CONSTRAINT "season_grant_fk_0"
     FOREIGN KEY("authUserId")
     REFERENCES "serverpod_auth_core_user"("id")
     ON DELETE CASCADE
@@ -1383,9 +1385,9 @@ ALTER TABLE ONLY "serverpod_auth_idp_passkey_account"
 -- MIGRATION VERSION FOR balmatchum
 --
 INSERT INTO "serverpod_migrations" ("module", "version", "timestamp")
-    VALUES ('balmatchum', '20261112142250762-wardrobe-sets', now())
+    VALUES ('balmatchum', '20261112144718024-wardrobe-sets', now())
     ON CONFLICT ("module")
-    DO UPDATE SET "version" = '20261112142250762-wardrobe-sets', "timestamp" = now();
+    DO UPDATE SET "version" = '20261112144718024-wardrobe-sets', "timestamp" = now();
 
 --
 -- MIGRATION VERSION FOR serverpod

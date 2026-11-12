@@ -100,7 +100,7 @@ Future<void> deleteAccountData(
     where: (t) => t.authUserId.equals(authUserIdOf(owner)),
     transaction: tx,
   );
-  await SeasonGrant.db.deleteWhere(
+  await GiftGrant.db.deleteWhere(
     session,
     where: (t) => t.authUserId.equals(authUserIdOf(owner)),
     transaction: tx,

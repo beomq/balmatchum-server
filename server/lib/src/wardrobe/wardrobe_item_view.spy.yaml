@@ -10,6 +10,8 @@ fields:
   ownedColours: List<String>
   ### Colours the profile's breed can wear; empty means "곧 입을 수 있어요".
   wearableColours: List<String>
-  ### False for season items, which come only with their set.
+  ### False for gift-only items (a gift-only set or a monthly item gift).
   sellable: bool
   setIds: List<String>
+  ### Set when the item itself is a monthly gift.
+  gift: WardrobeSeasonView?

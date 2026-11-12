@@ -2,7 +2,7 @@ import 'package:serverpod/serverpod.dart';
 
 import '../generated/protocol.dart';
 import '../product/product_service.dart';
-import '../wardrobe/season_grants.dart';
+import '../wardrobe/gift_grants.dart';
 import 'billing_service.dart';
 
 class BillingEndpoint extends Endpoint {
@@ -43,16 +43,15 @@ class BillingEndpoint extends Endpoint {
     lookup,
     () => ProductService.run(
       session,
-      (s) => s.grantOpenSeasonSets('subscribe'),
+      (s) => s.grantCurrentGift('subscribe'),
     ),
   );
 }
 
-/// A subscription seen active while a season window is open receives that
-/// season set (once); late subscribers get nothing because the window is
-/// closed. The gift is a separate write: if it fails, the verified
+/// A member seen active during a month receives that month's gift (once);
+/// late members do not get past months. The gift is a separate write: if it fails, the verified
 /// entitlement is still returned and the hourly release sweep
-/// ([grantReleasedSeasonSets]) gives the set later.
+/// ([grantMonthlyGifts]) gives the set later.
 Future<EntitlementView> withSeasonGift(
   Session session,
   Future<EntitlementView> lookup,

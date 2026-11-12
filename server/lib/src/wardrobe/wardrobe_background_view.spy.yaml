@@ -4,6 +4,6 @@ fields:
   name: String
   price: int
   owned: bool
-  ### False for a season background, which comes only with its set.
+  ### False for a gift-only set's background, which comes only with it.
   sellable: bool
   setId: String?

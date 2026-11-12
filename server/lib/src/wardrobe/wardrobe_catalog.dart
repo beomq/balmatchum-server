@@ -186,18 +186,19 @@ class Window {
   bool contains(DateTime now) => !now.isBefore(opensAt) && !now.isAfter(endsAt);
 }
 
-class Season {
-  const Season({required this.window, this.resale});
+/// One month's gift for paying members (owner decision 2026-11-12: monthly,
+/// because the subscription is monthly): a whole set or a single item. The
+/// art ships in the app ahead of time; the server opens it on the 1st (KST).
+class MonthlyGift {
+  const MonthlyGift.set(String this.setId, {this.resale}) : itemId = null;
+  const MonthlyGift.item(String this.itemId, {this.resale}) : setId = null;
 
-  /// Subscribers active inside this window receive the whole set.
-  final Window window;
+  final String? setId;
+  final String? itemId;
 
-  /// A later limited-time point sale; null while closed. Flip it here and
-  /// deploy the server; the app needs no release.
+  /// A later limited-time point sale of this past gift; null while closed.
+  /// Fill it here and deploy the server; the app needs no release.
   final Window? resale;
-
-  DateTime get releaseAt => window.opensAt;
-  DateTime get endsAt => window.endsAt;
 }
 
 class WardrobeSet {
@@ -207,7 +208,7 @@ class WardrobeSet {
     required this.background,
     required this.colours,
     required this.effect,
-    this.season,
+    this.sellable = true,
   });
 
   final String name;
@@ -215,15 +216,36 @@ class WardrobeSet {
   final String background;
   final List<String> colours;
   final String effect;
-  final Season? season;
+
+  /// False for a gift-only set: its items and background come with the
+  /// monthly gift (or a later resale), never from the regular shop.
+  final bool sellable;
 }
 
 DateTime kst(int y, int m, int d, [int h = 0, int min = 0, int s = 0]) =>
     DateTime.utc(y, m, d, h, min, s).subtract(const Duration(hours: 9));
 
+/// The KST calendar month of [instant] as `yyyy-MM`.
+String kstMonth(DateTime instant) {
+  final local = instant.toUtc().add(const Duration(hours: 9));
+  return '${local.year}-${local.month.toString().padLeft(2, '0')}';
+}
+
+/// From the 1st 00:00 KST to the last second of that month.
+Window monthWindow(String month) {
+  final [y, m] = [for (final part in month.split('-')) int.parse(part)];
+  return Window(
+    kst(y, m, 1),
+    kst(y, m + 1, 1).subtract(const Duration(seconds: 1)),
+  );
+}
+
 class WardrobeCatalog {
-  const WardrobeCatalog({required this.sets});
+  const WardrobeCatalog({required this.sets, required this.gifts});
   final Map<String, WardrobeSet> sets;
+
+  /// `yyyy-MM` (KST) -> that month's gift. A month without one gives nothing.
+  final Map<String, MonthlyGift> gifts;
 
   Map<String, WardrobeItem> get items => wardrobeItems;
   Map<String, WardrobeBackground> get backgrounds => wardrobeBackgrounds;
@@ -236,11 +258,31 @@ class WardrobeCatalog {
     return null;
   }
 
-  /// Season sets own their items and background: those are not sold singly.
-  bool seasonBackground(String backgroundId) {
+  /// A gift-only set's background is not sold singly.
+  bool giftOnlyBackground(String backgroundId) {
     final setId = setOfBackground(backgroundId);
-    return setId != null && sets[setId]!.season != null;
+    return setId != null && !sets[setId]!.sellable;
   }
+
+  /// The month whose gift [match]es: open now, else the latest past one,
+  /// else the next one. Null when it is never a gift.
+  String? giftMonth(bool Function(MonthlyGift) match, DateTime now) {
+    final months = [
+      for (final MapEntry(:key, :value) in gifts.entries)
+        if (match(value)) key,
+    ]..sort();
+    if (months.isEmpty) return null;
+    final current = kstMonth(now);
+    if (months.contains(current)) return current;
+    final past = months.where((m) => m.compareTo(current) < 0);
+    return past.isNotEmpty ? past.last : months.first;
+  }
+
+  String? giftMonthOfSet(String setId, DateTime now) =>
+      giftMonth((g) => g.setId == setId, now);
+
+  String? giftMonthOfItem(String itemId, DateTime now) =>
+      giftMonth((g) => g.itemId == itemId, now);
 
   static final standard = WardrobeCatalog(
     sets: {
@@ -257,7 +299,7 @@ class WardrobeCatalog {
         background: 'holiday-night',
         colours: ['tomato', 'pine', 'navy'],
         effect: 'holiday',
-        season: Season(window: _holidayWindow),
+        sellable: false,
       ),
       'seollal': WardrobeSet(
         name: '설날 세트',
@@ -265,20 +307,18 @@ class WardrobeCatalog {
         background: 'seollal-morning',
         colours: ['dahong', 'jjok', 'yeondu', 'bunhong'],
         effect: 'seollal',
-        season: Season(window: _seollalWindow),
+        sellable: false,
       ),
+    },
+    // Months with art so far; an art lane fills the rest.
+    gifts: {
+      '2026-12': MonthlyGift.set('holiday'),
+      '2027-01': MonthlyGift.set('winter'),
+      // Seollal 2027 is Feb 7.
+      '2027-02': MonthlyGift.set('seollal'),
     },
   );
 
   /// Tests swap the catalog (for example to open a resale window).
   static WardrobeCatalog current = standard;
 }
-
-final _holidayWindow = Window(
-  kst(2026, 12, 1),
-  kst(2027, 1, 10, 23, 59, 59),
-);
-final _seollalWindow = Window(
-  kst(2027, 1, 25),
-  kst(2027, 2, 21, 23, 59, 59),
-);

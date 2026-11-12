@@ -26,6 +26,7 @@ abstract class WardrobeSetView
     required this.effect,
     required this.fullPrice,
     required this.discountPct,
+    required this.sellable,
     this.season,
   });
 
@@ -38,6 +39,7 @@ abstract class WardrobeSetView
     required String effect,
     required int fullPrice,
     required int discountPct,
+    required bool sellable,
     _iind78px.WardrobeSeasonView? season,
   }) = _WardrobeSetViewImpl;
 
@@ -56,6 +58,7 @@ abstract class WardrobeSetView
       effect: jsonSerialization['effect'] as String,
       fullPrice: jsonSerialization['fullPrice'] as int,
       discountPct: jsonSerialization['discountPct'] as int,
+      sellable: _is.BoolJsonExtension.fromJson(jsonSerialization['sellable']),
       season: jsonSerialization['season'] == null
           ? null
           : _iu3f2ih9.Protocol().deserialize<_iind78px.WardrobeSeasonView>(
@@ -82,6 +85,10 @@ abstract class WardrobeSetView
 
   int discountPct;
 
+  /// False for a gift-only set (never in the regular shop).
+  bool sellable;
+
+  /// The set's monthly gift window, if it is ever a gift.
   _iind78px.WardrobeSeasonView? season;
 
   /// Returns a shallow copy of this [WardrobeSetView]
@@ -96,6 +103,7 @@ abstract class WardrobeSetView
     String? effect,
     int? fullPrice,
     int? discountPct,
+    bool? sellable,
     _iind78px.WardrobeSeasonView? season,
   });
   @override
@@ -110,6 +118,7 @@ abstract class WardrobeSetView
       'effect': effect,
       'fullPrice': fullPrice,
       'discountPct': discountPct,
+      'sellable': sellable,
       if (season != null) 'season': season?.toJson(),
     };
   }
@@ -126,6 +135,7 @@ abstract class WardrobeSetView
       'effect': effect,
       'fullPrice': fullPrice,
       'discountPct': discountPct,
+      'sellable': sellable,
       if (season != null) 'season': season?.toJsonForProtocol(),
     };
   }
@@ -148,6 +158,7 @@ class _WardrobeSetViewImpl extends WardrobeSetView {
     required String effect,
     required int fullPrice,
     required int discountPct,
+    required bool sellable,
     _iind78px.WardrobeSeasonView? season,
   }) : super._(
          setId: setId,
@@ -158,6 +169,7 @@ class _WardrobeSetViewImpl extends WardrobeSetView {
          effect: effect,
          fullPrice: fullPrice,
          discountPct: discountPct,
+         sellable: sellable,
          season: season,
        );
 
@@ -174,6 +186,7 @@ class _WardrobeSetViewImpl extends WardrobeSetView {
     String? effect,
     int? fullPrice,
     int? discountPct,
+    bool? sellable,
     Object? season = _Undefined,
   }) {
     return WardrobeSetView(
@@ -185,6 +198,7 @@ class _WardrobeSetViewImpl extends WardrobeSetView {
       effect: effect ?? this.effect,
       fullPrice: fullPrice ?? this.fullPrice,
       discountPct: discountPct ?? this.discountPct,
+      sellable: sellable ?? this.sellable,
       season: season is _iind78px.WardrobeSeasonView?
           ? season
           : this.season?.copyWith(),

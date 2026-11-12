@@ -87,8 +87,8 @@ import 'records/record_exception.dart' as _ihyrwhon;
 import 'records/record_receipt.dart' as _ipyparvp;
 import 'records/route_point.dart' as _ir7rvxr1;
 import 'records/stored_gps_record.dart' as _iyylbrve;
+import 'wardrobe/gift_grant.dart' as _iih4jdtz;
 import 'wardrobe/outfit_equip.dart' as _iwi5sv1w;
-import 'wardrobe/season_grant.dart' as _im5a7ag7;
 import 'wardrobe/wardrobe_background_view.dart' as _it8ud1gq;
 import 'wardrobe/wardrobe_colour_view.dart' as _ixlxdrib;
 import 'wardrobe/wardrobe_equip_view.dart' as _ikwt7tme;
@@ -159,8 +159,8 @@ export 'records/record_exception.dart';
 export 'records/record_receipt.dart';
 export 'records/route_point.dart';
 export 'records/stored_gps_record.dart';
+export 'wardrobe/gift_grant.dart';
 export 'wardrobe/outfit_equip.dart';
-export 'wardrobe/season_grant.dart';
 export 'wardrobe/wardrobe_background_view.dart';
 export 'wardrobe/wardrobe_colour_view.dart';
 export 'wardrobe/wardrobe_equip_view.dart';
@@ -960,6 +960,89 @@ class Protocol extends _is.DatabaseSerializationManager {
           ],
           type: 'btree',
           isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'gift_grant',
+      dartName: 'GiftGrant',
+      schema: 'public',
+      module: 'balmatchum',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'authUserId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'month',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'setId',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'itemId',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'grantedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'reason',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'gift_grant_fk_0',
+          columns: ['authUserId'],
+          referenceTable: 'serverpod_auth_core_user',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'gift_grant_auth_user_month',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'authUserId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'month',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
           isPrimary: false,
         ),
       ],
@@ -2315,77 +2398,6 @@ class Protocol extends _is.DatabaseSerializationManager {
       managed: true,
     ),
     _isp.TableDefinition(
-      name: 'season_grant',
-      dartName: 'SeasonGrant',
-      schema: 'public',
-      module: 'balmatchum',
-      columns: [
-        _isp.ColumnDefinition(
-          name: 'id',
-          columnType: _isp.ColumnType.bigint,
-          isNullable: false,
-          dartType: 'int?',
-          columnDefault: 'serial',
-        ),
-        _isp.ColumnDefinition(
-          name: 'authUserId',
-          columnType: _isp.ColumnType.uuid,
-          isNullable: false,
-          dartType: 'UuidValue',
-        ),
-        _isp.ColumnDefinition(
-          name: 'setId',
-          columnType: _isp.ColumnType.text,
-          isNullable: false,
-          dartType: 'String',
-        ),
-        _isp.ColumnDefinition(
-          name: 'grantedAt',
-          columnType: _isp.ColumnType.timestampWithoutTimeZone,
-          isNullable: false,
-          dartType: 'DateTime',
-        ),
-        _isp.ColumnDefinition(
-          name: 'reason',
-          columnType: _isp.ColumnType.text,
-          isNullable: false,
-          dartType: 'String',
-        ),
-      ],
-      foreignKeys: [
-        _isp.ForeignKeyDefinition(
-          constraintName: 'season_grant_fk_0',
-          columns: ['authUserId'],
-          referenceTable: 'serverpod_auth_core_user',
-          referenceTableSchema: 'public',
-          referenceColumns: ['id'],
-          onUpdate: _isp.ForeignKeyAction.noAction,
-          onDelete: _isp.ForeignKeyAction.cascade,
-          matchType: null,
-        ),
-      ],
-      indexes: [
-        _isp.IndexDefinition(
-          indexName: 'season_grant_auth_user_set',
-          tableSpace: null,
-          elements: [
-            _isp.IndexElementDefinition(
-              type: _isp.IndexElementDefinitionType.column,
-              definition: 'authUserId',
-            ),
-            _isp.IndexElementDefinition(
-              type: _isp.IndexElementDefinitionType.column,
-              definition: 'setId',
-            ),
-          ],
-          type: 'btree',
-          isUnique: true,
-          isPrimary: false,
-        ),
-      ],
-      managed: true,
-    ),
-    _isp.TableDefinition(
       name: 'step_revision',
       dartName: 'StepRevision',
       schema: 'public',
@@ -2760,11 +2772,11 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _iyylbrve.StoredGpsRecord) {
       return _iyylbrve.StoredGpsRecord.fromJson(data) as T;
     }
+    if (t == _iih4jdtz.GiftGrant) {
+      return _iih4jdtz.GiftGrant.fromJson(data) as T;
+    }
     if (t == _iwi5sv1w.OutfitEquip) {
       return _iwi5sv1w.OutfitEquip.fromJson(data) as T;
-    }
-    if (t == _im5a7ag7.SeasonGrant) {
-      return _im5a7ag7.SeasonGrant.fromJson(data) as T;
     }
     if (t == _it8ud1gq.WardrobeBackgroundView) {
       return _it8ud1gq.WardrobeBackgroundView.fromJson(data) as T;
@@ -3014,11 +3026,11 @@ class Protocol extends _is.DatabaseSerializationManager {
       return (data != null ? _iyylbrve.StoredGpsRecord.fromJson(data) : null)
           as T;
     }
+    if (t == _is.getType<_iih4jdtz.GiftGrant?>()) {
+      return (data != null ? _iih4jdtz.GiftGrant.fromJson(data) : null) as T;
+    }
     if (t == _is.getType<_iwi5sv1w.OutfitEquip?>()) {
       return (data != null ? _iwi5sv1w.OutfitEquip.fromJson(data) : null) as T;
-    }
-    if (t == _is.getType<_im5a7ag7.SeasonGrant?>()) {
-      return (data != null ? _im5a7ag7.SeasonGrant.fromJson(data) : null) as T;
     }
     if (t == _is.getType<_it8ud1gq.WardrobeBackgroundView?>()) {
       return (data != null
@@ -3263,8 +3275,8 @@ class Protocol extends _is.DatabaseSerializationManager {
       _ipyparvp.RecordReceipt => 'RecordReceipt',
       _ir7rvxr1.RoutePoint => 'RoutePoint',
       _iyylbrve.StoredGpsRecord => 'StoredGpsRecord',
+      _iih4jdtz.GiftGrant => 'GiftGrant',
       _iwi5sv1w.OutfitEquip => 'OutfitEquip',
-      _im5a7ag7.SeasonGrant => 'SeasonGrant',
       _it8ud1gq.WardrobeBackgroundView => 'WardrobeBackgroundView',
       _ixlxdrib.WardrobeColourView => 'WardrobeColourView',
       _ikwt7tme.WardrobeEquipView => 'WardrobeEquipView',
@@ -3411,10 +3423,10 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'RoutePoint';
       case _iyylbrve.StoredGpsRecord():
         return 'StoredGpsRecord';
+      case _iih4jdtz.GiftGrant():
+        return 'GiftGrant';
       case _iwi5sv1w.OutfitEquip():
         return 'OutfitEquip';
-      case _im5a7ag7.SeasonGrant():
-        return 'SeasonGrant';
       case _it8ud1gq.WardrobeBackgroundView():
         return 'WardrobeBackgroundView';
       case _ixlxdrib.WardrobeColourView():
@@ -3643,11 +3655,11 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (dataClassName == 'StoredGpsRecord') {
       return deserialize<_iyylbrve.StoredGpsRecord>(data['data']);
     }
+    if (dataClassName == 'GiftGrant') {
+      return deserialize<_iih4jdtz.GiftGrant>(data['data']);
+    }
     if (dataClassName == 'OutfitEquip') {
       return deserialize<_iwi5sv1w.OutfitEquip>(data['data']);
-    }
-    if (dataClassName == 'SeasonGrant') {
-      return deserialize<_im5a7ag7.SeasonGrant>(data['data']);
     }
     if (dataClassName == 'WardrobeBackgroundView') {
       return deserialize<_it8ud1gq.WardrobeBackgroundView>(data['data']);
@@ -3758,10 +3770,10 @@ class Protocol extends _is.DatabaseSerializationManager {
         return _ioawd7cw.QuizContentRevision.t;
       case _iyylbrve.StoredGpsRecord:
         return _iyylbrve.StoredGpsRecord.t;
+      case _iih4jdtz.GiftGrant:
+        return _iih4jdtz.GiftGrant.t;
       case _iwi5sv1w.OutfitEquip:
         return _iwi5sv1w.OutfitEquip.t;
-      case _im5a7ag7.SeasonGrant:
-        return _im5a7ag7.SeasonGrant.t;
     }
     return null;
   }

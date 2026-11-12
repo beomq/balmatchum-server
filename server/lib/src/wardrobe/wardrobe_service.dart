@@ -4,7 +4,7 @@ import 'package:clock/clock.dart';
 
 import '../generated/protocol.dart';
 import '../product/product_service.dart';
-import 'season_grants.dart';
+import 'gift_grants.dart';
 import 'wardrobe_catalog.dart';
 
 const wardrobePurchasePolicyVersion = 'wardrobe-purchase-v1-20261112';
@@ -57,7 +57,7 @@ extension WardrobeService on ProductService {
       orderBy: (t) => t.slot,
       transaction: tx,
     );
-    final grants = await SeasonGrant.db.find(
+    final grants = await GiftGrant.db.find(
       session,
       where: (t) => t.authUserId.equals(authUserId),
       transaction: tx,
@@ -71,30 +71,67 @@ extension WardrobeService on ProductService {
       items: {for (final o in items) _sku(o.outfitId, o.colourId)},
       backgrounds: {defaultBackgroundId, for (final t in themes) t.themeId},
       equips: equips,
-      granted: {for (final g in grants) g.setId},
+      granted: {for (final g in grants) g.month},
       breed: dog?.breedId,
       subscriber: await subscriberActive(),
       now: clock.now().toUtc(),
     );
   }
 
-  /// A season set is hidden before its release, shown while open, and after
-  /// its end shown only to owners or during a limited-time resale.
+  /// A set's monthly gift: the month open now, else the latest past one,
+  /// else the next one. Null when the set is never a gift.
+  ({String month, Window window, Window? resale})? _gift(
+    bool Function(MonthlyGift) match,
+    DateTime now,
+  ) {
+    final month = _catalog.giftMonth(match, now);
+    if (month == null) return null;
+    return (
+      month: month,
+      window: monthWindow(month),
+      resale: _catalog.gifts[month]!.resale,
+    );
+  }
+
+  ({String month, Window window, Window? resale})? _setGift(
+    WardrobeSet set,
+    DateTime now,
+  ) {
+    final setId = _setIdOf(set);
+    return _gift((g) => g.setId == setId, now);
+  }
+
+  /// A regular set always shows. A gift-only set is hidden before its month,
+  /// shown during it, and afterwards only to owners or during a resale.
   bool _visible(WardrobeSet set, _Owned o) {
-    final season = set.season;
-    if (season == null) return true;
-    if (o.now.isBefore(season.releaseAt)) return false;
-    if (!o.now.isAfter(season.endsAt)) return true;
-    return o.granted.contains(_setIdOf(set)) ||
+    if (set.sellable) return true;
+    final gift = _setGift(set, o.now);
+    if (gift == null) return false;
+    if (o.now.isBefore(gift.window.opensAt)) return false;
+    if (!o.now.isAfter(gift.window.endsAt)) return true;
+    return o.granted.contains(gift.month) ||
         o.ownsAnyOf(set) ||
-        (season.resale?.contains(o.now) ?? false);
+        (gift.resale?.contains(o.now) ?? false);
   }
 
   String _setIdOf(WardrobeSet set) =>
       _catalog.sets.entries.firstWhere((e) => identical(e.value, set)).key;
 
   bool _resaleOpen(WardrobeSet set, _Owned o) =>
-      set.season?.resale?.contains(o.now) ?? false;
+      _setGift(set, o.now)?.resale?.contains(o.now) ?? false;
+
+  WardrobeSeasonView _giftView(
+    ({String month, Window window, Window? resale}) gift,
+    _Owned o,
+  ) => WardrobeSeasonView(
+    month: gift.month,
+    releaseAt: gift.window.opensAt,
+    endsAt: gift.window.endsAt,
+    open: gift.window.contains(o.now),
+    granted: o.granted.contains(gift.month),
+    resaleOpen: gift.resale?.contains(o.now) ?? false,
+    resaleEndsAt: gift.resale?.endsAt,
+  );
 
   /// Points for [set] in [colourId]: 20% off the parts not owned yet.
   ({int price, int missing}) _setPrice(
@@ -125,8 +162,7 @@ extension WardrobeService on ProductService {
 
   bool _setPurchasable(WardrobeSet set, String colourId, _Owned o) {
     if (!_visible(set, o)) return false;
-    final season = set.season;
-    if (season != null && !_resaleOpen(set, o)) return false;
+    if (!set.sellable && !_resaleOpen(set, o)) return false;
     return _setPrice(set, colourId, o).missing > 0 &&
         _setWearable(set, colourId, o.breed);
   }
@@ -186,6 +222,10 @@ extension WardrobeService on ProductService {
                 for (final MapEntry(:key, :value) in visibleSets.entries)
                   if (value.items.contains(itemId)) key,
               ],
+              gift: switch (_gift((g) => g.itemId == itemId, o.now)) {
+                null => null,
+                final gift => _giftView(gift, o),
+              },
             ),
       ],
       backgrounds: [
@@ -196,7 +236,7 @@ extension WardrobeService on ProductService {
               name: bg.name,
               price: bg.price,
               owned: o.backgrounds.contains(id),
-              sellable: !_catalog.seasonBackground(id),
+              sellable: !_catalog.giftOnlyBackground(id),
               setId: _catalog.setOfBackground(id),
             ),
       ],
@@ -222,16 +262,10 @@ extension WardrobeService on ProductService {
                   wearable: _setWearable(set, colourId, o.breed),
                 ),
             ],
-            season: switch (set.season) {
+            sellable: set.sellable,
+            season: switch (_setGift(set, o.now)) {
               null => null,
-              final season => WardrobeSeasonView(
-                releaseAt: season.releaseAt,
-                endsAt: season.endsAt,
-                open: season.window.contains(o.now),
-                granted: o.granted.contains(setId),
-                resaleOpen: _resaleOpen(set, o),
-                resaleEndsAt: season.resale?.endsAt,
-              ),
+              final gift => _giftView(gift, o),
             },
           ),
       ],
@@ -261,12 +295,19 @@ extension WardrobeService on ProductService {
   ) =>
       item.sellable ||
       visibleSets.values.any((set) => set.items.contains(itemId)) ||
-      item.colours.any((c) => o.items.contains(_sku(itemId, c)));
+      item.colours.any((c) => o.items.contains(_sku(itemId, c))) ||
+      switch (_gift((g) => g.itemId == itemId, o.now)) {
+        null => false,
+        final gift =>
+          !o.now.isBefore(gift.window.opensAt) &&
+              (!o.now.isAfter(gift.window.endsAt) ||
+                  (gift.resale?.contains(o.now) ?? false)),
+      };
 
   bool _backgroundVisible(String id, Map<String, WardrobeSet> visibleSets) {
     final setId = _catalog.setOfBackground(id);
     return setId == null ||
-        _catalog.sets[setId]!.season == null ||
+        _catalog.sets[setId]!.sellable ||
         visibleSets.containsKey(setId);
   }
 
@@ -351,6 +392,17 @@ extension WardrobeService on ProductService {
     String requestId,
   ) => _write(requestId, ['purchaseItem', itemId, colourId], (o) async {
     final item = _item(itemId, colourId);
+    final gift = _gift((g) => g.itemId == itemId, o.now);
+    if (gift != null && gift.window.contains(o.now)) {
+      if (o.granted.contains(gift.month)) return;
+      if (o.subscriber) {
+        await grantGift(gift.month, 'subscribe');
+        return;
+      }
+      if (!item.sellable) {
+        throw ProductException(code: 'subscriptionRequired');
+      }
+    }
     if (!item.sellable) throw ProductException(code: 'setOnly');
     if (!item.wearableColours(o.breed).contains(colourId)) {
       throw ProductException(code: 'outfitIncompatible');
@@ -366,7 +418,7 @@ extension WardrobeService on ProductService {
   ) => _write(requestId, ['purchaseBackground', backgroundId], (o) async {
     final bg = _catalog.backgrounds[backgroundId];
     if (bg == null) throw ProductException(code: 'unknownTheme');
-    if (_catalog.seasonBackground(backgroundId)) {
+    if (_catalog.giftOnlyBackground(backgroundId)) {
       throw ProductException(code: 'setOnly');
     }
     if (o.backgrounds.contains(backgroundId)) return;
@@ -380,12 +432,18 @@ extension WardrobeService on ProductService {
     String requestId,
   ) => _write(requestId, ['purchaseSet', setId, colourId], (o) async {
     final set = _set(setId, colourId, o);
-    final season = set.season;
-    if (season != null && season.window.contains(o.now)) {
-      // During the window a season set is a subscriber gift, never sold.
-      if (!o.subscriber) throw ProductException(code: 'subscriptionRequired');
-      await grantSeasonSet(setId, 'subscribe');
-      return;
+    final gift = _setGift(set, o.now);
+    if (gift != null && gift.window.contains(o.now)) {
+      // This month's gift: a member receives it free, in every colour;
+      // asking again after receiving it changes nothing.
+      if (o.granted.contains(gift.month)) return;
+      if (o.subscriber) {
+        await grantGift(gift.month, 'subscribe');
+        return;
+      }
+      if (!set.sellable) {
+        throw ProductException(code: 'subscriptionRequired');
+      }
     }
     if (!_setWearable(set, colourId, o.breed)) {
       throw ProductException(code: 'outfitIncompatible');

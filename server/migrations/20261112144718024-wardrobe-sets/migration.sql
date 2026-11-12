@@ -3,6 +3,22 @@ BEGIN;
 --
 -- ACTION CREATE TABLE
 --
+CREATE TABLE "gift_grant" (
+    "id" bigserial PRIMARY KEY,
+    "authUserId" uuid NOT NULL,
+    "month" text NOT NULL,
+    "setId" text,
+    "itemId" text,
+    "grantedAt" timestamp without time zone NOT NULL,
+    "reason" text NOT NULL
+);
+
+-- Indexes
+CREATE UNIQUE INDEX "gift_grant_auth_user_month" ON "gift_grant" USING btree ("authUserId", "month");
+
+--
+-- ACTION CREATE TABLE
+--
 CREATE TABLE "outfit_equip" (
     "id" bigserial PRIMARY KEY,
     "authUserId" uuid NOT NULL,
@@ -22,28 +38,14 @@ ALTER TABLE "outfit_ownership" ADD COLUMN "colourId" text NOT NULL DEFAULT 'clas
 ALTER TABLE "outfit_ownership" ADD COLUMN "source" text NOT NULL DEFAULT 'purchase'::text;
 CREATE UNIQUE INDEX "outfit_ownership_auth_user_key" ON "outfit_ownership" USING btree ("authUserId", "outfitId", "colourId");
 --
--- ACTION CREATE TABLE
---
-CREATE TABLE "season_grant" (
-    "id" bigserial PRIMARY KEY,
-    "authUserId" uuid NOT NULL,
-    "setId" text NOT NULL,
-    "grantedAt" timestamp without time zone NOT NULL,
-    "reason" text NOT NULL
-);
-
--- Indexes
-CREATE UNIQUE INDEX "season_grant_auth_user_set" ON "season_grant" USING btree ("authUserId", "setId");
-
---
 -- ACTION ALTER TABLE
 --
 ALTER TABLE "theme_ownership" ADD COLUMN "source" text NOT NULL DEFAULT 'purchase'::text;
 --
 -- ACTION CREATE FOREIGN KEY
 --
-ALTER TABLE ONLY "outfit_equip"
-    ADD CONSTRAINT "outfit_equip_fk_0"
+ALTER TABLE ONLY "gift_grant"
+    ADD CONSTRAINT "gift_grant_fk_0"
     FOREIGN KEY("authUserId")
     REFERENCES "serverpod_auth_core_user"("id")
     ON DELETE CASCADE
@@ -52,8 +54,8 @@ ALTER TABLE ONLY "outfit_equip"
 --
 -- ACTION CREATE FOREIGN KEY
 --
-ALTER TABLE ONLY "season_grant"
-    ADD CONSTRAINT "season_grant_fk_0"
+ALTER TABLE ONLY "outfit_equip"
+    ADD CONSTRAINT "outfit_equip_fk_0"
     FOREIGN KEY("authUserId")
     REFERENCES "serverpod_auth_core_user"("id")
     ON DELETE CASCADE
@@ -86,9 +88,9 @@ UPDATE "product_account" SET "equippedOutfit" = NULL
 -- MIGRATION VERSION FOR balmatchum
 --
 INSERT INTO "serverpod_migrations" ("module", "version", "timestamp")
-    VALUES ('balmatchum', '20261112142250762-wardrobe-sets', now())
+    VALUES ('balmatchum', '20261112144718024-wardrobe-sets', now())
     ON CONFLICT ("module")
-    DO UPDATE SET "version" = '20261112142250762-wardrobe-sets', "timestamp" = now();
+    DO UPDATE SET "version" = '20261112144718024-wardrobe-sets', "timestamp" = now();
 
 --
 -- MIGRATION VERSION FOR serverpod

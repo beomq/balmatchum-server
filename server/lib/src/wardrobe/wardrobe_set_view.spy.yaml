@@ -10,4 +10,7 @@ fields:
   ### Undiscounted sum of every part.
   fullPrice: int
   discountPct: int
+  ### False for a gift-only set (never in the regular shop).
+  sellable: bool
+  ### The set's monthly gift window, if it is ever a gift.
   season: WardrobeSeasonView?

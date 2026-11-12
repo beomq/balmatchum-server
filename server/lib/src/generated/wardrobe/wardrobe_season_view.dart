@@ -12,9 +12,11 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _is;
 
+/// A monthly gift window of a set or an item.
 abstract class WardrobeSeasonView
     implements _is.SerializableModel, _is.ProtocolSerialization {
   WardrobeSeasonView._({
+    required this.month,
     required this.releaseAt,
     required this.endsAt,
     required this.open,
@@ -24,6 +26,7 @@ abstract class WardrobeSeasonView
   });
 
   factory WardrobeSeasonView({
+    required String month,
     required DateTime releaseAt,
     required DateTime endsAt,
     required bool open,
@@ -34,6 +37,7 @@ abstract class WardrobeSeasonView
 
   factory WardrobeSeasonView.fromJson(Map<String, dynamic> jsonSerialization) {
     return WardrobeSeasonView(
+      month: jsonSerialization['month'] as String,
       releaseAt: _is.DateTimeJsonExtension.fromJson(
         jsonSerialization['releaseAt'],
       ),
@@ -51,6 +55,9 @@ abstract class WardrobeSeasonView
     );
   }
 
+  /// KST month of the gift, yyyy-MM.
+  String month;
+
   DateTime releaseAt;
 
   DateTime endsAt;
@@ -58,10 +65,10 @@ abstract class WardrobeSeasonView
   /// Now inside [releaseAt, endsAt].
   bool open;
 
-  /// The user received this set as a subscriber.
+  /// The user received this gift as a paying member.
   bool granted;
 
-  /// A limited-time point sale of this past set is open now.
+  /// A limited-time point sale of this past gift is open now.
   bool resaleOpen;
 
   DateTime? resaleEndsAt;
@@ -70,6 +77,7 @@ abstract class WardrobeSeasonView
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
   WardrobeSeasonView copyWith({
+    String? month,
     DateTime? releaseAt,
     DateTime? endsAt,
     bool? open,
@@ -81,6 +89,7 @@ abstract class WardrobeSeasonView
   Map<String, dynamic> toJson() {
     return {
       '__className__': 'WardrobeSeasonView',
+      'month': month,
       'releaseAt': releaseAt.toJson(),
       'endsAt': endsAt.toJson(),
       'open': open,
@@ -94,6 +103,7 @@ abstract class WardrobeSeasonView
   Map<String, dynamic> toJsonForProtocol() {
     return {
       '__className__': 'WardrobeSeasonView',
+      'month': month,
       'releaseAt': releaseAt.toJson(),
       'endsAt': endsAt.toJson(),
       'open': open,
@@ -113,6 +123,7 @@ class _Undefined {}
 
 class _WardrobeSeasonViewImpl extends WardrobeSeasonView {
   _WardrobeSeasonViewImpl({
+    required String month,
     required DateTime releaseAt,
     required DateTime endsAt,
     required bool open,
@@ -120,6 +131,7 @@ class _WardrobeSeasonViewImpl extends WardrobeSeasonView {
     required bool resaleOpen,
     DateTime? resaleEndsAt,
   }) : super._(
+         month: month,
          releaseAt: releaseAt,
          endsAt: endsAt,
          open: open,
@@ -133,6 +145,7 @@ class _WardrobeSeasonViewImpl extends WardrobeSeasonView {
   @_is.useResult
   @override
   WardrobeSeasonView copyWith({
+    String? month,
     DateTime? releaseAt,
     DateTime? endsAt,
     bool? open,
@@ -141,6 +154,7 @@ class _WardrobeSeasonViewImpl extends WardrobeSeasonView {
     Object? resaleEndsAt = _Undefined,
   }) {
     return WardrobeSeasonView(
+      month: month ?? this.month,
       releaseAt: releaseAt ?? this.releaseAt,
       endsAt: endsAt ?? this.endsAt,
       open: open ?? this.open,

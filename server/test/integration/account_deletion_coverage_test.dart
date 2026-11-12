@@ -125,7 +125,7 @@ void main() {
         'product_request',
         'quiz_assignment',
         'quiz_state',
-        'season_grant',
+        'gift_grant',
         'step_revision',
         'theme_ownership',
       ]),
@@ -258,10 +258,11 @@ void main() {
           colourId: 'classic',
         ),
       );
-      await SeasonGrant.db.insertRow(
+      await GiftGrant.db.insertRow(
         admin,
-        SeasonGrant(
+        GiftGrant(
           authUserId: id,
+          month: '2026-12',
           setId: 'holiday',
           grantedAt: at,
           reason: 'release',

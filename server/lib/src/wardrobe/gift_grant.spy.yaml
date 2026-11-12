@@ -1,0 +1,18 @@
+### A monthly gift handed to a paying member, at most once per user and month.
+class: GiftGrant
+serverOnly: true
+table: gift_grant
+fields:
+  authUser: module:serverpod_auth_core:AuthUser?, relation(onDelete=Cascade)
+  ### KST month of the gift, yyyy-MM.
+  month: String
+  ### Exactly one of setId / itemId: what the gift was.
+  setId: String?
+  itemId: String?
+  grantedAt: DateTime
+  ### release (monthly sweep) or subscribe (became a member in the month).
+  reason: String
+indexes:
+  gift_grant_auth_user_month:
+    fields: authUserId, month
+    unique: true

@@ -12,6 +12,7 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:balmatchum_client/src/protocol/protocol.dart' as _i5u3fx7i;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+import '../wardrobe/wardrobe_season_view.dart' as _iind78px;
 
 abstract class WardrobeItemView
     implements _isc.SerializableModel, _isc.ProtocolSerialization {
@@ -25,6 +26,7 @@ abstract class WardrobeItemView
     required this.wearableColours,
     required this.sellable,
     required this.setIds,
+    this.gift,
   });
 
   factory WardrobeItemView({
@@ -37,6 +39,7 @@ abstract class WardrobeItemView
     required List<String> wearableColours,
     required bool sellable,
     required List<String> setIds,
+    _iind78px.WardrobeSeasonView? gift,
   }) = _WardrobeItemViewImpl;
 
   factory WardrobeItemView.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -58,6 +61,11 @@ abstract class WardrobeItemView
       setIds: _i5u3fx7i.Protocol().deserialize<List<String>>(
         jsonSerialization['setIds'],
       ),
+      gift: jsonSerialization['gift'] == null
+          ? null
+          : _i5u3fx7i.Protocol().deserialize<_iind78px.WardrobeSeasonView>(
+              jsonSerialization['gift'],
+            ),
     );
   }
 
@@ -78,10 +86,13 @@ abstract class WardrobeItemView
   /// Colours the profile's breed can wear; empty means "곧 입을 수 있어요".
   List<String> wearableColours;
 
-  /// False for season items, which come only with their set.
+  /// False for gift-only items (a gift-only set or a monthly item gift).
   bool sellable;
 
   List<String> setIds;
+
+  /// Set when the item itself is a monthly gift.
+  _iind78px.WardrobeSeasonView? gift;
 
   /// Returns a shallow copy of this [WardrobeItemView]
   /// with some or all fields replaced by the given arguments.
@@ -96,6 +107,7 @@ abstract class WardrobeItemView
     List<String>? wearableColours,
     bool? sellable,
     List<String>? setIds,
+    _iind78px.WardrobeSeasonView? gift,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -110,6 +122,7 @@ abstract class WardrobeItemView
       'wearableColours': wearableColours.toJson(),
       'sellable': sellable,
       'setIds': setIds.toJson(),
+      if (gift != null) 'gift': gift?.toJson(),
     };
   }
 
@@ -126,6 +139,7 @@ abstract class WardrobeItemView
       'wearableColours': wearableColours.toJson(),
       'sellable': sellable,
       'setIds': setIds.toJson(),
+      if (gift != null) 'gift': gift?.toJsonForProtocol(),
     };
   }
 
@@ -134,6 +148,8 @@ abstract class WardrobeItemView
     return _isc.SerializationManager.encode(this);
   }
 }
+
+class _Undefined {}
 
 class _WardrobeItemViewImpl extends WardrobeItemView {
   _WardrobeItemViewImpl({
@@ -146,6 +162,7 @@ class _WardrobeItemViewImpl extends WardrobeItemView {
     required List<String> wearableColours,
     required bool sellable,
     required List<String> setIds,
+    _iind78px.WardrobeSeasonView? gift,
   }) : super._(
          itemId: itemId,
          slot: slot,
@@ -156,6 +173,7 @@ class _WardrobeItemViewImpl extends WardrobeItemView {
          wearableColours: wearableColours,
          sellable: sellable,
          setIds: setIds,
+         gift: gift,
        );
 
   /// Returns a shallow copy of this [WardrobeItemView]
@@ -172,6 +190,7 @@ class _WardrobeItemViewImpl extends WardrobeItemView {
     List<String>? wearableColours,
     bool? sellable,
     List<String>? setIds,
+    Object? gift = _Undefined,
   }) {
     return WardrobeItemView(
       itemId: itemId ?? this.itemId,
@@ -184,6 +203,9 @@ class _WardrobeItemViewImpl extends WardrobeItemView {
           wearableColours ?? this.wearableColours.map((e0) => e0).toList(),
       sellable: sellable ?? this.sellable,
       setIds: setIds ?? this.setIds.map((e0) => e0).toList(),
+      gift: gift is _iind78px.WardrobeSeasonView?
+          ? gift
+          : this.gift?.copyWith(),
     );
   }
 }

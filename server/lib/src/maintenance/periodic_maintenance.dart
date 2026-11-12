@@ -7,7 +7,7 @@ import '../auth/login_attempt_cleanup.dart';
 import '../billing/billing_retention.dart';
 import '../photos/photo_endpoint.dart';
 import '../product/product_request_cleanup.dart';
-import '../wardrobe/season_grants.dart';
+import '../wardrobe/gift_grants.dart';
 
 typedef MaintenanceJob = Future<void> Function(Session session);
 
@@ -21,7 +21,7 @@ const List<MaintenanceJob> retentionJobs = [
   deleteStaleLoginAttempts,
   purgeExpiredBillingRetention,
   sweepPendingPhotos,
-  grantReleasedSeasonSets,
+  grantMonthlyGifts,
 ];
 
 void _reportFailure(Object error, StackTrace stackTrace) {

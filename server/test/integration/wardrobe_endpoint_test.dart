@@ -1,7 +1,7 @@
 import 'package:balmatchum_server/src/billing/billing_endpoint.dart';
 import 'package:balmatchum_server/src/generated/protocol.dart';
 import 'package:balmatchum_server/src/product/product_service.dart';
-import 'package:balmatchum_server/src/wardrobe/season_grants.dart';
+import 'package:balmatchum_server/src/wardrobe/gift_grants.dart';
 import 'package:balmatchum_server/src/wardrobe/wardrobe_catalog.dart';
 import 'package:balmatchum_server/src/wardrobe/wardrobe_service.dart';
 import 'package:clock/clock.dart';
@@ -477,8 +477,8 @@ void main() {
         await as('maltese');
         await subscribe(kst(2026, 11, 1), kst(2027, 3, 1));
 
-        await at(holidayRelease, () => grantReleasedSeasonSets(session));
-        await at(holidayRelease, () => grantReleasedSeasonSets(session));
+        await at(holidayRelease, () => grantMonthlyGifts(session));
+        await at(holidayRelease, () => grantMonthlyGifts(session));
 
         final store = await wardrobe(holidayOpen);
         expect(store.subscriber, isTrue);
@@ -496,12 +496,12 @@ void main() {
           isTrue,
         );
         expect(await debits(), isEmpty);
-        final grants = await SeasonGrant.db.find(
+        final grants = await GiftGrant.db.find(
           session,
           where: (t) => t.authUserId.equals(authUserIdOf(userId)),
         );
-        expect(grants.map((g) => (g.setId, g.reason)), [
-          ('holiday', 'release'),
+        expect(grants.map((g) => (g.month, g.setId, g.reason)), [
+          ('2026-12', 'holiday', 'release'),
         ]);
         final owned = await OutfitOwnership.db.find(
           session,
@@ -515,7 +515,7 @@ void main() {
     test('unsubscribing keeps the gift and it can still be worn', () async {
       await as('dachshund');
       final purchase = await subscribe(kst(2026, 11, 1), kst(2026, 12, 31));
-      await at(holidayRelease, () => grantReleasedSeasonSets(session));
+      await at(holidayRelease, () => grantMonthlyGifts(session));
       purchase
         ..state = 'expired'
         ..observedAt = kst(2027, 1, 2);
@@ -542,7 +542,7 @@ void main() {
           kst(2026, 12, 10, 9),
           () => ProductService.run(
             session,
-            (s) => s.grantOpenSeasonSets('subscribe'),
+            (s) => s.grantCurrentGift('subscribe'),
           ),
         );
         final gift = await at(
@@ -555,13 +555,13 @@ void main() {
           ),
         );
 
-        expect(granted, ['holiday']);
+        expect(granted, '2026-12');
         expect(setOf(gift, 'holiday').season!.granted, isTrue);
         expect(await debits(), isEmpty);
       },
     );
 
-    test('a late subscriber does not receive a past set', () async {
+    test('a late member gets this month, never a past month', () async {
       await as('maltese');
       await subscribe(kst(2027, 1, 15), kst(2027, 2, 15));
 
@@ -569,34 +569,28 @@ void main() {
         afterHoliday,
         () => ProductService.run(
           session,
-          (s) => s.grantOpenSeasonSets('subscribe'),
+          (s) => s.grantCurrentGift('subscribe'),
         ),
       );
-      await at(afterHoliday, () => grantReleasedSeasonSets(session));
+      await at(afterHoliday, () => grantMonthlyGifts(session));
       final store = await wardrobe(afterHoliday);
 
-      expect(granted, isEmpty);
+      expect(granted, '2027-01');
       expect(store.sets.map((s) => s.setId), ['winter']);
-      expect(
-        store.items.map((i) => i.itemId),
-        isNot(contains('rudolph-band')),
-      );
+      expect(setOf(store, 'winter').season!.granted, isTrue);
+      expect(itemOf(store, 'padding').ownedColours, hasLength(4));
+      expect(store.items.map((i) => i.itemId), isNot(contains('rudolph-band')));
+      expect(await debits(), isEmpty);
     });
 
-    test('a past set can reopen as a limited-time point sale', () async {
+    test('a past gift can reopen as a limited-time point sale', () async {
       WardrobeCatalog.current = WardrobeCatalog(
-        sets: {
-          ...WardrobeCatalog.standard.sets,
-          'holiday': WardrobeSet(
-            name: '크리스마스 세트',
-            items: const ['rudolph-band', 'santa-cape'],
-            background: 'holiday-night',
-            colours: const ['tomato', 'pine', 'navy'],
-            effect: 'holiday',
-            season: Season(
-              window: WardrobeCatalog.standard.sets['holiday']!.season!.window,
-              resale: Window(kst(2027, 11, 1), kst(2027, 11, 30)),
-            ),
+        sets: WardrobeCatalog.standard.sets,
+        gifts: {
+          ...WardrobeCatalog.standard.gifts,
+          '2026-12': MonthlyGift.set(
+            'holiday',
+            resale: Window(kst(2027, 11, 1), kst(2027, 11, 30)),
           ),
         },
       );
@@ -626,6 +620,93 @@ void main() {
         setOf(closed, 'holiday').colours.map((c) => c.purchasable),
         everyElement(isFalse),
       );
+    });
+
+    test('the gift month follows KST calendar boundaries', () async {
+      await as('dachshund');
+      await subscribe(kst(2026, 11, 1), kst(2027, 6, 1));
+      Future<String?> claim(DateTime when) => at(
+        when,
+        () => ProductService.run(
+          session,
+          (s) => s.grantCurrentGift('subscribe'),
+        ),
+      );
+
+      final lastNovemberSecond = kst(2026, 11, 30, 23, 59, 59);
+      expect(await claim(lastNovemberSecond), isNull);
+      expect(
+        (await wardrobe(lastNovemberSecond)).sets.map((s) => s.setId),
+        ['winter'],
+      );
+      expect(await claim(kst(2026, 12, 1)), '2026-12');
+      expect(await claim(kst(2026, 12, 31, 23, 59, 59)), isNull);
+      expect(await claim(kst(2027, 1, 1)), '2027-01');
+      expect(await claim(kst(2027, 2, 7)), '2027-02');
+
+      final holiday = setOf(
+        await wardrobe(kst(2026, 12, 31, 23, 59, 59)),
+        'holiday',
+      );
+      expect(holiday.season!.month, '2026-12');
+      expect(holiday.season!.open, isTrue);
+      expect(holiday.season!.releaseAt, DateTime.utc(2026, 11, 30, 15));
+      expect(holiday.season!.endsAt, DateTime.utc(2026, 12, 31, 14, 59, 59));
+      final grants = await GiftGrant.db.find(
+        session,
+        where: (t) => t.authUserId.equals(authUserIdOf(userId)),
+        orderBy: (t) => t.month,
+      );
+      expect(grants.map((g) => (g.month, g.setId)), [
+        ('2026-12', 'holiday'),
+        ('2027-01', 'winter'),
+        ('2027-02', 'seollal'),
+      ]);
+    });
+
+    test('a month without a gift gives nothing and breaks nothing', () async {
+      await as('maltese');
+      await subscribe(kst(2027, 1, 1), kst(2027, 6, 1));
+      final march = kst(2027, 3, 10);
+
+      await at(march, () => grantMonthlyGifts(session));
+      final granted = await at(
+        march,
+        () => ProductService.run(
+          session,
+          (s) => s.grantCurrentGift('subscribe'),
+        ),
+      );
+      final store = await wardrobe(march);
+
+      expect(granted, isNull);
+      expect(store.subscriber, isTrue);
+      expect(await GiftGrant.db.count(session), isNonNegative);
+      expect(
+        await GiftGrant.db.count(
+          session,
+          where: (t) => t.authUserId.equals(authUserIdOf(userId)),
+        ),
+        0,
+      );
+    });
+
+    test('a single-item gift gives that item in every colour', () async {
+      WardrobeCatalog.current = WardrobeCatalog(
+        sets: WardrobeCatalog.standard.sets,
+        gifts: {'2027-03': MonthlyGift.item('beanie')},
+      );
+      await as('golden-retriever');
+      await subscribe(kst(2027, 1, 1), kst(2027, 6, 1));
+
+      await at(kst(2027, 3, 1, 0, 5), () => grantMonthlyGifts(session));
+      final store = await wardrobe(kst(2027, 3, 2));
+
+      expect(itemOf(store, 'beanie').ownedColours, hasLength(4));
+      expect(itemOf(store, 'beanie').gift!.month, '2027-03');
+      expect(itemOf(store, 'beanie').gift!.granted, isTrue);
+      expect(itemOf(store, 'padding').ownedColours, isEmpty);
+      expect(await debits(), isEmpty);
     });
 
     test('home snapshot carries the worn wardrobe', () async {
@@ -661,7 +742,7 @@ void main() {
         await as('maltese');
         await subscribe(kst(2026, 11, 1), null, kind: 'lifetime');
 
-        await at(holidayRelease, () => grantReleasedSeasonSets(session));
+        await at(holidayRelease, () => grantMonthlyGifts(session));
         final store = await wardrobe(holidayOpen);
 
         expect(store.subscriber, isTrue);
@@ -681,7 +762,7 @@ void main() {
       lifetime.revokedAt = kst(2026, 11, 20);
       await StoredPurchase.db.updateRow(session, lifetime);
 
-      await at(holidayRelease, () => grantReleasedSeasonSets(session));
+      await at(holidayRelease, () => grantMonthlyGifts(session));
       final store = await wardrobe(holidayOpen);
 
       expect(store.subscriber, isFalse);

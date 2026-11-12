@@ -105,7 +105,8 @@ abstract class WardrobeStore
 
   int balance;
 
-  /// A paid subscription is active by the server's stored observation.
+  /// A subscription or lifetime purchase is active by the server's stored
+  /// observation: this user receives the monthly gifts.
   bool subscriber;
 
   String? fixtureLabel;
