@@ -21,9 +21,9 @@
 
 ## 시즌 세트
 - 그림은 앱에 미리 실어 두고, 서버가 `releaseAt` 전에는 세트·아이템·배경을 응답에서 뺀다.
-- 기간 안에 **구독이 활성**(서버에 저장된 마지막 결제 관측 기준)인 사용자는 세트의 **모든 아이템 × 모든 색 + 배경**을 받는다. 포인트 원장에는 아무것도 쓰지 않고, 보유 줄의 `source`는 `subscription`, `season_grant`에 한 줄(사용자·세트 고유)을 남긴다.
+- 기간 안에 **구독이 활성**(서버에 저장된 마지막 결제 관측 기준, `kind = subscription`만. 평생 이용권은 포함하지 않음)인 사용자는 세트의 **모든 아이템 × 모든 색 + 배경**을 받는다. 포인트 원장에는 아무것도 쓰지 않고, 보유 줄의 `source`는 `subscription`, `season_grant`에 한 줄(사용자·세트 고유)을 남긴다.
   - 기간이 열리면 주기 작업(`grantReleasedSeasonSets`, 1시간마다)이 활성 구독자에게 준다. 다시 돌려도 한 번만 준다.
-  - 기간 중에 구독이 활성으로 확인되면(`billing.verifyPurchase` / `restorePurchase` / `getEntitlement`) 바로 준다. 구독자가 `purchaseSet`을 불러도 결제 없이 받는다.
+  - 기간 중에 구독이 활성으로 확인되면(`billing.verifyPurchase` / `restorePurchase` / `getEntitlement`) 바로 준다. 이 선물 쓰기가 실패해도 결제 확인 응답은 그대로 돌려주고, 빠진 선물은 주기 작업이 준다. 구독자가 `purchaseSet`을 불러도 결제 없이 받는다.
 - 구독을 끊어도 받은 세트는 계속 가지고 입을 수 있다(착용은 구독을 확인하지 않는다).
 - 기간이 끝난 뒤 구독한 사람은 지난 세트를 받지 않는다.
 - 기간 중 비구독자: 세트를 보고 앱에서 입어 볼 수 있지만 `purchaseSet`은 `subscriptionRequired`.
