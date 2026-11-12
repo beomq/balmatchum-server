@@ -1,0 +1,61 @@
+# 옷장 API (아이템 · 세트 · 시즌 세트)
+
+엔드포인트 `wardrobe` (로그인 필요). 모든 쓰기는 `requestId`를 받고, 같은 `requestId`로 다시 보내면 처음 결과를 그대로 돌려준다(다른 내용이면 `idempotencyConflict`). 모든 메서드는 전체 상태 `WardrobeStore`를 돌려준다. 홈 화면은 `product.getHomeSnapshot`의 `wardrobe` 필드로 같은 상태를 받는다.
+
+## 가격과 규칙 (주인님 결정 2026-11-12)
+- 아이템은 **색 하나가 한 상품**이다. 색마다 150P. 배경 100P(`sunny`는 무료·기본 보유). 걸음 포인트로만 산다.
+- 세트 값 = 그 색으로 **아직 없는 부분**(옷 + 세트 배경)의 합에서 20% 할인, `합 * 80 ~/ 100`. 다 가졌으면 살 수 없고 "세트로 입히기"만 한다.
+- **세트 완성** = 세트의 옷을 모두 **같은 색으로** 입고, 배경이 **그 세트 배경**일 때만. 서버가 `completeSetId`, `completeColour`로 알려 준다. 앱은 이때만 세트 이름표와 효과를 그린다.
+- 원장 키: 아이템 `outfit:<item>:<colour>`, 배경 `theme:<background>`, 세트 `set:<set>:<colour>`. 정책 버전 `wardrobe-purchase-v1-20261112`(잔액에 포함). 개발 fixture DB에서는 기존처럼 fixture 잔액을 쓴다.
+
+## 카탈로그 (`lib/src/wardrobe/wardrobe_catalog.dart`)
+| 세트 | 아이템 | 배경 | 색 | 효과 | 판매 |
+|---|---|---|---|---|---|
+| `winter` 겨울 세트 | `padding`, `beanie`, `booties` | `winter-dusk` | tomato pine plum navy | `snow` | 늘 |
+| `holiday` 크리스마스 세트 | `rudolph-band`, `santa-cape` | `holiday-night` | tomato pine navy | `holiday` | 구독자 선물, 2026-12-01 ~ 2027-01-10 (KST) |
+| `seollal` 설날 세트 | `saekdong-jeogori`, `gulle` | `seollal-morning` | dahong jjok yeondu bunhong | `seollal` | 구독자 선물, 2027-01-25 ~ 2027-02-21 (KST) |
+
+- 조끼(`vest`, 색 `classic`)는 시추·닥스훈트 단품 아이템이다. 예전 `vest-low-v` 보유·착용은 마이그레이션이 `vest/classic`으로 옮겼다.
+- 입을 수 있는 견종: 겹쳐 입는 그림이 있는 말티즈·닥스훈트·골든 리트리버는 모든 아이템과 색. 나머지 27견종은 **토마토 패딩만**(강아지 전체에 구운 그림이라 다른 아이템과 같이 입지 않음). 그 견종에게 다른 아이템은 `wearableColours`가 비어 있다(앱: "곧 입을 수 있어요").
+- 슬롯: `feet`, `torso`, `head`. 한 슬롯에 하나. 배경은 `product_account.equippedTheme`(기존 테마와 같은 칸).
+
+## 시즌 세트
+- 그림은 앱에 미리 실어 두고, 서버가 `releaseAt` 전에는 세트·아이템·배경을 응답에서 뺀다.
+- 기간 안에 **구독이 활성**(서버에 저장된 마지막 결제 관측 기준)인 사용자는 세트의 **모든 아이템 × 모든 색 + 배경**을 받는다. 포인트 원장에는 아무것도 쓰지 않고, 보유 줄의 `source`는 `subscription`, `season_grant`에 한 줄(사용자·세트 고유)을 남긴다.
+  - 기간이 열리면 주기 작업(`grantReleasedSeasonSets`, 1시간마다)이 활성 구독자에게 준다. 다시 돌려도 한 번만 준다.
+  - 기간 중에 구독이 활성으로 확인되면(`billing.verifyPurchase` / `restorePurchase` / `getEntitlement`) 바로 준다. 구독자가 `purchaseSet`을 불러도 결제 없이 받는다.
+- 구독을 끊어도 받은 세트는 계속 가지고 입을 수 있다(착용은 구독을 확인하지 않는다).
+- 기간이 끝난 뒤 구독한 사람은 지난 세트를 받지 않는다.
+- 기간 중 비구독자: 세트를 보고 앱에서 입어 볼 수 있지만 `purchaseSet`은 `subscriptionRequired`.
+- 기간이 끝나면 가진 사람에게만 보인다. 나중에 한정 판매를 열려면 카탈로그의 `Season(resale: Window(opensAt, endsAt))`를 채워 서버를 배포한다(앱 업데이트 불필요). 그 기간에는 보통 세트처럼 색마다 포인트로 판다.
+
+## 메서드
+| 메서드 | 하는 일 | 오류 코드 |
+|---|---|---|
+| `getWardrobe()` | 상태 읽기 | |
+| `purchaseItem(itemId, colourId, requestId)` | 아이템 한 색 150P | `unknownOutfit`, `setOnly`(시즌 아이템), `outfitIncompatible`, `insufficientPoints` |
+| `purchaseBackground(backgroundId, requestId)` | 배경 100P | `unknownTheme`, `setOnly`(시즌 배경), `insufficientPoints` |
+| `purchaseSet(setId, colourId, requestId)` | 없는 부분만 20% 할인으로 한 번에 | `unknownSet`, `subscriptionRequired`, `outfitIncompatible`, `setNotPurchasable`, `insufficientPoints` |
+| `equipItem(itemId, colourId, requestId)` | 그 슬롯을 바꿈 | `unknownOutfit`, `outfitNotOwned`, `outfitIncompatible` |
+| `unequipSlot(slot, requestId)` | 슬롯 비우기 | |
+| `equipBackground(backgroundId, requestId)` | 배경 바꾸기 | `unknownTheme`, `themeNotOwned` |
+| `equipSet(setId, colourId, requestId)` | 세트 옷 전부 + 세트 배경 | `unknownSet`, `outfitNotOwned`, `outfitIncompatible`, `themeNotOwned` |
+| `unequipSet(setId, requestId)` | 입은 세트 옷만 벗기기(배경은 그대로) | `unknownSet` |
+
+이미 가진 것을 다시 사면 아무것도 쓰지 않고 상태만 돌려준다(아이템·배경).
+
+## `WardrobeStore`
+- `colours[]`: `colourId`, `name`, `swatch`(ARGB).
+- `items[]`: `itemId`, `slot`, `name`, `price`, `colours`, `ownedColours`, `wearableColours`(이 견종이 입을 수 있는 색), `sellable`(false = 세트로만), `setIds`.
+- `backgrounds[]`: `backgroundId`, `name`, `price`, `owned`, `sellable`, `setId?`.
+- `sets[]`: `setId`, `name`, `itemIds`, `backgroundId`, `effect`(앱 `effects/presets.json`의 프리셋 이름), `fullPrice`, `discountPct`, `colours[]`(`colourId`, `price`(내 보유 기준, 다 가졌으면 0), `missingParts`, `purchasable`, `wearable`), `season?`(`releaseAt`, `endsAt`, `open`, `granted`, `resaleOpen`, `resaleEndsAt?`).
+- `equipped[]`: `slot`, `itemId`, `colourId`. `equippedBackground`.
+- `completeSetId?`, `completeColour?`, `breedId?`, `balance`, `subscriber`, `fixtureLabel?`.
+
+## 테이블
+- `outfit_ownership`: `colourId`(기본 `classic`), `source`(`purchase` | `subscription` | `migration`) 추가, 고유키 (사용자, 아이템, 색).
+- `theme_ownership`: `source` 추가.
+- 새 `outfit_equip` (사용자, 슬롯 고유), 새 `season_grant` (사용자, 세트 고유). 계정 삭제가 둘 다 지운다.
+- 마이그레이션 `20261112142250762-wardrobe-sets`: `vest-low-v` → `vest/classic`(`source = migration`), `equippedOutfit` → `outfit_equip`(torso), `equippedOutfit` 비움. 원장의 옛 키는 그대로.
+
+예전 `product.listOutfits` / `purchaseOutfit` / `equipOutfit` / `unequipOutfit`는 옛 앱을 위해 남겨 두었고 조끼(`vest-low-v` = `vest/classic`)만 다룬다. 예전 `product.purchaseTheme`의 가격도 그대로다. 새 앱은 `wardrobe`만 쓴다.
