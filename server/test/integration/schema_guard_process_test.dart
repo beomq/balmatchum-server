@@ -184,7 +184,12 @@ void main() {
     )).first;
     final guard = schemaMismatchesFrom(await db.execute(schemaGuardQuery));
     _log('A version=$version backfill=$backfill guard=$guard');
-    expect(version, step2Id);
+    // One start applies every pending migration, so the version is the
+    // registry head (step2 or any migration added after it).
+    final head = File(
+      'migrations/migration_registry.txt',
+    ).readAsLinesSync().map((l) => l.trim()).lastWhere((l) => l.isNotEmpty);
+    expect(version, head);
     expect(backfill, [_user, 30, 20756, 20757]);
     expect(guard, isEmpty);
 

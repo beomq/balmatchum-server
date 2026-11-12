@@ -1,0 +1,23 @@
+class: StoredPhoto
+serverOnly: true
+table: photo
+fields:
+  id: UuidValue?, defaultPersist=random_v7
+  authUser: module:serverpod_auth_core:AuthUser?, relation(onDelete=Cascade)
+  objectKey: String
+  contentType: String
+  byteSize: int
+  width: int?
+  height: int?
+  # pending until confirmUpload has seen the object; then ready.
+  status: String
+  createdAt: DateTime
+  confirmedAt: DateTime?
+indexes:
+  photo_object_key:
+    fields: objectKey
+    unique: true
+  photo_auth_user_status:
+    fields: authUserId, status, createdAt
+  photo_status_created:
+    fields: status, createdAt

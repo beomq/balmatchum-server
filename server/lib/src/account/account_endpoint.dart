@@ -6,6 +6,7 @@ import '../auth/apple_revocation.dart';
 import '../auth/naver_revocation.dart';
 import '../billing/billing_service.dart';
 import '../maintenance/schema_guard.dart';
+import '../photos/photo_endpoint.dart';
 import '../product/product_service.dart';
 
 class AccountEndpoint extends Endpoint {
@@ -42,6 +43,8 @@ Future<void> deleteAccountData(
   await revokeAppleAccount(session, authUserIdOf(owner), tx);
   await revokeNaverAccount(session, authUserIdOf(owner), tx);
   await deleteBillingData(session, owner, tx);
+  // S3 objects go first; a storage failure rolls the whole deletion back.
+  await deleteAccountPhotos(session, authUserIdOf(owner), tx);
   await StoredAdIntent.db.deleteWhere(
     session,
     where: (t) => t.authUserId.equals(authUserIdOf(owner)),

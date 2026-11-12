@@ -34,6 +34,7 @@ import '../auth/kakao_endpoint.dart' as _if7olpvl;
 import '../auth/naver_endpoint.dart' as _ijj6xngx;
 import '../billing/billing_endpoint.dart' as _irc9lmoc;
 import '../greetings/greeting_endpoint.dart' as _il624ik7;
+import '../photos/photo_endpoint.dart' as _iruuo3h9;
 import '../product/product_endpoint.dart' as _itexbxyn;
 import '../profile/profile_endpoint.dart' as _i6ky944g;
 import '../quiz/quiz_endpoint.dart' as _iskif4sw;
@@ -90,6 +91,12 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'greeting',
+          null,
+        ),
+      'photo': _iruuo3h9.PhotoEndpoint()
+        ..initialize(
+          server,
+          'photo',
           null,
         ),
       'product': _itexbxyn.ProductEndpoint()
@@ -562,6 +569,97 @@ class Endpoints extends _is.EndpointDispatch {
                   (endpoints['greeting'] as _il624ik7.GreetingEndpoint).hello(
                     session,
                     params['name'],
+                  ),
+        ),
+      },
+    );
+    connectors['photo'] = _is.EndpointConnector(
+      name: 'photo',
+      endpoint: endpoints['photo']!,
+      methodConnectors: {
+        'createUpload': _is.MethodConnector(
+          name: 'createUpload',
+          params: {
+            'contentType': _is.ParameterDescription(
+              name: 'contentType',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'byteSize': _is.ParameterDescription(
+              name: 'byteSize',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['photo'] as _iruuo3h9.PhotoEndpoint).createUpload(
+                    session,
+                    params['contentType'],
+                    params['byteSize'],
+                  ),
+        ),
+        'confirmUpload': _is.MethodConnector(
+          name: 'confirmUpload',
+          params: {
+            'photoId': _is.ParameterDescription(
+              name: 'photoId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'width': _is.ParameterDescription(
+              name: 'width',
+              type: _is.getType<int?>(),
+              nullable: true,
+            ),
+            'height': _is.ParameterDescription(
+              name: 'height',
+              type: _is.getType<int?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['photo'] as _iruuo3h9.PhotoEndpoint).confirmUpload(
+                    session,
+                    params['photoId'],
+                    params['width'],
+                    params['height'],
+                  ),
+        ),
+        'listMine': _is.MethodConnector(
+          name: 'listMine',
+          params: {},
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['photo'] as _iruuo3h9.PhotoEndpoint)
+                  .listMine(session),
+        ),
+        'deletePhoto': _is.MethodConnector(
+          name: 'deletePhoto',
+          params: {
+            'photoId': _is.ParameterDescription(
+              name: 'photoId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['photo'] as _iruuo3h9.PhotoEndpoint).deletePhoto(
+                    session,
+                    params['photoId'],
                   ),
         ),
       },

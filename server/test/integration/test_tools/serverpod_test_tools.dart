@@ -30,6 +30,10 @@ import 'package:balmatchum_server/src/generated/billing/purchase_input.dart'
 import 'package:balmatchum_server/src/generated/future_calls.dart' as _icaa5uxu;
 import 'package:balmatchum_server/src/generated/greetings/greeting.dart'
     as _id6ypawo;
+import 'package:balmatchum_server/src/generated/photos/photo_upload_ticket.dart'
+    as _igze1hvz;
+import 'package:balmatchum_server/src/generated/photos/photo_view.dart'
+    as _ips38zld;
 import 'package:balmatchum_server/src/generated/product/daily_quiz.dart'
     as _is16fueh;
 import 'package:balmatchum_server/src/generated/product/daily_record.dart'
@@ -215,6 +219,8 @@ class TestEndpoints {
 
   late final _GreetingEndpoint greeting;
 
+  late final _PhotoEndpoint photo;
+
   late final _ProductEndpoint product;
 
   late final _ProfileEndpoint profile;
@@ -260,6 +266,10 @@ class _InternalTestEndpoints extends TestEndpoints
       serializationManager,
     );
     greeting = _GreetingEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    photo = _PhotoEndpoint(
       endpoints,
       serializationManager,
     );
@@ -1009,6 +1019,150 @@ class _GreetingEndpoint {
                   _localCallContext.arguments,
                 )
                 as _ida.Future<_id6ypawo.Greeting>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+}
+
+class _PhotoEndpoint {
+  _PhotoEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_igze1hvz.PhotoUploadTicket> createUpload(
+    _ist.TestSessionBuilder sessionBuilder,
+    String contentType,
+    int byteSize,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'photo',
+            method: 'createUpload',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'photo',
+          methodName: 'createUpload',
+          parameters: _ist.testObjectToJson({
+            'contentType': contentType,
+            'byteSize': byteSize,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_igze1hvz.PhotoUploadTicket>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ips38zld.PhotoView> confirmUpload(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue photoId,
+    int? width,
+    int? height,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'photo',
+            method: 'confirmUpload',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'photo',
+          methodName: 'confirmUpload',
+          parameters: _ist.testObjectToJson({
+            'photoId': photoId,
+            'width': width,
+            'height': height,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ips38zld.PhotoView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<List<_ips38zld.PhotoView>> listMine(
+    _ist.TestSessionBuilder sessionBuilder,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'photo',
+            method: 'listMine',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'photo',
+          methodName: 'listMine',
+          parameters: _ist.testObjectToJson({}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<List<_ips38zld.PhotoView>>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<void> deletePhoto(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue photoId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'photo',
+            method: 'deletePhoto',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'photo',
+          methodName: 'deletePhoto',
+          parameters: _ist.testObjectToJson({'photoId': photoId}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<void>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

@@ -26,6 +26,10 @@ import 'package:balmatchum_client/src/protocol/billing/purchase_input.dart'
     as _i833pumr;
 import 'package:balmatchum_client/src/protocol/greetings/greeting.dart'
     as _ipkbb44w;
+import 'package:balmatchum_client/src/protocol/photos/photo_upload_ticket.dart'
+    as _ihn2qlvs;
+import 'package:balmatchum_client/src/protocol/photos/photo_view.dart'
+    as _i8aiv0pd;
 import 'package:balmatchum_client/src/protocol/product/daily_quiz.dart'
     as _ig075m1r;
 import 'package:balmatchum_client/src/protocol/product/daily_record.dart'
@@ -319,6 +323,61 @@ class EndpointGreeting extends _isc.EndpointRef {
         'greeting',
         'hello',
         {'name': name},
+      );
+}
+
+/// {@category Endpoint}
+class EndpointPhoto extends _isc.EndpointRef {
+  EndpointPhoto(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'photo';
+
+  /// Reserves a photo and returns where to PUT its bytes. S3 itself rejects a
+  /// body of another length or content type because both headers are signed.
+  _ida.Future<_ihn2qlvs.PhotoUploadTicket> createUpload(
+    String contentType,
+    int byteSize,
+  ) => caller.callServerEndpoint<_ihn2qlvs.PhotoUploadTicket>(
+    'photo',
+    'createUpload',
+    {
+      'contentType': contentType,
+      'byteSize': byteSize,
+    },
+  );
+
+  /// Marks the photo ready once S3 holds exactly the reserved object.
+  /// Repeating it for a ready photo returns the same photo.
+  _ida.Future<_i8aiv0pd.PhotoView> confirmUpload(
+    _isc.UuidValue photoId,
+    int? width,
+    int? height,
+  ) => caller.callServerEndpoint<_i8aiv0pd.PhotoView>(
+    'photo',
+    'confirmUpload',
+    {
+      'photoId': photoId,
+      'width': width,
+      'height': height,
+    },
+  );
+
+  /// Confirmed photos, newest first, each with a fresh short-lived GET URL.
+  _ida.Future<List<_i8aiv0pd.PhotoView>> listMine() =>
+      caller.callServerEndpoint<List<_i8aiv0pd.PhotoView>>(
+        'photo',
+        'listMine',
+        {},
+      );
+
+  /// Removes the object first: a row is never deleted while its object may
+  /// remain, so a failed call can simply be retried.
+  _ida.Future<void> deletePhoto(_isc.UuidValue photoId) =>
+      caller.callServerEndpoint<void>(
+        'photo',
+        'deletePhoto',
+        {'photoId': photoId},
       );
 }
 
@@ -753,6 +812,7 @@ class Client extends _isc.ServerpodClientShared {
     naver = EndpointNaver(this);
     billing = EndpointBilling(this);
     greeting = EndpointGreeting(this);
+    photo = EndpointPhoto(this);
     product = EndpointProduct(this);
     profile = EndpointProfile(this);
     quiz = EndpointQuiz(this);
@@ -776,6 +836,8 @@ class Client extends _isc.ServerpodClientShared {
 
   late final EndpointGreeting greeting;
 
+  late final EndpointPhoto photo;
+
   late final EndpointProduct product;
 
   late final EndpointProfile profile;
@@ -796,6 +858,7 @@ class Client extends _isc.ServerpodClientShared {
     'naver': naver,
     'billing': billing,
     'greeting': greeting,
+    'photo': photo,
     'product': product,
     'profile': profile,
     'quiz': quiz,
