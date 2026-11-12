@@ -1,3 +1,4 @@
+import 'package:balmatchum_server/src/billing/billing_endpoint.dart';
 import 'package:balmatchum_server/src/generated/protocol.dart';
 import 'package:balmatchum_server/src/product/product_service.dart';
 import 'package:balmatchum_server/src/wardrobe/season_grants.dart';
@@ -92,25 +93,28 @@ void main() {
     );
 
     /// A stored subscription observed active from [from] until [until].
-    Future<StoredPurchase> subscribe(DateTime from, DateTime until) =>
-        StoredPurchase.db.insertRow(
-          session,
-          StoredPurchase(
-            authUserId: authUserIdOf(userId),
-            identityHash: 'hash-$userId',
-            store: 'apple',
-            environment: 'sandbox',
-            productId: 'premium-monthly',
-            kind: 'subscription',
-            purchaseReference: 'ref-$userId',
-            state: 'active',
-            sequence: 1,
-            observedAt: from,
-            purchasedAt: from,
-            expiresAt: until,
-            acknowledgementPending: false,
-          ),
-        );
+    Future<StoredPurchase> subscribe(
+      DateTime from,
+      DateTime? until, {
+      String kind = 'subscription',
+    }) => StoredPurchase.db.insertRow(
+      session,
+      StoredPurchase(
+        authUserId: authUserIdOf(userId),
+        identityHash: 'hash-$userId',
+        store: 'apple',
+        environment: 'sandbox',
+        productId: 'premium-monthly',
+        kind: kind,
+        purchaseReference: 'ref-$userId',
+        state: 'active',
+        sequence: 1,
+        observedAt: from,
+        purchasedAt: from,
+        expiresAt: until,
+        acknowledgementPending: false,
+      ),
+    );
 
     Future<WardrobeStore> wardrobe(DateTime when) =>
         at(when, () => endpoints.wardrobe.getWardrobe(owner));
@@ -649,6 +653,93 @@ void main() {
       expect(home.wardrobe.completeSetId, 'winter');
       expect(home.wardrobe.completeColour, 'plum');
       expect(home.themes.equippedTheme, 'winter-dusk');
+    });
+
+    test(
+      'a lifetime purchase is not a subscription for season gifts',
+      () async {
+        await as('maltese');
+        await subscribe(kst(2026, 11, 1), null, kind: 'lifetime');
+
+        await at(holidayRelease, () => grantReleasedSeasonSets(session));
+        final granted = await at(
+          holidayOpen,
+          () => ProductService.run(
+            session,
+            (s) => s.grantOpenSeasonSets('subscribe'),
+          ),
+        );
+        final store = await wardrobe(holidayOpen);
+
+        expect(granted, isEmpty);
+        expect(store.subscriber, isFalse);
+        expect(setOf(store, 'holiday').season!.granted, isFalse);
+        await expectLater(
+          at(
+            holidayOpen,
+            () => endpoints.wardrobe.purchaseSet(
+              owner,
+              'holiday',
+              'tomato',
+              request(),
+            ),
+          ),
+          productError('subscriptionRequired'),
+        );
+      },
+    );
+
+    test(
+      'a failed gift write still returns the verified entitlement',
+      () async {
+        await as('maltese');
+        final active = EntitlementView(active: true, purchases: []);
+        var gifts = 0;
+
+        final view = await withSeasonGift(
+          session,
+          Future.value(active),
+          () async {
+            gifts++;
+            throw StateError('gift write failed');
+          },
+        );
+        final inactive = await withSeasonGift(
+          session,
+          Future.value(EntitlementView(active: false, purchases: [])),
+          () async => gifts++,
+        );
+
+        expect(view, same(active));
+        expect(inactive.active, isFalse);
+        expect(gifts, 1);
+      },
+    );
+
+    test('the vest has art only for shih-tzu and dachshund', () async {
+      for (final (breed, wearable) in [
+        ('shih-tzu', true),
+        ('dachshund', true),
+        ('maltese', false),
+        ('golden-retriever', false),
+      ]) {
+        await as(breed);
+        await fund(150);
+        final buy = at(
+          november,
+          () => endpoints.wardrobe.purchaseItem(
+            owner,
+            'vest',
+            'classic',
+            request(),
+          ),
+        );
+        if (wearable) {
+          expect((await buy).balance, 0, reason: breed);
+        } else {
+          await expectLater(buy, productError('outfitIncompatible'));
+        }
+      }
     });
 
     test('the legacy vest endpoints read and write vest/classic', () async {

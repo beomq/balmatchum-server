@@ -35,19 +35,39 @@ class BillingEndpoint extends Endpoint {
     BillingService.run(session, (s, db) => s.entitlement(db)),
   );
 
-  /// A subscription seen active while a season window is open receives that
-  /// season set (once). Late subscribers get nothing: the window is closed.
   Future<EntitlementView> _granting(
     Session session,
     Future<EntitlementView> lookup,
-  ) async {
-    final view = await lookup;
-    if (view.active) {
-      await ProductService.run(
-        session,
-        (s) => s.grantOpenSeasonSets('subscribe'),
-      );
-    }
-    return view;
+  ) => withSeasonGift(
+    session,
+    lookup,
+    () => ProductService.run(
+      session,
+      (s) => s.grantOpenSeasonSets('subscribe'),
+    ),
+  );
+}
+
+/// A subscription seen active while a season window is open receives that
+/// season set (once); late subscribers get nothing because the window is
+/// closed. The gift is a separate write: if it fails, the verified
+/// entitlement is still returned and the hourly release sweep
+/// ([grantReleasedSeasonSets]) gives the set later.
+Future<EntitlementView> withSeasonGift(
+  Session session,
+  Future<EntitlementView> lookup,
+  Future<void> Function() gift,
+) async {
+  final view = await lookup;
+  if (!view.active) return view;
+  try {
+    await gift();
+  } catch (error) {
+    session.log(
+      'Season-set gift failed; the release sweep retries it: '
+      '${error.runtimeType}',
+      level: LogLevel.warning,
+    );
   }
+  return view;
 }

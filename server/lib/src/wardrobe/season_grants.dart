@@ -14,7 +14,7 @@ import 'wardrobe_catalog.dart';
 /// and equipping never checks the subscription. Someone who subscribes after
 /// the window has closed does not receive that set.
 extension SeasonGrants on ProductService {
-  /// Active by the server's stored purchase observation.
+  /// An active paid subscription by the server's stored purchase observation.
   Future<bool> subscriberActive() async {
     final rows = await StoredPurchase.db.find(
       session,
@@ -22,7 +22,7 @@ extension SeasonGrants on ProductService {
       transaction: tx,
     );
     final now = clock.now().toUtc();
-    return rows.any((row) => storedPurchaseActive(row, now));
+    return rows.any((row) => activeSubscription(row, now));
   }
 
   /// Grants every open season set this user has not received yet, if the
@@ -92,6 +92,12 @@ extension SeasonGrants on ProductService {
   }
 }
 
+/// Season sets are a gift for paid subscribers only. A lifetime purchase is a
+/// different product (DESIGN.md 6 names subscribers; BILLING_API.md keeps
+/// `subscription` and `lifetime` apart), so it does not count here.
+bool activeSubscription(StoredPurchase row, DateTime now) =>
+    row.kind == 'subscription' && storedPurchaseActive(row, now);
+
 /// Maintenance job: once a season window opens, hand the set to everyone whose
 /// subscription is active by the stored observation. Idempotent and resumable:
 /// a run cut short simply continues on the next tick.
@@ -107,7 +113,7 @@ Future<void> grantReleasedSeasonSets(Session session) async {
   );
   final users = {
     for (final row in rows)
-      if (storedPurchaseActive(row, now)) row.authUserId.toString(),
+      if (activeSubscription(row, now)) row.authUserId.toString(),
   };
   for (final owner in users) {
     try {
