@@ -64,6 +64,8 @@ import 'package:balmatchum_server/src/generated/records/gps_record_input.dart'
     as _iax46414;
 import 'package:balmatchum_server/src/generated/records/record_receipt.dart'
     as _i7o4egsw;
+import 'package:balmatchum_server/src/generated/wardrobe/wardrobe_store.dart'
+    as _ir2ja5z8;
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as _iacs;
@@ -228,6 +230,8 @@ class TestEndpoints {
   late final _QuizEndpoint quiz;
 
   late final _RecordsEndpoint records;
+
+  late final _WardrobeEndpoint wardrobe;
 }
 
 class _InternalTestEndpoints extends TestEndpoints
@@ -286,6 +290,10 @@ class _InternalTestEndpoints extends TestEndpoints
       serializationManager,
     );
     records = _RecordsEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    wardrobe = _WardrobeEndpoint(
       endpoints,
       serializationManager,
     );
@@ -2354,6 +2362,335 @@ class _RecordsEndpoint {
                   _localCallContext.arguments,
                 )
                 as _ida.Future<_i3f7m4hi.GpsRecord>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+}
+
+class _WardrobeEndpoint {
+  _WardrobeEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_ir2ja5z8.WardrobeStore> getWardrobe(
+    _ist.TestSessionBuilder sessionBuilder,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'wardrobe',
+            method: 'getWardrobe',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'wardrobe',
+          methodName: 'getWardrobe',
+          parameters: _ist.testObjectToJson({}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ir2ja5z8.WardrobeStore>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ir2ja5z8.WardrobeStore> purchaseItem(
+    _ist.TestSessionBuilder sessionBuilder,
+    String itemId,
+    String colourId,
+    String requestId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'wardrobe',
+            method: 'purchaseItem',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'wardrobe',
+          methodName: 'purchaseItem',
+          parameters: _ist.testObjectToJson({
+            'itemId': itemId,
+            'colourId': colourId,
+            'requestId': requestId,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ir2ja5z8.WardrobeStore>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ir2ja5z8.WardrobeStore> purchaseSet(
+    _ist.TestSessionBuilder sessionBuilder,
+    String setId,
+    String colourId,
+    String requestId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'wardrobe',
+            method: 'purchaseSet',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'wardrobe',
+          methodName: 'purchaseSet',
+          parameters: _ist.testObjectToJson({
+            'setId': setId,
+            'colourId': colourId,
+            'requestId': requestId,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ir2ja5z8.WardrobeStore>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ir2ja5z8.WardrobeStore> purchaseBackground(
+    _ist.TestSessionBuilder sessionBuilder,
+    String backgroundId,
+    String requestId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'wardrobe',
+            method: 'purchaseBackground',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'wardrobe',
+          methodName: 'purchaseBackground',
+          parameters: _ist.testObjectToJson({
+            'backgroundId': backgroundId,
+            'requestId': requestId,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ir2ja5z8.WardrobeStore>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ir2ja5z8.WardrobeStore> equipItem(
+    _ist.TestSessionBuilder sessionBuilder,
+    String itemId,
+    String colourId,
+    String requestId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'wardrobe',
+            method: 'equipItem',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'wardrobe',
+          methodName: 'equipItem',
+          parameters: _ist.testObjectToJson({
+            'itemId': itemId,
+            'colourId': colourId,
+            'requestId': requestId,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ir2ja5z8.WardrobeStore>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ir2ja5z8.WardrobeStore> unequipSlot(
+    _ist.TestSessionBuilder sessionBuilder,
+    String slot,
+    String requestId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'wardrobe',
+            method: 'unequipSlot',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'wardrobe',
+          methodName: 'unequipSlot',
+          parameters: _ist.testObjectToJson({
+            'slot': slot,
+            'requestId': requestId,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ir2ja5z8.WardrobeStore>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ir2ja5z8.WardrobeStore> equipBackground(
+    _ist.TestSessionBuilder sessionBuilder,
+    String backgroundId,
+    String requestId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'wardrobe',
+            method: 'equipBackground',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'wardrobe',
+          methodName: 'equipBackground',
+          parameters: _ist.testObjectToJson({
+            'backgroundId': backgroundId,
+            'requestId': requestId,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ir2ja5z8.WardrobeStore>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ir2ja5z8.WardrobeStore> equipSet(
+    _ist.TestSessionBuilder sessionBuilder,
+    String setId,
+    String colourId,
+    String requestId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'wardrobe',
+            method: 'equipSet',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'wardrobe',
+          methodName: 'equipSet',
+          parameters: _ist.testObjectToJson({
+            'setId': setId,
+            'colourId': colourId,
+            'requestId': requestId,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ir2ja5z8.WardrobeStore>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ir2ja5z8.WardrobeStore> unequipSet(
+    _ist.TestSessionBuilder sessionBuilder,
+    String setId,
+    String requestId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'wardrobe',
+            method: 'unequipSet',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'wardrobe',
+          methodName: 'unequipSet',
+          parameters: _ist.testObjectToJson({
+            'setId': setId,
+            'requestId': requestId,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ir2ja5z8.WardrobeStore>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

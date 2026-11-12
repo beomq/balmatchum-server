@@ -429,20 +429,25 @@ class BillingService {
         );
       });
 
-  bool _active(StoredPurchase p, DateTime now) {
-    if (now.isBefore(p.observedAt) ||
-        p.purchasedAt == null ||
-        now.isBefore(p.purchasedAt!) ||
-        p.revokedAt != null) {
-      return false;
-    }
-    if (p.state == 'grace') {
-      return p.graceExpiresAt != null && now.isBefore(p.graceExpiresAt!);
-    }
-    return p.state == 'active' &&
-        (p.kind == 'lifetime' ||
-            (p.expiresAt != null && now.isBefore(p.expiresAt!)));
+  bool _active(StoredPurchase p, DateTime now) => storedPurchaseActive(p, now);
+}
+
+/// Whether a stored purchase grants access at [now] by its last observation.
+/// Season-set grants use this stored view; reward consumption still needs a
+/// fresh lookup through [BillingService.revalidateBenefit].
+bool storedPurchaseActive(StoredPurchase p, DateTime now) {
+  if (now.isBefore(p.observedAt) ||
+      p.purchasedAt == null ||
+      now.isBefore(p.purchasedAt!) ||
+      p.revokedAt != null) {
+    return false;
   }
+  if (p.state == 'grace') {
+    return p.graceExpiresAt != null && now.isBefore(p.graceExpiresAt!);
+  }
+  return p.state == 'active' &&
+      (p.kind == 'lifetime' ||
+          (p.expiresAt != null && now.isBefore(p.expiresAt!)));
 }
 
 /// Server-only proof of a completed fresh lookup, never a client premium flag.

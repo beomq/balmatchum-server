@@ -1,0 +1,5 @@
+class: WardrobeEquipView
+fields:
+  slot: String
+  itemId: String
+  colourId: String

@@ -23,14 +23,19 @@ abstract class OutfitOwnership
     required this.authUserId,
     this.authUser,
     required this.outfitId,
+    String? colourId,
+    String? source,
     required this.purchasedAt,
-  });
+  }) : colourId = colourId ?? 'classic',
+       source = source ?? 'purchase';
 
   factory OutfitOwnership({
     int? id,
     required _is.UuidValue authUserId,
     _iacs.AuthUser? authUser,
     required String outfitId,
+    String? colourId,
+    String? source,
     required DateTime purchasedAt,
   }) = _OutfitOwnershipImpl;
 
@@ -46,6 +51,8 @@ abstract class OutfitOwnership
               jsonSerialization['authUser'],
             ),
       outfitId: jsonSerialization['outfitId'] as String,
+      colourId: jsonSerialization['colourId'] as String?,
+      source: jsonSerialization['source'] as String?,
       purchasedAt: _is.DateTimeJsonExtension.fromJson(
         jsonSerialization['purchasedAt'],
       ),
@@ -65,6 +72,12 @@ abstract class OutfitOwnership
 
   String outfitId;
 
+  /// Colour SKU; the legacy vest is 'classic'.
+  String colourId;
+
+  /// purchase, subscription, or migration.
+  String source;
+
   DateTime purchasedAt;
 
   @override
@@ -78,6 +91,8 @@ abstract class OutfitOwnership
     _is.UuidValue? authUserId,
     _iacs.AuthUser? authUser,
     String? outfitId,
+    String? colourId,
+    String? source,
     DateTime? purchasedAt,
   });
   @override
@@ -88,6 +103,8 @@ abstract class OutfitOwnership
       'authUserId': authUserId.toJson(),
       if (authUser != null) 'authUser': authUser?.toJson(),
       'outfitId': outfitId,
+      'colourId': colourId,
+      'source': source,
       'purchasedAt': purchasedAt.toJson(),
     };
   }
@@ -133,12 +150,16 @@ class _OutfitOwnershipImpl extends OutfitOwnership {
     required _is.UuidValue authUserId,
     _iacs.AuthUser? authUser,
     required String outfitId,
+    String? colourId,
+    String? source,
     required DateTime purchasedAt,
   }) : super._(
          id: id,
          authUserId: authUserId,
          authUser: authUser,
          outfitId: outfitId,
+         colourId: colourId,
+         source: source,
          purchasedAt: purchasedAt,
        );
 
@@ -151,6 +172,8 @@ class _OutfitOwnershipImpl extends OutfitOwnership {
     _is.UuidValue? authUserId,
     Object? authUser = _Undefined,
     String? outfitId,
+    String? colourId,
+    String? source,
     DateTime? purchasedAt,
   }) {
     return OutfitOwnership(
@@ -160,6 +183,8 @@ class _OutfitOwnershipImpl extends OutfitOwnership {
           ? authUser
           : this.authUser?.copyWith(),
       outfitId: outfitId ?? this.outfitId,
+      colourId: colourId ?? this.colourId,
+      source: source ?? this.source,
       purchasedAt: purchasedAt ?? this.purchasedAt,
     );
   }
@@ -177,6 +202,16 @@ class OutfitOwnershipUpdateTable extends _is.UpdateTable<OutfitOwnershipTable> {
 
   _is.ColumnValue<String, String> outfitId(String value) => _is.ColumnValue(
     table.outfitId,
+    value,
+  );
+
+  _is.ColumnValue<String, String> colourId(String value) => _is.ColumnValue(
+    table.colourId,
+    value,
+  );
+
+  _is.ColumnValue<String, String> source(String value) => _is.ColumnValue(
+    table.source,
     value,
   );
 
@@ -199,6 +234,16 @@ class OutfitOwnershipTable extends _is.Table<int?> {
       'outfitId',
       this,
     );
+    colourId = _is.ColumnString(
+      'colourId',
+      this,
+      hasDefault: true,
+    );
+    source = _is.ColumnString(
+      'source',
+      this,
+      hasDefault: true,
+    );
     purchasedAt = _is.ColumnDateTime(
       'purchasedAt',
       this,
@@ -212,6 +257,12 @@ class OutfitOwnershipTable extends _is.Table<int?> {
   _iacs.AuthUserTable? _authUser;
 
   late final _is.ColumnString outfitId;
+
+  /// Colour SKU; the legacy vest is 'classic'.
+  late final _is.ColumnString colourId;
+
+  /// purchase, subscription, or migration.
+  late final _is.ColumnString source;
 
   late final _is.ColumnDateTime purchasedAt;
 
@@ -233,6 +284,8 @@ class OutfitOwnershipTable extends _is.Table<int?> {
     id,
     authUserId,
     outfitId,
+    colourId,
+    source,
     purchasedAt,
   ];
 

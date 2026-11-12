@@ -11,6 +11,7 @@ import '../ads/ad_service.dart';
 import '../billing/billing_service.dart';
 import '../maintenance/schema_guard.dart';
 import '../quiz/quiz_bank.dart';
+import '../wardrobe/wardrobe_service.dart';
 
 /// Legacy quiz/theme fixtures remain isolated from production step balances.
 const productFixtureLabel = 'development-fixture-v1-not-production';
@@ -123,7 +124,7 @@ Future<List<List<dynamic>>> reconcilePointBalances(Session session) =>
       WITH ledger AS (
         SELECT "authUserId",
           COALESCE(SUM(ledger_entry.amount) FILTER (WHERE "policyVersion" IN
-            (@steps, @quiz, @theme, @outfit)), 0) AS balance,
+            (@steps, @quiz, @theme, @outfit, @wardrobe)), 0) AS balance,
           COALESCE(SUM(ledger_entry.amount) FILTER (WHERE "policyVersion" = @fixture), 0)
             AS fixture_balance
         FROM point_entry ledger_entry GROUP BY "authUserId"
@@ -141,6 +142,7 @@ Future<List<List<dynamic>>> reconcilePointBalances(Session session) =>
         'quiz': quizPolicyVersion,
         'theme': themePurchasePolicyVersion,
         'outfit': outfitPurchasePolicyVersion,
+        'wardrobe': wardrobePurchasePolicyVersion,
         'fixture': productFixtureLabel,
       }),
     );
@@ -288,6 +290,7 @@ class ProductService {
       quizPolicyVersion,
       themePurchasePolicyVersion,
       outfitPurchasePolicyVersion,
+      wardrobePurchasePolicyVersion,
     }.contains(entry.policyVersion)) {
       account.balance += entry.amount;
     } else if (entry.policyVersion == productFixtureLabel) {

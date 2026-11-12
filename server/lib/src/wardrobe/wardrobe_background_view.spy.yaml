@@ -1,0 +1,9 @@
+class: WardrobeBackgroundView
+fields:
+  backgroundId: String
+  name: String
+  price: int
+  owned: bool
+  ### False for a gift-only set's background, which comes only with it.
+  sellable: bool
+  setId: String?

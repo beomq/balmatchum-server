@@ -87,6 +87,16 @@ import 'records/record_exception.dart' as _ihyrwhon;
 import 'records/record_receipt.dart' as _ipyparvp;
 import 'records/route_point.dart' as _ir7rvxr1;
 import 'records/stored_gps_record.dart' as _iyylbrve;
+import 'wardrobe/gift_grant.dart' as _iih4jdtz;
+import 'wardrobe/outfit_equip.dart' as _iwi5sv1w;
+import 'wardrobe/wardrobe_background_view.dart' as _it8ud1gq;
+import 'wardrobe/wardrobe_colour_view.dart' as _ixlxdrib;
+import 'wardrobe/wardrobe_equip_view.dart' as _ikwt7tme;
+import 'wardrobe/wardrobe_item_view.dart' as _iupll8tb;
+import 'wardrobe/wardrobe_season_view.dart' as _iioemq8t;
+import 'wardrobe/wardrobe_set_colour_view.dart' as _icerumb8;
+import 'wardrobe/wardrobe_set_view.dart' as _ick58lqq;
+import 'wardrobe/wardrobe_store.dart' as _i52ngzd4;
 export 'ads/ad_exception.dart';
 export 'ads/ad_intent.dart';
 export 'ads/ad_platform.dart';
@@ -149,6 +159,16 @@ export 'records/record_exception.dart';
 export 'records/record_receipt.dart';
 export 'records/route_point.dart';
 export 'records/stored_gps_record.dart';
+export 'wardrobe/gift_grant.dart';
+export 'wardrobe/outfit_equip.dart';
+export 'wardrobe/wardrobe_background_view.dart';
+export 'wardrobe/wardrobe_colour_view.dart';
+export 'wardrobe/wardrobe_equip_view.dart';
+export 'wardrobe/wardrobe_item_view.dart';
+export 'wardrobe/wardrobe_season_view.dart';
+export 'wardrobe/wardrobe_set_colour_view.dart';
+export 'wardrobe/wardrobe_set_view.dart';
+export 'wardrobe/wardrobe_store.dart';
 
 class Protocol extends _is.DatabaseSerializationManager {
   Protocol._();
@@ -946,6 +966,89 @@ class Protocol extends _is.DatabaseSerializationManager {
       managed: true,
     ),
     _isp.TableDefinition(
+      name: 'gift_grant',
+      dartName: 'GiftGrant',
+      schema: 'public',
+      module: 'balmatchum',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'authUserId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'month',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'setId',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'itemId',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'grantedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'reason',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'gift_grant_fk_0',
+          columns: ['authUserId'],
+          referenceTable: 'serverpod_auth_core_user',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'gift_grant_auth_user_month',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'authUserId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'month',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
       name: 'gps_record',
       dartName: 'StoredGpsRecord',
       schema: 'public',
@@ -1250,6 +1353,77 @@ class Protocol extends _is.DatabaseSerializationManager {
       managed: true,
     ),
     _isp.TableDefinition(
+      name: 'outfit_equip',
+      dartName: 'OutfitEquip',
+      schema: 'public',
+      module: 'balmatchum',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'authUserId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'slot',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'outfitId',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'colourId',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'outfit_equip_fk_0',
+          columns: ['authUserId'],
+          referenceTable: 'serverpod_auth_core_user',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'outfit_equip_auth_user_slot',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'authUserId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'slot',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
       name: 'outfit_ownership',
       dartName: 'OutfitOwnership',
       schema: 'public',
@@ -1273,6 +1447,20 @@ class Protocol extends _is.DatabaseSerializationManager {
           columnType: _isp.ColumnType.text,
           isNullable: false,
           dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'colourId',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+          columnDefault: '\'classic\'',
+        ),
+        _isp.ColumnDefinition(
+          name: 'source',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+          columnDefault: '\'purchase\'',
         ),
         _isp.ColumnDefinition(
           name: 'purchasedAt',
@@ -1305,6 +1493,10 @@ class Protocol extends _is.DatabaseSerializationManager {
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
               definition: 'outfitId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'colourId',
             ),
           ],
           type: 'btree',
@@ -2316,6 +2508,13 @@ class Protocol extends _is.DatabaseSerializationManager {
           dartType: 'String',
         ),
         _isp.ColumnDefinition(
+          name: 'source',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+          columnDefault: '\'purchase\'',
+        ),
+        _isp.ColumnDefinition(
           name: 'purchasedAt',
           columnType: _isp.ColumnType.timestampWithoutTimeZone,
           isNullable: false,
@@ -2573,6 +2772,36 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _iyylbrve.StoredGpsRecord) {
       return _iyylbrve.StoredGpsRecord.fromJson(data) as T;
     }
+    if (t == _iih4jdtz.GiftGrant) {
+      return _iih4jdtz.GiftGrant.fromJson(data) as T;
+    }
+    if (t == _iwi5sv1w.OutfitEquip) {
+      return _iwi5sv1w.OutfitEquip.fromJson(data) as T;
+    }
+    if (t == _it8ud1gq.WardrobeBackgroundView) {
+      return _it8ud1gq.WardrobeBackgroundView.fromJson(data) as T;
+    }
+    if (t == _ixlxdrib.WardrobeColourView) {
+      return _ixlxdrib.WardrobeColourView.fromJson(data) as T;
+    }
+    if (t == _ikwt7tme.WardrobeEquipView) {
+      return _ikwt7tme.WardrobeEquipView.fromJson(data) as T;
+    }
+    if (t == _iupll8tb.WardrobeItemView) {
+      return _iupll8tb.WardrobeItemView.fromJson(data) as T;
+    }
+    if (t == _iioemq8t.WardrobeSeasonView) {
+      return _iioemq8t.WardrobeSeasonView.fromJson(data) as T;
+    }
+    if (t == _icerumb8.WardrobeSetColourView) {
+      return _icerumb8.WardrobeSetColourView.fromJson(data) as T;
+    }
+    if (t == _ick58lqq.WardrobeSetView) {
+      return _ick58lqq.WardrobeSetView.fromJson(data) as T;
+    }
+    if (t == _i52ngzd4.WardrobeStore) {
+      return _i52ngzd4.WardrobeStore.fromJson(data) as T;
+    }
     if (t == _is.getType<_i8mgtt64.AdException?>()) {
       return (data != null ? _i8mgtt64.AdException.fromJson(data) : null) as T;
     }
@@ -2797,6 +3026,48 @@ class Protocol extends _is.DatabaseSerializationManager {
       return (data != null ? _iyylbrve.StoredGpsRecord.fromJson(data) : null)
           as T;
     }
+    if (t == _is.getType<_iih4jdtz.GiftGrant?>()) {
+      return (data != null ? _iih4jdtz.GiftGrant.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_iwi5sv1w.OutfitEquip?>()) {
+      return (data != null ? _iwi5sv1w.OutfitEquip.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_it8ud1gq.WardrobeBackgroundView?>()) {
+      return (data != null
+              ? _it8ud1gq.WardrobeBackgroundView.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_ixlxdrib.WardrobeColourView?>()) {
+      return (data != null ? _ixlxdrib.WardrobeColourView.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_ikwt7tme.WardrobeEquipView?>()) {
+      return (data != null ? _ikwt7tme.WardrobeEquipView.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_iupll8tb.WardrobeItemView?>()) {
+      return (data != null ? _iupll8tb.WardrobeItemView.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_iioemq8t.WardrobeSeasonView?>()) {
+      return (data != null ? _iioemq8t.WardrobeSeasonView.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_icerumb8.WardrobeSetColourView?>()) {
+      return (data != null
+              ? _icerumb8.WardrobeSetColourView.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_ick58lqq.WardrobeSetView?>()) {
+      return (data != null ? _ick58lqq.WardrobeSetView.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_i52ngzd4.WardrobeStore?>()) {
+      return (data != null ? _i52ngzd4.WardrobeStore.fromJson(data) : null)
+          as T;
+    }
     if (t == List<_i0fbcnhc.PurchaseView>) {
       return (data as List)
               .map((e) => deserialize<_i0fbcnhc.PurchaseView>(e))
@@ -2865,6 +3136,42 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == List<_i4gtfwun.ThemeItem>) {
       return (data as List)
               .map((e) => deserialize<_i4gtfwun.ThemeItem>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_icerumb8.WardrobeSetColourView>) {
+      return (data as List)
+              .map((e) => deserialize<_icerumb8.WardrobeSetColourView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_ixlxdrib.WardrobeColourView>) {
+      return (data as List)
+              .map((e) => deserialize<_ixlxdrib.WardrobeColourView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_iupll8tb.WardrobeItemView>) {
+      return (data as List)
+              .map((e) => deserialize<_iupll8tb.WardrobeItemView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_it8ud1gq.WardrobeBackgroundView>) {
+      return (data as List)
+              .map((e) => deserialize<_it8ud1gq.WardrobeBackgroundView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_ick58lqq.WardrobeSetView>) {
+      return (data as List)
+              .map((e) => deserialize<_ick58lqq.WardrobeSetView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_ikwt7tme.WardrobeEquipView>) {
+      return (data as List)
+              .map((e) => deserialize<_ikwt7tme.WardrobeEquipView>(e))
               .toList()
           as T;
     }
@@ -2968,6 +3275,16 @@ class Protocol extends _is.DatabaseSerializationManager {
       _ipyparvp.RecordReceipt => 'RecordReceipt',
       _ir7rvxr1.RoutePoint => 'RoutePoint',
       _iyylbrve.StoredGpsRecord => 'StoredGpsRecord',
+      _iih4jdtz.GiftGrant => 'GiftGrant',
+      _iwi5sv1w.OutfitEquip => 'OutfitEquip',
+      _it8ud1gq.WardrobeBackgroundView => 'WardrobeBackgroundView',
+      _ixlxdrib.WardrobeColourView => 'WardrobeColourView',
+      _ikwt7tme.WardrobeEquipView => 'WardrobeEquipView',
+      _iupll8tb.WardrobeItemView => 'WardrobeItemView',
+      _iioemq8t.WardrobeSeasonView => 'WardrobeSeasonView',
+      _icerumb8.WardrobeSetColourView => 'WardrobeSetColourView',
+      _ick58lqq.WardrobeSetView => 'WardrobeSetView',
+      _i52ngzd4.WardrobeStore => 'WardrobeStore',
       _ => null,
     };
   }
@@ -3106,6 +3423,26 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'RoutePoint';
       case _iyylbrve.StoredGpsRecord():
         return 'StoredGpsRecord';
+      case _iih4jdtz.GiftGrant():
+        return 'GiftGrant';
+      case _iwi5sv1w.OutfitEquip():
+        return 'OutfitEquip';
+      case _it8ud1gq.WardrobeBackgroundView():
+        return 'WardrobeBackgroundView';
+      case _ixlxdrib.WardrobeColourView():
+        return 'WardrobeColourView';
+      case _ikwt7tme.WardrobeEquipView():
+        return 'WardrobeEquipView';
+      case _iupll8tb.WardrobeItemView():
+        return 'WardrobeItemView';
+      case _iioemq8t.WardrobeSeasonView():
+        return 'WardrobeSeasonView';
+      case _icerumb8.WardrobeSetColourView():
+        return 'WardrobeSetColourView';
+      case _ick58lqq.WardrobeSetView():
+        return 'WardrobeSetView';
+      case _i52ngzd4.WardrobeStore():
+        return 'WardrobeStore';
     }
     className = _iacs.Protocol().getClassNameForObject(data);
     if (className != null) {
@@ -3318,6 +3655,36 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (dataClassName == 'StoredGpsRecord') {
       return deserialize<_iyylbrve.StoredGpsRecord>(data['data']);
     }
+    if (dataClassName == 'GiftGrant') {
+      return deserialize<_iih4jdtz.GiftGrant>(data['data']);
+    }
+    if (dataClassName == 'OutfitEquip') {
+      return deserialize<_iwi5sv1w.OutfitEquip>(data['data']);
+    }
+    if (dataClassName == 'WardrobeBackgroundView') {
+      return deserialize<_it8ud1gq.WardrobeBackgroundView>(data['data']);
+    }
+    if (dataClassName == 'WardrobeColourView') {
+      return deserialize<_ixlxdrib.WardrobeColourView>(data['data']);
+    }
+    if (dataClassName == 'WardrobeEquipView') {
+      return deserialize<_ikwt7tme.WardrobeEquipView>(data['data']);
+    }
+    if (dataClassName == 'WardrobeItemView') {
+      return deserialize<_iupll8tb.WardrobeItemView>(data['data']);
+    }
+    if (dataClassName == 'WardrobeSeasonView') {
+      return deserialize<_iioemq8t.WardrobeSeasonView>(data['data']);
+    }
+    if (dataClassName == 'WardrobeSetColourView') {
+      return deserialize<_icerumb8.WardrobeSetColourView>(data['data']);
+    }
+    if (dataClassName == 'WardrobeSetView') {
+      return deserialize<_ick58lqq.WardrobeSetView>(data['data']);
+    }
+    if (dataClassName == 'WardrobeStore') {
+      return deserialize<_i52ngzd4.WardrobeStore>(data['data']);
+    }
     if (dataClassName.startsWith('serverpod_auth_core.')) {
       data['className'] = dataClassName.substring(20);
       return _iacs.Protocol().deserializeByClassName(data);
@@ -3403,6 +3770,10 @@ class Protocol extends _is.DatabaseSerializationManager {
         return _ioawd7cw.QuizContentRevision.t;
       case _iyylbrve.StoredGpsRecord:
         return _iyylbrve.StoredGpsRecord.t;
+      case _iih4jdtz.GiftGrant:
+        return _iih4jdtz.GiftGrant.t;
+      case _iwi5sv1w.OutfitEquip:
+        return _iwi5sv1w.OutfitEquip.t;
     }
     return null;
   }
