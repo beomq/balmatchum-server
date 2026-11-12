@@ -26,6 +26,11 @@ billing:
   - getEntitlement:
 greeting:
   - hello:
+photo:
+  - createUpload:
+  - confirmUpload:
+  - listMine:
+  - deletePhoto:
 product:
   - getDay:
   - getHomeSnapshot:

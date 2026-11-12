@@ -11,6 +11,8 @@
 // ignore_for_file: dead_code, unnecessary_type_check
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:balmatchum_client/src/protocol/photos/photo_view.dart'
+    as _i8aiv0pd;
 import 'package:balmatchum_client/src/protocol/product/daily_quiz.dart'
     as _ig075m1r;
 import 'package:balmatchum_client/src/protocol/product/daily_record.dart'
@@ -35,6 +37,9 @@ import 'billing/purchase_input.dart' as _i8awtsqn;
 import 'billing/purchase_product.dart' as _iiesu012;
 import 'billing/purchase_view.dart' as _i0fbcnhc;
 import 'greetings/greeting.dart' as _izw8z7ou;
+import 'photos/photo_exception.dart' as _iigpd3j4;
+import 'photos/photo_upload_ticket.dart' as _ilhfcnh4;
+import 'photos/photo_view.dart' as _i00aw8k6;
 import 'product/daily_quiz.dart' as _i94q6xjz;
 import 'product/daily_record.dart' as _ie37ihl8;
 import 'product/daily_step_input.dart' as _i4z7ptb2;
@@ -71,6 +76,9 @@ export 'billing/purchase_input.dart';
 export 'billing/purchase_product.dart';
 export 'billing/purchase_view.dart';
 export 'greetings/greeting.dart';
+export 'photos/photo_exception.dart';
+export 'photos/photo_upload_ticket.dart';
+export 'photos/photo_view.dart';
 export 'product/daily_quiz.dart';
 export 'product/daily_record.dart';
 export 'product/daily_step_input.dart';
@@ -168,6 +176,15 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _izw8z7ou.Greeting) {
       return _izw8z7ou.Greeting.fromJson(data) as T;
+    }
+    if (t == _iigpd3j4.PhotoException) {
+      return _iigpd3j4.PhotoException.fromJson(data) as T;
+    }
+    if (t == _ilhfcnh4.PhotoUploadTicket) {
+      return _ilhfcnh4.PhotoUploadTicket.fromJson(data) as T;
+    }
+    if (t == _i00aw8k6.PhotoView) {
+      return _i00aw8k6.PhotoView.fromJson(data) as T;
     }
     if (t == _i94q6xjz.DailyQuiz) {
       return _i94q6xjz.DailyQuiz.fromJson(data) as T;
@@ -289,6 +306,17 @@ class Protocol extends _isc.SerializationManager {
     if (t == _isc.getType<_izw8z7ou.Greeting?>()) {
       return (data != null ? _izw8z7ou.Greeting.fromJson(data) : null) as T;
     }
+    if (t == _isc.getType<_iigpd3j4.PhotoException?>()) {
+      return (data != null ? _iigpd3j4.PhotoException.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_ilhfcnh4.PhotoUploadTicket?>()) {
+      return (data != null ? _ilhfcnh4.PhotoUploadTicket.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_i00aw8k6.PhotoView?>()) {
+      return (data != null ? _i00aw8k6.PhotoView.fromJson(data) : null) as T;
+    }
     if (t == _isc.getType<_i94q6xjz.DailyQuiz?>()) {
       return (data != null ? _i94q6xjz.DailyQuiz.fromJson(data) : null) as T;
     }
@@ -376,6 +404,12 @@ class Protocol extends _isc.SerializationManager {
               .toList()
           as T;
     }
+    if (t == Map<String, String>) {
+      return (data as Map).map(
+            (k, v) => MapEntry(deserialize<String>(k), deserialize<String>(v)),
+          )
+          as T;
+    }
     if (t == List<String>) {
       return (data as List).map((e) => deserialize<String>(e)).toList() as T;
     }
@@ -423,6 +457,12 @@ class Protocol extends _isc.SerializationManager {
               .toList()
           as T;
     }
+    if (t == List<_i8aiv0pd.PhotoView>) {
+      return (data as List)
+              .map((e) => deserialize<_i8aiv0pd.PhotoView>(e))
+              .toList()
+          as T;
+    }
     if (t == List<_i6924b5v.DailyRecord>) {
       return (data as List)
               .map((e) => deserialize<_i6924b5v.DailyRecord>(e))
@@ -465,6 +505,9 @@ class Protocol extends _isc.SerializationManager {
       _iiesu012.PurchaseProduct => 'PurchaseProduct',
       _i0fbcnhc.PurchaseView => 'PurchaseView',
       _izw8z7ou.Greeting => 'Greeting',
+      _iigpd3j4.PhotoException => 'PhotoException',
+      _ilhfcnh4.PhotoUploadTicket => 'PhotoUploadTicket',
+      _i00aw8k6.PhotoView => 'PhotoView',
       _i94q6xjz.DailyQuiz => 'DailyQuiz',
       _ie37ihl8.DailyRecord => 'DailyRecord',
       _i4z7ptb2.DailyStepInput => 'DailyStepInput',
@@ -528,6 +571,12 @@ class Protocol extends _isc.SerializationManager {
         return 'PurchaseView';
       case _izw8z7ou.Greeting():
         return 'Greeting';
+      case _iigpd3j4.PhotoException():
+        return 'PhotoException';
+      case _ilhfcnh4.PhotoUploadTicket():
+        return 'PhotoUploadTicket';
+      case _i00aw8k6.PhotoView():
+        return 'PhotoView';
       case _i94q6xjz.DailyQuiz():
         return 'DailyQuiz';
       case _ie37ihl8.DailyRecord():
@@ -634,6 +683,15 @@ class Protocol extends _isc.SerializationManager {
     }
     if (dataClassName == 'Greeting') {
       return deserialize<_izw8z7ou.Greeting>(data['data']);
+    }
+    if (dataClassName == 'PhotoException') {
+      return deserialize<_iigpd3j4.PhotoException>(data['data']);
+    }
+    if (dataClassName == 'PhotoUploadTicket') {
+      return deserialize<_ilhfcnh4.PhotoUploadTicket>(data['data']);
+    }
+    if (dataClassName == 'PhotoView') {
+      return deserialize<_i00aw8k6.PhotoView>(data['data']);
     }
     if (dataClassName == 'DailyQuiz') {
       return deserialize<_i94q6xjz.DailyQuiz>(data['data']);

@@ -11,6 +11,8 @@
 // ignore_for_file: dead_code, unnecessary_type_check
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:balmatchum_server/src/generated/photos/photo_view.dart'
+    as _ips38zld;
 import 'package:balmatchum_server/src/generated/product/daily_quiz.dart'
     as _is16fueh;
 import 'package:balmatchum_server/src/generated/product/daily_record.dart'
@@ -45,6 +47,10 @@ import 'billing/purchase_view.dart' as _i0fbcnhc;
 import 'billing/retained_payment_record.dart' as _i4qy0j97;
 import 'billing/stored_purchase.dart' as _i7xmzgxf;
 import 'greetings/greeting.dart' as _izw8z7ou;
+import 'photos/photo_exception.dart' as _iigpd3j4;
+import 'photos/photo_upload_ticket.dart' as _ilhfcnh4;
+import 'photos/photo_view.dart' as _i00aw8k6;
+import 'photos/stored_photo.dart' as _ie56jcdy;
 import 'product/daily_quiz.dart' as _i94q6xjz;
 import 'product/daily_record.dart' as _ie37ihl8;
 import 'product/daily_step_input.dart' as _i4z7ptb2;
@@ -103,6 +109,10 @@ export 'billing/purchase_view.dart';
 export 'billing/retained_payment_record.dart';
 export 'billing/stored_purchase.dart';
 export 'greetings/greeting.dart';
+export 'photos/photo_exception.dart';
+export 'photos/photo_upload_ticket.dart';
+export 'photos/photo_view.dart';
+export 'photos/stored_photo.dart';
 export 'product/daily_quiz.dart';
 export 'product/daily_record.dart';
 export 'product/daily_step_input.dart';
@@ -1305,6 +1315,141 @@ class Protocol extends _is.DatabaseSerializationManager {
       managed: true,
     ),
     _isp.TableDefinition(
+      name: 'photo',
+      dartName: 'StoredPhoto',
+      schema: 'public',
+      module: 'balmatchum',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue?',
+          columnDefault: 'random_v7',
+        ),
+        _isp.ColumnDefinition(
+          name: 'authUserId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'objectKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'contentType',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'byteSize',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'width',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'height',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'status',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'confirmedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'photo_fk_0',
+          columns: ['authUserId'],
+          referenceTable: 'serverpod_auth_core_user',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'photo_object_key',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'objectKey',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'photo_auth_user_status',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'authUserId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'status',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'createdAt',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'photo_status_created',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'status',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'createdAt',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
       name: 'point_entry',
       dartName: 'PointEntry',
       schema: 'public',
@@ -2295,6 +2440,18 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _izw8z7ou.Greeting) {
       return _izw8z7ou.Greeting.fromJson(data) as T;
     }
+    if (t == _iigpd3j4.PhotoException) {
+      return _iigpd3j4.PhotoException.fromJson(data) as T;
+    }
+    if (t == _ilhfcnh4.PhotoUploadTicket) {
+      return _ilhfcnh4.PhotoUploadTicket.fromJson(data) as T;
+    }
+    if (t == _i00aw8k6.PhotoView) {
+      return _i00aw8k6.PhotoView.fromJson(data) as T;
+    }
+    if (t == _ie56jcdy.StoredPhoto) {
+      return _ie56jcdy.StoredPhoto.fromJson(data) as T;
+    }
     if (t == _i94q6xjz.DailyQuiz) {
       return _i94q6xjz.DailyQuiz.fromJson(data) as T;
     }
@@ -2490,6 +2647,20 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _is.getType<_izw8z7ou.Greeting?>()) {
       return (data != null ? _izw8z7ou.Greeting.fromJson(data) : null) as T;
     }
+    if (t == _is.getType<_iigpd3j4.PhotoException?>()) {
+      return (data != null ? _iigpd3j4.PhotoException.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_ilhfcnh4.PhotoUploadTicket?>()) {
+      return (data != null ? _ilhfcnh4.PhotoUploadTicket.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_i00aw8k6.PhotoView?>()) {
+      return (data != null ? _i00aw8k6.PhotoView.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_ie56jcdy.StoredPhoto?>()) {
+      return (data != null ? _ie56jcdy.StoredPhoto.fromJson(data) : null) as T;
+    }
     if (t == _is.getType<_i94q6xjz.DailyQuiz?>()) {
       return (data != null ? _i94q6xjz.DailyQuiz.fromJson(data) : null) as T;
     }
@@ -2625,6 +2796,12 @@ class Protocol extends _is.DatabaseSerializationManager {
               .toList()
           as T;
     }
+    if (t == Map<String, String>) {
+      return (data as Map).map(
+            (k, v) => MapEntry(deserialize<String>(k), deserialize<String>(v)),
+          )
+          as T;
+    }
     if (t == List<String>) {
       return (data as List).map((e) => deserialize<String>(e)).toList() as T;
     }
@@ -2675,6 +2852,12 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == List<_i4gtfwun.ThemeItem>) {
       return (data as List)
               .map((e) => deserialize<_i4gtfwun.ThemeItem>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_ips38zld.PhotoView>) {
+      return (data as List)
+              .map((e) => deserialize<_ips38zld.PhotoView>(e))
               .toList()
           as T;
     }
@@ -2732,6 +2915,10 @@ class Protocol extends _is.DatabaseSerializationManager {
       _i4qy0j97.RetainedPaymentRecord => 'RetainedPaymentRecord',
       _i7xmzgxf.StoredPurchase => 'StoredPurchase',
       _izw8z7ou.Greeting => 'Greeting',
+      _iigpd3j4.PhotoException => 'PhotoException',
+      _ilhfcnh4.PhotoUploadTicket => 'PhotoUploadTicket',
+      _i00aw8k6.PhotoView => 'PhotoView',
+      _ie56jcdy.StoredPhoto => 'StoredPhoto',
       _i94q6xjz.DailyQuiz => 'DailyQuiz',
       _ie37ihl8.DailyRecord => 'DailyRecord',
       _i4z7ptb2.DailyStepInput => 'DailyStepInput',
@@ -2826,6 +3013,14 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'StoredPurchase';
       case _izw8z7ou.Greeting():
         return 'Greeting';
+      case _iigpd3j4.PhotoException():
+        return 'PhotoException';
+      case _ilhfcnh4.PhotoUploadTicket():
+        return 'PhotoUploadTicket';
+      case _i00aw8k6.PhotoView():
+        return 'PhotoView';
+      case _ie56jcdy.StoredPhoto():
+        return 'StoredPhoto';
       case _i94q6xjz.DailyQuiz():
         return 'DailyQuiz';
       case _ie37ihl8.DailyRecord():
@@ -2989,6 +3184,18 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (dataClassName == 'Greeting') {
       return deserialize<_izw8z7ou.Greeting>(data['data']);
+    }
+    if (dataClassName == 'PhotoException') {
+      return deserialize<_iigpd3j4.PhotoException>(data['data']);
+    }
+    if (dataClassName == 'PhotoUploadTicket') {
+      return deserialize<_ilhfcnh4.PhotoUploadTicket>(data['data']);
+    }
+    if (dataClassName == 'PhotoView') {
+      return deserialize<_i00aw8k6.PhotoView>(data['data']);
+    }
+    if (dataClassName == 'StoredPhoto') {
+      return deserialize<_ie56jcdy.StoredPhoto>(data['data']);
     }
     if (dataClassName == 'DailyQuiz') {
       return deserialize<_i94q6xjz.DailyQuiz>(data['data']);
@@ -3157,6 +3364,8 @@ class Protocol extends _is.DatabaseSerializationManager {
         return _i4qy0j97.RetainedPaymentRecord.t;
       case _i7xmzgxf.StoredPurchase:
         return _i7xmzgxf.StoredPurchase.t;
+      case _ie56jcdy.StoredPhoto:
+        return _ie56jcdy.StoredPhoto.t;
       case _itwveuom.OutfitOwnership:
         return _itwveuom.OutfitOwnership.t;
       case _i3g927ck.PointEntry:

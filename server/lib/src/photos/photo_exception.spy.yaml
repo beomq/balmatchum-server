@@ -1,0 +1,3 @@
+exception: PhotoException
+fields:
+  code: String
