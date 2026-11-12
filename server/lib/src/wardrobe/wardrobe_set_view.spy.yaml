@@ -1,0 +1,13 @@
+class: WardrobeSetView
+fields:
+  setId: String
+  name: String
+  itemIds: List<String>
+  backgroundId: String
+  colours: List<WardrobeSetColourView>
+  ### Effect preset name in the app's effects/presets.json.
+  effect: String
+  ### Undiscounted sum of every part.
+  fullPrice: int
+  discountPct: int
+  season: WardrobeSeasonView?

@@ -69,3 +69,13 @@ quiz:
 records:
   - saveConfirmed:
   - getMine:
+wardrobe:
+  - getWardrobe:
+  - purchaseItem:
+  - purchaseSet:
+  - purchaseBackground:
+  - equipItem:
+  - unequipSlot:
+  - equipBackground:
+  - equipSet:
+  - unequipSet:

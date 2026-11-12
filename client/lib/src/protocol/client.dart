@@ -60,6 +60,8 @@ import 'package:balmatchum_client/src/protocol/records/gps_record_input.dart'
     as _i9inenda;
 import 'package:balmatchum_client/src/protocol/records/record_receipt.dart'
     as _ixlh9bse;
+import 'package:balmatchum_client/src/protocol/wardrobe/wardrobe_store.dart'
+    as _iurrerqh;
 import 'package:http/http.dart' as _i85jenna;
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as _iacc;
@@ -775,6 +777,127 @@ class EndpointRecords extends _isc.EndpointRef {
       );
 }
 
+/// Wardrobe: items per colour, sets, backgrounds and what is worn.
+/// Every write takes a requestId and replays its first result.
+/// {@category Endpoint}
+class EndpointWardrobe extends _isc.EndpointRef {
+  EndpointWardrobe(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'wardrobe';
+
+  _ida.Future<_iurrerqh.WardrobeStore> getWardrobe() =>
+      caller.callServerEndpoint<_iurrerqh.WardrobeStore>(
+        'wardrobe',
+        'getWardrobe',
+        {},
+      );
+
+  _ida.Future<_iurrerqh.WardrobeStore> purchaseItem(
+    String itemId,
+    String colourId,
+    String requestId,
+  ) => caller.callServerEndpoint<_iurrerqh.WardrobeStore>(
+    'wardrobe',
+    'purchaseItem',
+    {
+      'itemId': itemId,
+      'colourId': colourId,
+      'requestId': requestId,
+    },
+  );
+
+  _ida.Future<_iurrerqh.WardrobeStore> purchaseSet(
+    String setId,
+    String colourId,
+    String requestId,
+  ) => caller.callServerEndpoint<_iurrerqh.WardrobeStore>(
+    'wardrobe',
+    'purchaseSet',
+    {
+      'setId': setId,
+      'colourId': colourId,
+      'requestId': requestId,
+    },
+  );
+
+  _ida.Future<_iurrerqh.WardrobeStore> purchaseBackground(
+    String backgroundId,
+    String requestId,
+  ) => caller.callServerEndpoint<_iurrerqh.WardrobeStore>(
+    'wardrobe',
+    'purchaseBackground',
+    {
+      'backgroundId': backgroundId,
+      'requestId': requestId,
+    },
+  );
+
+  _ida.Future<_iurrerqh.WardrobeStore> equipItem(
+    String itemId,
+    String colourId,
+    String requestId,
+  ) => caller.callServerEndpoint<_iurrerqh.WardrobeStore>(
+    'wardrobe',
+    'equipItem',
+    {
+      'itemId': itemId,
+      'colourId': colourId,
+      'requestId': requestId,
+    },
+  );
+
+  _ida.Future<_iurrerqh.WardrobeStore> unequipSlot(
+    String slot,
+    String requestId,
+  ) => caller.callServerEndpoint<_iurrerqh.WardrobeStore>(
+    'wardrobe',
+    'unequipSlot',
+    {
+      'slot': slot,
+      'requestId': requestId,
+    },
+  );
+
+  _ida.Future<_iurrerqh.WardrobeStore> equipBackground(
+    String backgroundId,
+    String requestId,
+  ) => caller.callServerEndpoint<_iurrerqh.WardrobeStore>(
+    'wardrobe',
+    'equipBackground',
+    {
+      'backgroundId': backgroundId,
+      'requestId': requestId,
+    },
+  );
+
+  _ida.Future<_iurrerqh.WardrobeStore> equipSet(
+    String setId,
+    String colourId,
+    String requestId,
+  ) => caller.callServerEndpoint<_iurrerqh.WardrobeStore>(
+    'wardrobe',
+    'equipSet',
+    {
+      'setId': setId,
+      'colourId': colourId,
+      'requestId': requestId,
+    },
+  );
+
+  _ida.Future<_iurrerqh.WardrobeStore> unequipSet(
+    String setId,
+    String requestId,
+  ) => caller.callServerEndpoint<_iurrerqh.WardrobeStore>(
+    'wardrobe',
+    'unequipSet',
+    {
+      'setId': setId,
+      'requestId': requestId,
+    },
+  );
+}
+
 class Modules {
   Modules(Client client) {
     serverpod_auth_core = _iacc.Caller(client);
@@ -826,6 +949,7 @@ class Client extends _isc.ServerpodClientShared {
     profile = EndpointProfile(this);
     quiz = EndpointQuiz(this);
     records = EndpointRecords(this);
+    wardrobe = EndpointWardrobe(this);
     modules = Modules(this);
   }
 
@@ -855,6 +979,8 @@ class Client extends _isc.ServerpodClientShared {
 
   late final EndpointRecords records;
 
+  late final EndpointWardrobe wardrobe;
+
   late final Modules modules;
 
   @override
@@ -872,6 +998,7 @@ class Client extends _isc.ServerpodClientShared {
     'profile': profile,
     'quiz': quiz,
     'records': records,
+    'wardrobe': wardrobe,
   };
 
   @override

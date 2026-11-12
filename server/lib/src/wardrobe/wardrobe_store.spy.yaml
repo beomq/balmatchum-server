@@ -1,0 +1,18 @@
+### Whole wardrobe state after every read or write. The server decides
+### prices, ownership, what may be worn, and whether a set is complete.
+class: WardrobeStore
+fields:
+  colours: List<WardrobeColourView>
+  items: List<WardrobeItemView>
+  backgrounds: List<WardrobeBackgroundView>
+  sets: List<WardrobeSetView>
+  equipped: List<WardrobeEquipView>
+  equippedBackground: String
+  ### Set whose items are all worn in one colour over its own background.
+  completeSetId: String?
+  completeColour: String?
+  breedId: String?
+  balance: int
+  ### A paid subscription is active by the server's stored observation.
+  subscriber: bool
+  fixtureLabel: String?

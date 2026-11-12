@@ -1,0 +1,6 @@
+class: WardrobeColourView
+fields:
+  colourId: String
+  name: String
+  ### ARGB swatch for colour chips.
+  swatch: int

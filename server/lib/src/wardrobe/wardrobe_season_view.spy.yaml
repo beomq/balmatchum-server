@@ -1,0 +1,11 @@
+class: WardrobeSeasonView
+fields:
+  releaseAt: DateTime
+  endsAt: DateTime
+  ### Now inside [releaseAt, endsAt].
+  open: bool
+  ### The user received this set as a subscriber.
+  granted: bool
+  ### A limited-time point sale of this past set is open now.
+  resaleOpen: bool
+  resaleEndsAt: DateTime?

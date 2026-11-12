@@ -17,6 +17,7 @@ import '../product/outfit_store.dart' as _iobmgmk3;
 import '../product/theme_store.dart' as _ifhmh1w9;
 import '../product/wallet_view.dart' as _ic5lo3sd;
 import '../profile/profile_view.dart' as _ih0yc01p;
+import '../wardrobe/wardrobe_store.dart' as _ixjh1hef;
 
 abstract class HomeSnapshot
     implements _isc.SerializableModel, _isc.ProtocolSerialization {
@@ -27,6 +28,7 @@ abstract class HomeSnapshot
     required this.wallet,
     required this.themes,
     required this.outfits,
+    required this.wardrobe,
     required this.recentDays,
   });
 
@@ -37,6 +39,7 @@ abstract class HomeSnapshot
     required _ic5lo3sd.WalletView wallet,
     required _ifhmh1w9.ThemeStore themes,
     required _iobmgmk3.OutfitStore outfits,
+    required _ixjh1hef.WardrobeStore wardrobe,
     required List<_irm9m2mf.DailyRecord> recentDays,
   }) = _HomeSnapshotImpl;
 
@@ -60,6 +63,9 @@ abstract class HomeSnapshot
       outfits: _i5u3fx7i.Protocol().deserialize<_iobmgmk3.OutfitStore>(
         jsonSerialization['outfits'],
       ),
+      wardrobe: _i5u3fx7i.Protocol().deserialize<_ixjh1hef.WardrobeStore>(
+        jsonSerialization['wardrobe'],
+      ),
       recentDays: _i5u3fx7i.Protocol().deserialize<List<_irm9m2mf.DailyRecord>>(
         jsonSerialization['recentDays'],
       ),
@@ -78,6 +84,8 @@ abstract class HomeSnapshot
 
   _iobmgmk3.OutfitStore outfits;
 
+  _ixjh1hef.WardrobeStore wardrobe;
+
   List<_irm9m2mf.DailyRecord> recentDays;
 
   /// Returns a shallow copy of this [HomeSnapshot]
@@ -90,6 +98,7 @@ abstract class HomeSnapshot
     _ic5lo3sd.WalletView? wallet,
     _ifhmh1w9.ThemeStore? themes,
     _iobmgmk3.OutfitStore? outfits,
+    _ixjh1hef.WardrobeStore? wardrobe,
     List<_irm9m2mf.DailyRecord>? recentDays,
   });
   @override
@@ -102,6 +111,7 @@ abstract class HomeSnapshot
       'wallet': wallet.toJson(),
       'themes': themes.toJson(),
       'outfits': outfits.toJson(),
+      'wardrobe': wardrobe.toJson(),
       'recentDays': recentDays.toJson(valueToJson: (v) => v.toJson()),
     };
   }
@@ -116,6 +126,7 @@ abstract class HomeSnapshot
       'wallet': wallet.toJsonForProtocol(),
       'themes': themes.toJsonForProtocol(),
       'outfits': outfits.toJsonForProtocol(),
+      'wardrobe': wardrobe.toJsonForProtocol(),
       'recentDays': recentDays.toJson(
         valueToJson: (v) => v.toJsonForProtocol(),
       ),
@@ -138,6 +149,7 @@ class _HomeSnapshotImpl extends HomeSnapshot {
     required _ic5lo3sd.WalletView wallet,
     required _ifhmh1w9.ThemeStore themes,
     required _iobmgmk3.OutfitStore outfits,
+    required _ixjh1hef.WardrobeStore wardrobe,
     required List<_irm9m2mf.DailyRecord> recentDays,
   }) : super._(
          date: date,
@@ -146,6 +158,7 @@ class _HomeSnapshotImpl extends HomeSnapshot {
          wallet: wallet,
          themes: themes,
          outfits: outfits,
+         wardrobe: wardrobe,
          recentDays: recentDays,
        );
 
@@ -160,6 +173,7 @@ class _HomeSnapshotImpl extends HomeSnapshot {
     _ic5lo3sd.WalletView? wallet,
     _ifhmh1w9.ThemeStore? themes,
     _iobmgmk3.OutfitStore? outfits,
+    _ixjh1hef.WardrobeStore? wardrobe,
     List<_irm9m2mf.DailyRecord>? recentDays,
   }) {
     return HomeSnapshot(
@@ -171,6 +185,7 @@ class _HomeSnapshotImpl extends HomeSnapshot {
       wallet: wallet ?? this.wallet.copyWith(),
       themes: themes ?? this.themes.copyWith(),
       outfits: outfits ?? this.outfits.copyWith(),
+      wardrobe: wardrobe ?? this.wardrobe.copyWith(),
       recentDays:
           recentDays ?? this.recentDays.map((e0) => e0.copyWith()).toList(),
     );

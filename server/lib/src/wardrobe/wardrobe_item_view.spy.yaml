@@ -1,0 +1,15 @@
+class: WardrobeItemView
+fields:
+  itemId: String
+  ### feet, torso, head (draw order is the app catalog's).
+  slot: String
+  name: String
+  price: int
+  ### Every colour the item comes in.
+  colours: List<String>
+  ownedColours: List<String>
+  ### Colours the profile's breed can wear; empty means "곧 입을 수 있어요".
+  wearableColours: List<String>
+  ### False for season items, which come only with their set.
+  sellable: bool
+  setIds: List<String>

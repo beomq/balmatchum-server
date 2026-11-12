@@ -1,0 +1,14 @@
+### A season set handed to a paid subscriber, at most once per user and set.
+class: SeasonGrant
+serverOnly: true
+table: season_grant
+fields:
+  authUser: module:serverpod_auth_core:AuthUser?, relation(onDelete=Cascade)
+  setId: String
+  grantedAt: DateTime
+  ### release (window-open sweep) or subscribe (became active in the window).
+  reason: String
+indexes:
+  season_grant_auth_user_set:
+    fields: authUserId, setId
+    unique: true

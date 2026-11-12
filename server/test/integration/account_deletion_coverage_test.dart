@@ -116,6 +116,7 @@ void main() {
         'external_identity',
         'gps_record',
         'naver_grant',
+        'outfit_equip',
         'outfit_ownership',
         'photo',
         'point_entry',
@@ -124,6 +125,7 @@ void main() {
         'product_request',
         'quiz_assignment',
         'quiz_state',
+        'season_grant',
         'step_revision',
         'theme_ownership',
       ]),
@@ -245,6 +247,24 @@ void main() {
           authUserId: id,
           outfitId: 'vest-low-v',
           purchasedAt: at,
+        ),
+      );
+      await OutfitEquip.db.insertRow(
+        admin,
+        OutfitEquip(
+          authUserId: id,
+          slot: 'torso',
+          outfitId: 'vest',
+          colourId: 'classic',
+        ),
+      );
+      await SeasonGrant.db.insertRow(
+        admin,
+        SeasonGrant(
+          authUserId: id,
+          setId: 'holiday',
+          grantedAt: at,
+          reason: 'release',
         ),
       );
       await StoredAdIntent.db.insertRow(

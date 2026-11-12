@@ -10,5 +10,7 @@ fields:
   wallet: WalletView
   themes: ThemeStore
   outfits: OutfitStore
+  # Items, sets, worn slots and set completion (see WARDROBE_API.md).
+  wardrobe: WardrobeStore
   # date - 30 ... date (31 entries, oldest first), routes empty.
   recentDays: List<DailyRecord>

@@ -1,0 +1,13 @@
+### One worn item per slot. The background stays in product_account.equippedTheme.
+class: OutfitEquip
+serverOnly: true
+table: outfit_equip
+fields:
+  authUser: module:serverpod_auth_core:AuthUser?, relation(onDelete=Cascade)
+  slot: String
+  outfitId: String
+  colourId: String
+indexes:
+  outfit_equip_auth_user_slot:
+    fields: authUserId, slot
+    unique: true
