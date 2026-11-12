@@ -20,6 +20,16 @@ AWS 비밀 키는 서버 밖으로 나가지 않으며 SDK 없이 SigV4 query �
 4. `photo.listMine()` → 최신순 `PhotoView` 목록. 각 항목의 `url`은 10분짜리 GET URL입니다.
    URL은 매번 바뀌므로 앱은 `photoId`로 캐시하고, `urlExpiresAt`이 지나면 다시 조회합니다.
 5. `photo.deletePhoto(photoId)` → S3 객체를 먼저 지우고 행을 지웁니다. S3 실패 시 행이 남아 그대로 재시도할 수 있습니다.
+   원본을 지우면 그 원본으로 만든 합성 사진은 남고 `originalId`만 비워집니다.
+
+### 원본과 합성 사진
+
+`createUpload(contentType, byteSize, {kind, originalId})`의 `kind`는 `original`(기본, 고른 사진) 또는
+`composite`(강아지를 얹어 저장한 사진)입니다. 기존 호출(`kind` 없음)은 원본입니다.
+합성 사진은 자기 계정의 **확정된 원본** `originalId`를 가리킬 수 있고, 없으면 단독으로 저장합니다.
+다른 계정의 사진은 `notFound`, 합성 사진·미확정 원본을 가리키거나 원본이 `originalId`를 주면 `invalidOriginal`입니다.
+형식·크기 제한과 계정당 500장 한도, 키 형식, 정리·계정 삭제 규칙은 원본과 같습니다.
+`PhotoView`에는 `kind`와 `originalId`가 있어 앱이 원본과 합성 사진을 묶어 보여 줄 수 있습니다.
 
 모든 메서드는 로그인 필요(`requireLogin`)이며 다른 계정의 사진은 `notFound`입니다.
 
@@ -27,6 +37,8 @@ AWS 비밀 키는 서버 밖으로 나가지 않으며 SDK 없이 SigV4 query �
 
 | 코드 | 의미 |
 | --- | --- |
+| `invalidKind` | `kind`가 `original`·`composite`가 아님 |
+| `invalidOriginal` | 원본이 `originalId`를 줌, 또는 합성 사진·미확정 원본을 가리킴 |
 | `unsupportedType` | `image/jpeg` 외 형식 |
 | `invalidSize` | 0 이하 또는 5 MiB 초과 |
 | `tooManyPending` | 5분 안의 미확정 업로드가 계정당 5개 이상 |
