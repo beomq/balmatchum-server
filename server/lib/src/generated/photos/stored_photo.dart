@@ -27,10 +27,12 @@ abstract class StoredPhoto
     required this.byteSize,
     this.width,
     this.height,
+    String? kind,
+    this.originalId,
     required this.status,
     required this.createdAt,
     this.confirmedAt,
-  });
+  }) : kind = kind ?? 'original';
 
   factory StoredPhoto({
     _is.UuidValue? id,
@@ -41,6 +43,8 @@ abstract class StoredPhoto
     required int byteSize,
     int? width,
     int? height,
+    String? kind,
+    _is.UuidValue? originalId,
     required String status,
     required DateTime createdAt,
     DateTime? confirmedAt,
@@ -64,6 +68,12 @@ abstract class StoredPhoto
       byteSize: jsonSerialization['byteSize'] as int,
       width: jsonSerialization['width'] as int?,
       height: jsonSerialization['height'] as int?,
+      kind: jsonSerialization['kind'] as String?,
+      originalId: jsonSerialization['originalId'] == null
+          ? null
+          : _is.UuidValueJsonExtension.fromJson(
+              jsonSerialization['originalId'],
+            ),
       status: jsonSerialization['status'] as String,
       createdAt: _is.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
@@ -97,6 +107,10 @@ abstract class StoredPhoto
 
   int? height;
 
+  String kind;
+
+  _is.UuidValue? originalId;
+
   String status;
 
   DateTime createdAt;
@@ -118,6 +132,8 @@ abstract class StoredPhoto
     int? byteSize,
     int? width,
     int? height,
+    String? kind,
+    _is.UuidValue? originalId,
     String? status,
     DateTime? createdAt,
     DateTime? confirmedAt,
@@ -134,6 +150,8 @@ abstract class StoredPhoto
       'byteSize': byteSize,
       if (width != null) 'width': width,
       if (height != null) 'height': height,
+      'kind': kind,
+      if (originalId != null) 'originalId': originalId?.toJson(),
       'status': status,
       'createdAt': createdAt.toJson(),
       if (confirmedAt != null) 'confirmedAt': confirmedAt?.toJson(),
@@ -185,6 +203,8 @@ class _StoredPhotoImpl extends StoredPhoto {
     required int byteSize,
     int? width,
     int? height,
+    String? kind,
+    _is.UuidValue? originalId,
     required String status,
     required DateTime createdAt,
     DateTime? confirmedAt,
@@ -197,6 +217,8 @@ class _StoredPhotoImpl extends StoredPhoto {
          byteSize: byteSize,
          width: width,
          height: height,
+         kind: kind,
+         originalId: originalId,
          status: status,
          createdAt: createdAt,
          confirmedAt: confirmedAt,
@@ -215,6 +237,8 @@ class _StoredPhotoImpl extends StoredPhoto {
     int? byteSize,
     Object? width = _Undefined,
     Object? height = _Undefined,
+    String? kind,
+    Object? originalId = _Undefined,
     String? status,
     DateTime? createdAt,
     Object? confirmedAt = _Undefined,
@@ -230,6 +254,8 @@ class _StoredPhotoImpl extends StoredPhoto {
       byteSize: byteSize ?? this.byteSize,
       width: width is int? ? width : this.width,
       height: height is int? ? height : this.height,
+      kind: kind ?? this.kind,
+      originalId: originalId is _is.UuidValue? ? originalId : this.originalId,
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       confirmedAt: confirmedAt is DateTime? ? confirmedAt : this.confirmedAt,
@@ -269,6 +295,18 @@ class StoredPhotoUpdateTable extends _is.UpdateTable<StoredPhotoTable> {
 
   _is.ColumnValue<int, int> height(int? value) => _is.ColumnValue(
     table.height,
+    value,
+  );
+
+  _is.ColumnValue<String, String> kind(String value) => _is.ColumnValue(
+    table.kind,
+    value,
+  );
+
+  _is.ColumnValue<_is.UuidValue, _is.UuidValue> originalId(
+    _is.UuidValue? value,
+  ) => _is.ColumnValue(
+    table.originalId,
     value,
   );
 
@@ -317,6 +355,15 @@ class StoredPhotoTable extends _is.Table<_is.UuidValue?> {
       'height',
       this,
     );
+    kind = _is.ColumnString(
+      'kind',
+      this,
+      hasDefault: true,
+    );
+    originalId = _is.ColumnUuid(
+      'originalId',
+      this,
+    );
     status = _is.ColumnString(
       'status',
       this,
@@ -347,6 +394,10 @@ class StoredPhotoTable extends _is.Table<_is.UuidValue?> {
 
   late final _is.ColumnInt height;
 
+  late final _is.ColumnString kind;
+
+  late final _is.ColumnUuid originalId;
+
   late final _is.ColumnString status;
 
   late final _is.ColumnDateTime createdAt;
@@ -375,6 +426,8 @@ class StoredPhotoTable extends _is.Table<_is.UuidValue?> {
     byteSize,
     width,
     height,
+    kind,
+    originalId,
     status,
     createdAt,
     confirmedAt,

@@ -236,6 +236,157 @@ void main() {
       );
     });
 
+    Future<PhotoView> composite(
+      TestSessionBuilder owner, {
+      UuidValue? originalId,
+      int size = 4096,
+    }) async {
+      final ticket = await endpoints.photo.createUpload(
+        owner,
+        'image/jpeg',
+        size,
+        kind: 'composite',
+        originalId: originalId,
+      );
+      store.put(store.presigned.last, byteSize: size);
+      return endpoints.photo.confirmUpload(owner, ticket.photoId, 1600, 1200);
+    }
+
+    test('photos are originals unless they say composite', () async {
+      final original = await upload(a);
+      expect(original.kind, 'original');
+      expect(original.originalId, isNull);
+      for (final kind in ['', 'thumbnail', 'Composite']) {
+        await expectLater(
+          endpoints.photo.createUpload(a, 'image/jpeg', 10, kind: kind),
+          photoError('invalidKind'),
+          reason: kind,
+        );
+      }
+      // An original never links to another photo.
+      await expectLater(
+        endpoints.photo.createUpload(
+          a,
+          'image/jpeg',
+          10,
+          kind: 'original',
+          originalId: original.photoId,
+        ),
+        photoError('invalidOriginal'),
+      );
+    });
+
+    test('a composite links to its own original and lists with it', () async {
+      final original = await upload(a);
+      final saved = await composite(a, originalId: original.photoId);
+      expect(saved.kind, 'composite');
+      expect(saved.originalId, original.photoId);
+      final row = (await StoredPhoto.db.findById(a.build(), saved.photoId))!;
+      expect(row.objectKey, photoObjectKey(idOf(a), saved.photoId));
+      final listed = await endpoints.photo.listMine(a);
+      expect(
+        listed.map((p) => (p.kind, p.originalId)),
+        [('composite', original.photoId), ('original', null)],
+      );
+      // Without an uploaded original it stands alone.
+      final alone = await composite(a);
+      expect(alone.originalId, isNull);
+    });
+
+    test(
+      'a composite cannot link to another account or another composite',
+      () async {
+        final theirs = await upload(b);
+        await expectLater(
+          endpoints.photo.createUpload(
+            a,
+            'image/jpeg',
+            10,
+            kind: 'composite',
+            originalId: theirs.photoId,
+          ),
+          photoError('notFound'),
+        );
+        final mine = await upload(a);
+        final saved = await composite(a, originalId: mine.photoId);
+        await expectLater(
+          endpoints.photo.createUpload(
+            a,
+            'image/jpeg',
+            10,
+            kind: 'composite',
+            originalId: saved.photoId,
+          ),
+          photoError('invalidOriginal'),
+        );
+        // An original still waiting for its upload cannot be linked either.
+        final pending = await endpoints.photo.createUpload(a, 'image/jpeg', 10);
+        await expectLater(
+          endpoints.photo.createUpload(
+            a,
+            'image/jpeg',
+            10,
+            kind: 'composite',
+            originalId: pending.photoId,
+          ),
+          photoError('invalidOriginal'),
+        );
+        // Nothing was reserved for the rejected links.
+        expect(
+          await StoredPhoto.db.count(
+            a.build(),
+            where: (t) => t.authUserId.equals(idOf(a)),
+          ),
+          3,
+        );
+      },
+    );
+
+    test(
+      'composites share the size limit and the stored-photo quota',
+      () async {
+        await expectLater(
+          endpoints.photo.createUpload(
+            a,
+            'image/jpeg',
+            photoMaxBytes + 1,
+            kind: 'composite',
+          ),
+          photoError('invalidSize'),
+        );
+        final original = await upload(a);
+        await composite(a, originalId: original.photoId);
+        // Fill the quota up to the cap with direct rows, both kinds counted.
+        final now = DateTime.now().toUtc();
+        await StoredPhoto.db.insert(a.build(), [
+          for (var i = 0; i < photoMaxStored - 2; i++)
+            StoredPhoto(
+              authUserId: idOf(a),
+              objectKey: 'photos/${idOf(a).uuid}/fill-$i.jpg',
+              contentType: 'image/jpeg',
+              byteSize: 1,
+              kind: 'original',
+              status: 'ready',
+              createdAt: now,
+            ),
+        ]);
+        await expectLater(
+          endpoints.photo.createUpload(a, 'image/jpeg', 10, kind: 'composite'),
+          photoError('quotaExceeded'),
+        );
+      },
+    );
+
+    test('deleting an original keeps its composite, unlinked', () async {
+      final original = await upload(a);
+      final saved = await composite(a, originalId: original.photoId);
+      await endpoints.photo.deletePhoto(a, original.photoId);
+      final listed = await endpoints.photo.listMine(a);
+      expect(listed.map((p) => p.photoId), [saved.photoId]);
+      expect(listed.single.originalId, isNull);
+      expect(store.objects.keys, [photoObjectKey(idOf(a), saved.photoId)]);
+    });
+
     test(
       'the sweep removes stale unconfirmed uploads with their objects',
       () async {

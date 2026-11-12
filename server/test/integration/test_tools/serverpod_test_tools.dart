@@ -1040,8 +1040,10 @@ class _PhotoEndpoint {
   _ida.Future<_igze1hvz.PhotoUploadTicket> createUpload(
     _ist.TestSessionBuilder sessionBuilder,
     String contentType,
-    int byteSize,
-  ) async {
+    int byteSize, {
+    String? kind,
+    _is.UuidValue? originalId,
+  }) async {
     return _ist.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
           (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
@@ -1056,6 +1058,8 @@ class _PhotoEndpoint {
           parameters: _ist.testObjectToJson({
             'contentType': contentType,
             'byteSize': byteSize,
+            'kind': kind,
+            'originalId': originalId,
           }),
           serializationManager: _serializationManager,
         );

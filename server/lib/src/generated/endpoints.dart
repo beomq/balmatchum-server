@@ -590,6 +590,16 @@ class Endpoints extends _is.EndpointDispatch {
               type: _is.getType<int>(),
               nullable: false,
             ),
+            'kind': _is.ParameterDescription(
+              name: 'kind',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+            'originalId': _is.ParameterDescription(
+              name: 'originalId',
+              type: _is.getType<_is.UuidValue?>(),
+              nullable: true,
+            ),
           },
           call:
               (
@@ -600,6 +610,8 @@ class Endpoints extends _is.EndpointDispatch {
                     session,
                     params['contentType'],
                     params['byteSize'],
+                    kind: params['kind'],
+                    originalId: params['originalId'],
                   ),
         ),
         'confirmUpload': _is.MethodConnector(

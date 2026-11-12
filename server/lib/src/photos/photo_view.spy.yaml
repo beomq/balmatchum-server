@@ -3,6 +3,11 @@
 class: PhotoView
 fields:
   photoId: UuidValue
+  ### original or composite.
+  kind: String
+  ### For a composite, the original it was made from (null if unknown or
+  ### since deleted).
+  originalId: UuidValue?
   contentType: String
   byteSize: int
   width: int?

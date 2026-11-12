@@ -335,15 +335,23 @@ class EndpointPhoto extends _isc.EndpointRef {
 
   /// Reserves a photo and returns where to PUT its bytes. S3 itself rejects a
   /// body of another length or content type because both headers are signed.
+  ///
+  /// [kind] is `original` (default) or `composite`; a composite may name the
+  /// caller's own [originalId] it was made from. Both count toward the same
+  /// limits.
   _ida.Future<_ihn2qlvs.PhotoUploadTicket> createUpload(
     String contentType,
-    int byteSize,
-  ) => caller.callServerEndpoint<_ihn2qlvs.PhotoUploadTicket>(
+    int byteSize, {
+    String? kind,
+    _isc.UuidValue? originalId,
+  }) => caller.callServerEndpoint<_ihn2qlvs.PhotoUploadTicket>(
     'photo',
     'createUpload',
     {
       'contentType': contentType,
       'byteSize': byteSize,
+      'kind': kind,
+      'originalId': originalId,
     },
   );
 
@@ -372,7 +380,8 @@ class EndpointPhoto extends _isc.EndpointRef {
       );
 
   /// Removes the object first: a row is never deleted while its object may
-  /// remain, so a failed call can simply be retried.
+  /// remain, so a failed call can simply be retried. Composites made from a
+  /// deleted original stay, unlinked.
   _ida.Future<void> deletePhoto(_isc.UuidValue photoId) =>
       caller.callServerEndpoint<void>(
         'photo',

@@ -18,6 +18,8 @@ abstract class PhotoView
     implements _is.SerializableModel, _is.ProtocolSerialization {
   PhotoView._({
     required this.photoId,
+    required this.kind,
+    this.originalId,
     required this.contentType,
     required this.byteSize,
     this.width,
@@ -29,6 +31,8 @@ abstract class PhotoView
 
   factory PhotoView({
     required _is.UuidValue photoId,
+    required String kind,
+    _is.UuidValue? originalId,
     required String contentType,
     required int byteSize,
     int? width,
@@ -43,6 +47,12 @@ abstract class PhotoView
       photoId: _is.UuidValueJsonExtension.fromJson(
         jsonSerialization['photoId'],
       ),
+      kind: jsonSerialization['kind'] as String,
+      originalId: jsonSerialization['originalId'] == null
+          ? null
+          : _is.UuidValueJsonExtension.fromJson(
+              jsonSerialization['originalId'],
+            ),
       contentType: jsonSerialization['contentType'] as String,
       byteSize: jsonSerialization['byteSize'] as int,
       width: jsonSerialization['width'] as int?,
@@ -58,6 +68,13 @@ abstract class PhotoView
   }
 
   _is.UuidValue photoId;
+
+  /// original or composite.
+  String kind;
+
+  /// For a composite, the original it was made from (null if unknown or
+  /// since deleted).
+  _is.UuidValue? originalId;
 
   String contentType;
 
@@ -78,6 +95,8 @@ abstract class PhotoView
   @_is.useResult
   PhotoView copyWith({
     _is.UuidValue? photoId,
+    String? kind,
+    _is.UuidValue? originalId,
     String? contentType,
     int? byteSize,
     int? width,
@@ -91,6 +110,8 @@ abstract class PhotoView
     return {
       '__className__': 'PhotoView',
       'photoId': photoId.toJson(),
+      'kind': kind,
+      if (originalId != null) 'originalId': originalId?.toJson(),
       'contentType': contentType,
       'byteSize': byteSize,
       if (width != null) 'width': width,
@@ -106,6 +127,8 @@ abstract class PhotoView
     return {
       '__className__': 'PhotoView',
       'photoId': photoId.toJson(),
+      'kind': kind,
+      if (originalId != null) 'originalId': originalId?.toJson(),
       'contentType': contentType,
       'byteSize': byteSize,
       if (width != null) 'width': width,
@@ -127,6 +150,8 @@ class _Undefined {}
 class _PhotoViewImpl extends PhotoView {
   _PhotoViewImpl({
     required _is.UuidValue photoId,
+    required String kind,
+    _is.UuidValue? originalId,
     required String contentType,
     required int byteSize,
     int? width,
@@ -136,6 +161,8 @@ class _PhotoViewImpl extends PhotoView {
     required DateTime urlExpiresAt,
   }) : super._(
          photoId: photoId,
+         kind: kind,
+         originalId: originalId,
          contentType: contentType,
          byteSize: byteSize,
          width: width,
@@ -151,6 +178,8 @@ class _PhotoViewImpl extends PhotoView {
   @override
   PhotoView copyWith({
     _is.UuidValue? photoId,
+    String? kind,
+    Object? originalId = _Undefined,
     String? contentType,
     int? byteSize,
     Object? width = _Undefined,
@@ -161,6 +190,8 @@ class _PhotoViewImpl extends PhotoView {
   }) {
     return PhotoView(
       photoId: photoId ?? this.photoId,
+      kind: kind ?? this.kind,
+      originalId: originalId is _is.UuidValue? ? originalId : this.originalId,
       contentType: contentType ?? this.contentType,
       byteSize: byteSize ?? this.byteSize,
       width: width is int? ? width : this.width,
