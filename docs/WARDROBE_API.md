@@ -14,14 +14,25 @@
 | `winter` 겨울 세트 | `padding`, `beanie`, `booties` | `winter-dusk` | tomato pine plum navy | `snow` | 늘 판매 |
 | `holiday` 크리스마스 세트 | `rudolph-band`, `santa-cape` | `holiday-night` | tomato pine navy | `holiday` | 선물 전용 |
 | `seollal` 설날 세트 | `saekdong-jeogori`, `gulle` | `seollal-morning` | dahong jjok yeondu bunhong | `seollal` | 선물 전용 |
+| `spring` 봄 벚꽃 세트 | `knit`, `blossom` | `spring-blossom` | sakura forsythia lilac mint | `spring` | 선물 전용 |
+| `picnic` 봄 소풍 세트 | `overall`, `flower-crown` | `picnic-meadow` | cherry sky yeondu butter | `picnic` | 선물 전용 |
+| `kids-day` 어린이날 세트 | `smock`, `kinder-hat` | `kids-day-park` | chick sky pink yeondu | `kids-day` | 선물 전용 |
+| `monsoon` 장마 세트 | `raincoat`, `rain-hat` | `monsoon-rain` | chick sky frog tomato | `monsoon` | 선물 전용 |
+| `sea` 여름 바다 세트 | `rashguard`, `straw-hat` | `summer-beach` | ocean watermelon lemon mint | `summer` | 선물 전용 |
+| `watermelon` 수박 세트 | `melon-vest`, `melon-clip` | `summer-night` | watermelon yellow-watermelon peach melon | `summer-night` | 선물 전용 |
+| `chuseok` 추석 세트 | `baeja`, `rabbit-band` | `chuseok-moon` | teal jaju ginkgo jjok | `chuseok` | 선물 전용 |
+| `halloween` 핼러윈 세트 | `witch-cape`, `witch-hat` | `halloween-dusk` | purple black slime burgundy | `halloween` | 선물 전용 |
+| `autumn` 단풍 세트 | `muffler`, `beret` | `autumn-maple` | maple mustard wine olive | `autumn` | 선물 전용 |
+
+- 기본 상시 아이템(포인트로 늘 판매, 색 cream navy grey tomato): `stripe-tee`, `hoodie`, `knit-vest`, `puffer-vest`, `bandana`(모두 torso), `rib-beanie`(head).
 
 - 조끼(`vest`, 색 `classic`)는 시추·닥스훈트 단품 아이템이다(그림이 그 둘뿐). 예전 `vest-low-v` 보유·착용은 마이그레이션이 `vest/classic`으로 옮겼다.
-- 입을 수 있는 견종: 겹쳐 입는 그림이 있는 말티즈·닥스훈트·골든 리트리버는 모든 아이템과 색. 나머지 27견종은 **토마토 패딩만**(강아지 전체에 구운 그림이라 다른 아이템과 같이 입지 않음). 그 견종에게 다른 아이템은 `wearableColours`가 비어 있다(앱: "곧 입을 수 있어요").
+- 입을 수 있는 견종: 30견종 모두 겹쳐 입는 그림이 있어 모든 아이템과 색을 입는다(`layeredBreeds`). 예외는 조끼(`vest`)뿐이다. 견종이 없거나 그림 밖 견종이면 `wearableColours`가 비어 있다(앱: "곧 입을 수 있어요").
 - 슬롯: `feet`, `torso`, `head`. 한 슬롯에 하나. 배경은 `product_account.equippedTheme`(기존 테마와 같은 칸).
 
 ## 매달 구독 선물 (주인님 결정 2026-11-12: 월 구독이 있으니 매달)
 - 한국 시간 달력 달마다 선물이 하나(세트 하나 또는 아이템 하나) 있을 수 있다. 카탈로그 `gifts`의 `yyyy-MM` → `MonthlyGift.set(...)` / `MonthlyGift.item(...)`. 선물이 없는 달은 아무것도 주지 않는다.
-- 지금 정한 달: **2026-12 크리스마스 세트, 2027-01 겨울 세트, 2027-02 설날 세트**. 모든 달은 1일 0시(KST)에 열린다. 2월 선물도 2월 1일에 열리며 설날(2027-02-07, 한국천문연구원 2027 월력요항)은 이름일 뿐이다. 나머지 달은 그림이 준비되면 채운다.
+- 지금 정한 달: **2026-11 단풍, 2026-12 크리스마스, 2027-01 겨울, 2027-02 설날, 2027-03 봄 벚꽃, 2027-04 봄 소풍, 2027-05 어린이날, 2027-06 장마, 2027-07 여름 바다, 2027-08 수박, 2027-09 추석, 2027-10 핼러윈 세트**. 2026-11 단풍은 주인님 결정(2026-11-24)으로 배포 즉시 이번 달 선물이 된다. 모든 달은 1일 0시(KST)에 열린다. 2월 선물도 2월 1일에 열리며 설날(2027-02-07, 한국천문연구원 2027 월력요항)은 이름일 뿐이다. 나머지 달은 그림이 준비되면 채운다.
 - 대상: 그 달에 **구독 또는 평생 이용권이 활성**(서버에 저장된 마지막 결제 관측 기준)인 사용자. 평생 이용권은 만료가 없어 계속 받는다. 취소된 결제는 받지 않는다.
 - 받는 것: 세트면 모든 아이템 × 모든 색 + 세트 배경, 아이템이면 그 아이템의 모든 색. 포인트 원장에는 아무것도 쓰지 않고, 보유 줄의 `source`는 `subscription`, `gift_grant`에 (사용자, 달) 한 줄을 남긴다(고유키라 두 번 주지 않음).
   - 그 달 1일 0시(KST)부터 주기 작업(`grantMonthlyGifts`, 1시간마다, 서버 시작 때도 한 번)이 활성 회원에게 준다. 다시 돌려도 한 번만 준다.

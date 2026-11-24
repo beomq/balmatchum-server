@@ -133,13 +133,17 @@ void main() {
     });
 
     test(
-      'before the holiday window only the winter set shows, at 440P',
+      'in November the winter set and the open autumn gift show, at 440P',
       () async {
         await as('maltese');
 
         final store = await wardrobe(november);
 
-        expect(store.sets.map((s) => s.setId), ['winter']);
+        // Later gifts (holiday, seollal, 2027-03..10) stay hidden until their
+        // month opens.
+        expect(store.sets.map((s) => s.setId), ['winter', 'autumn']);
+        expect(setOf(store, 'autumn').season!.month, '2026-11');
+        expect(setOf(store, 'autumn').season!.open, isTrue);
         final winter = setOf(store, 'winter');
         expect(winter.fullPrice, 550);
         expect(winter.discountPct, 20);
@@ -152,8 +156,23 @@ void main() {
         }
         expect(
           store.items.map((i) => i.itemId),
-          unorderedEquals(['padding', 'beanie', 'booties', 'vest']),
+          unorderedEquals([
+            'padding',
+            'beanie',
+            'booties',
+            'vest',
+            'stripe-tee',
+            'hoodie',
+            'knit-vest',
+            'puffer-vest',
+            'rib-beanie',
+            'bandana',
+            'muffler',
+            'beret',
+          ]),
         );
+        expect(itemOf(store, 'hoodie').sellable, isTrue);
+        expect(itemOf(store, 'muffler').sellable, isFalse);
         expect(itemOf(store, 'padding').price, itemPrice);
         expect(itemOf(store, 'padding').wearableColours, [
           'tomato',
@@ -176,17 +195,20 @@ void main() {
     );
 
     test(
-      'a breed without layered art wears only the baked tomato padding',
+      'every breed has layered art and layers any item in any colour',
       () async {
         await as('beagle');
         await fund(1000);
 
         final store = await wardrobe(november);
-        expect(itemOf(store, 'padding').wearableColours, ['tomato']);
-        expect(itemOf(store, 'beanie').wearableColours, isEmpty);
+        for (final item in store.items.where((i) => i.itemId != 'vest')) {
+          expect(item.wearableColours, item.colours, reason: item.itemId);
+        }
+        // The vest art still exists only for shih-tzu and dachshund.
+        expect(itemOf(store, 'vest').wearableColours, isEmpty);
         expect(
           setOf(store, 'winter').colours.map((c) => c.purchasable),
-          everyElement(isFalse),
+          everyElement(isTrue),
         );
 
         await expectLater(
@@ -194,45 +216,50 @@ void main() {
             november,
             () => endpoints.wardrobe.purchaseItem(
               owner,
-              'beanie',
-              'tomato',
+              'vest',
+              'classic',
               request(),
             ),
           ),
           productError('outfitIncompatible'),
         );
-        await expectLater(
-          at(
-            november,
-            () => endpoints.wardrobe.purchaseItem(
-              owner,
-              'padding',
-              'pine',
-              request(),
-            ),
+        await at(
+          november,
+          () => endpoints.wardrobe.purchaseItem(
+            owner,
+            'padding',
+            'pine',
+            request(),
           ),
-          productError('outfitIncompatible'),
         );
         final bought = await at(
           november,
           () => endpoints.wardrobe.purchaseItem(
             owner,
-            'padding',
+            'beanie',
             'tomato',
             request(),
           ),
+        );
+        await at(
+          november,
+          () =>
+              endpoints.wardrobe.equipItem(owner, 'padding', 'pine', request()),
         );
         final worn = await at(
           november,
           () => endpoints.wardrobe.equipItem(
             owner,
-            'padding',
+            'beanie',
             'tomato',
             request(),
           ),
         );
-        expect(bought.balance, 850);
-        expect(worn.equipped.single.itemId, 'padding');
+        expect(bought.balance, 700);
+        expect(
+          worn.equipped.map((e) => (e.itemId, e.colourId)),
+          unorderedEquals([('padding', 'pine'), ('beanie', 'tomato')]),
+        );
         expect(worn.completeSetId, isNull);
       },
     );
@@ -634,10 +661,11 @@ void main() {
       );
 
       final lastNovemberSecond = kst(2026, 11, 30, 23, 59, 59);
+      expect(await claim(kst(2026, 11, 1)), '2026-11');
       expect(await claim(lastNovemberSecond), isNull);
       expect(
         (await wardrobe(lastNovemberSecond)).sets.map((s) => s.setId),
-        ['winter'],
+        ['winter', 'autumn'],
       );
       expect(await claim(kst(2026, 12, 1)), '2026-12');
       expect(await claim(kst(2026, 12, 31, 23, 59, 59)), isNull);
@@ -645,7 +673,14 @@ void main() {
       expect(await claim(kst(2027, 1, 31, 23, 59, 59)), isNull);
       // Like every month, February's gift opens on the 1st, not on Seollal.
       expect(await claim(kst(2027, 2, 1)), '2027-02');
-
+      final lastFebruarySecond = kst(2027, 2, 28, 23, 59, 59);
+      expect(await claim(lastFebruarySecond), isNull);
+      // Spring is a later gift: hidden until March 1 (KST).
+      expect(
+        (await wardrobe(lastFebruarySecond)).sets.map((s) => s.setId),
+        isNot(contains('spring')),
+      );
+      expect(await claim(kst(2027, 3, 1)), '2027-03');
       final holiday = setOf(
         await wardrobe(kst(2026, 12, 31, 23, 59, 59)),
         'holiday',
@@ -660,26 +695,28 @@ void main() {
         orderBy: (t) => t.month,
       );
       expect(grants.map((g) => (g.month, g.setId)), [
+        ('2026-11', 'autumn'),
         ('2026-12', 'holiday'),
         ('2027-01', 'winter'),
         ('2027-02', 'seollal'),
+        ('2027-03', 'spring'),
       ]);
     });
 
     test('a month without a gift gives nothing and breaks nothing', () async {
       await as('maltese');
-      await subscribe(kst(2027, 1, 1), kst(2027, 6, 1));
-      final march = kst(2027, 3, 10);
+      await subscribe(kst(2027, 1, 1), kst(2028, 6, 1));
+      final december = kst(2027, 12, 10);
 
-      await at(march, () => grantMonthlyGifts(session));
+      await at(december, () => grantMonthlyGifts(session));
       final granted = await at(
-        march,
+        december,
         () => ProductService.run(
           session,
           (s) => s.grantCurrentGift('subscribe'),
         ),
       );
-      final store = await wardrobe(march);
+      final store = await wardrobe(december);
 
       expect(granted, isNull);
       expect(store.subscriber, isTrue);

@@ -10,13 +10,9 @@ const itemPrice = 150;
 const backgroundPrice = 100;
 const setDiscountPct = 20;
 
-/// Breeds with layered art (item layer + cut, combinable with other items).
-const layeredBreeds = ['maltese', 'dachshund', 'golden-retriever'];
-
-/// Breeds whose only art is the tomato padding baked onto the whole dog. It
-/// replaces the sprite, so it is worn alone. Every other item shows
-/// "곧 입을 수 있어요" for them.
-const bakedPaddingBreeds = [
+/// Breeds with layered art (item layer + cut, combinable with other items):
+/// all 30 breeds.
+const layeredBreeds = [
   'alaskan-malamute',
   'beagle',
   'bichon-frise',
@@ -25,11 +21,14 @@ const bakedPaddingBreeds = [
   'bulldog',
   'chihuahua',
   'cocker-spaniel',
+  'dachshund',
   'dalmatian',
   'french-bulldog',
   'german-shepherd',
+  'golden-retriever',
   'jindo',
   'labrador-retriever',
+  'maltese',
   'miniature-pinscher',
   'miniature-schnauzer',
   'norwich-terrier',
@@ -62,6 +61,35 @@ const wardrobeColours = {
   'yeondu': WardrobeColour('연두', 0xFF8CC23A),
   'bunhong': WardrobeColour('분홍', 0xFFE0669A),
   'classic': WardrobeColour('기본', 0xFF6B7F5A),
+  'sakura': WardrobeColour('벚꽃 분홍', 0xFFEE9AB5),
+  'forsythia': WardrobeColour('개나리 노랑', 0xFFF2C340),
+  'lilac': WardrobeColour('라일락', 0xFFB095E0),
+  'mint': WardrobeColour('민트', 0xFF5CC4A8),
+  'cherry': WardrobeColour('체리 빨강', 0xFFD9434F),
+  'sky': WardrobeColour('하늘', 0xFF5FA3DB),
+  'butter': WardrobeColour('버터 노랑', 0xFFEFC75A),
+  'chick': WardrobeColour('병아리 노랑', 0xFFF2C93A),
+  'pink': WardrobeColour('분홍', 0xFFE883AB),
+  'frog': WardrobeColour('개구리 초록', 0xFF5DB548),
+  'ocean': WardrobeColour('바다 파랑', 0xFF2E86C8),
+  'watermelon': WardrobeColour('수박 빨강', 0xFFE2445A),
+  'lemon': WardrobeColour('레몬', 0xFFF2D53A),
+  'yellow-watermelon': WardrobeColour('노란 수박', 0xFFF2C94A),
+  'peach': WardrobeColour('복숭아', 0xFFF59F7E),
+  'melon': WardrobeColour('멜론 연두', 0xFF9CCB4A),
+  'teal': WardrobeColour('청록', 0xFF2A9D8F),
+  'jaju': WardrobeColour('자주', 0xFFA3357E),
+  'ginkgo': WardrobeColour('은행 노랑', 0xFFEEC52E),
+  'purple': WardrobeColour('보라', 0xFF7A45B0),
+  'black': WardrobeColour('밤 검정', 0xFF40364C),
+  'slime': WardrobeColour('슬라임 초록', 0xFF7CC22E),
+  'burgundy': WardrobeColour('버건디', 0xFF9A2842),
+  'maple': WardrobeColour('단풍 주황', 0xFFE0632A),
+  'mustard': WardrobeColour('머스터드', 0xFFD9A92E),
+  'wine': WardrobeColour('와인', 0xFF8E2A46),
+  'olive': WardrobeColour('올리브', 0xFF828E2C),
+  'cream': WardrobeColour('크림', 0xFFDCC5A0),
+  'grey': WardrobeColour('회색', 0xFF80868F),
 };
 
 class WardrobeItem {
@@ -107,9 +135,6 @@ final wardrobeItems = {
     name: '패딩',
     colours: ['tomato', 'pine', 'plum', 'navy'],
     breeds: layeredBreeds,
-    extraBreeds: {
-      for (final breed in bakedPaddingBreeds) breed: ['tomato'],
-    },
   ),
   'beanie': WardrobeItem(
     slot: 'head',
@@ -157,7 +182,72 @@ final wardrobeItems = {
     colours: [vestColourId],
     breeds: ['shih-tzu', 'dachshund'],
   ),
+  for (final MapEntry(key: id, value: (slot, name, colours))
+      in _monthlyGiftItems.entries)
+    id: WardrobeItem(
+      slot: slot,
+      name: name,
+      colours: colours,
+      breeds: layeredBreeds,
+      sellable: false,
+    ),
+  for (final MapEntry(key: id, value: (slot, name)) in _basicItems.entries)
+    id: WardrobeItem(
+      slot: slot,
+      name: name,
+      colours: _basicColours,
+      breeds: layeredBreeds,
+    ),
 };
+
+/// Gift-only items of the monthly sets: id -> (slot, name, colours).
+const _monthlyGiftItems = {
+  'knit': ('torso', '봄 니트', ['sakura', 'forsythia', 'lilac', 'mint']),
+  'blossom': ('head', '벚꽃 머리핀', ['sakura', 'forsythia', 'lilac', 'mint']),
+  'overall': ('torso', '체크 멜빵 조끼', ['cherry', 'sky', 'yeondu', 'butter']),
+  'flower-crown': ('head', '꽃 화관', ['cherry', 'sky', 'yeondu', 'butter']),
+  'smock': ('torso', '세일러 원복', ['chick', 'sky', 'pink', 'yeondu']),
+  'kinder-hat': ('head', '유치원 모자', ['chick', 'sky', 'pink', 'yeondu']),
+  'raincoat': ('torso', '우비', ['chick', 'sky', 'frog', 'tomato']),
+  'rain-hat': ('head', '방수 모자', ['chick', 'sky', 'frog', 'tomato']),
+  'rashguard': (
+    'torso',
+    '줄무늬 래시가드',
+    ['ocean', 'watermelon', 'lemon', 'mint'],
+  ),
+  'straw-hat': ('head', '밀짚모자', ['ocean', 'watermelon', 'lemon', 'mint']),
+  'melon-vest': (
+    'torso',
+    '수박 조끼',
+    ['watermelon', 'yellow-watermelon', 'peach', 'melon'],
+  ),
+  'melon-clip': (
+    'head',
+    '수박 머리핀',
+    ['watermelon', 'yellow-watermelon', 'peach', 'melon'],
+  ),
+  'baeja': ('torso', '배자', ['teal', 'jaju', 'ginkgo', 'jjok']),
+  'rabbit-band': ('head', '달토끼 머리띠', ['teal', 'jaju', 'ginkgo', 'jjok']),
+  'witch-cape': (
+    'torso',
+    '핼러윈 망토',
+    ['purple', 'black', 'slime', 'burgundy'],
+  ),
+  'witch-hat': ('head', '마녀 모자', ['purple', 'black', 'slime', 'burgundy']),
+  'muffler': ('torso', '단풍 머플러', ['maple', 'mustard', 'wine', 'olive']),
+  'beret': ('head', '베레', ['maple', 'mustard', 'wine', 'olive']),
+};
+
+/// Always-on basics sold in [_basicColours]: id -> (slot, name).
+const _basicItems = {
+  'stripe-tee': ('torso', '줄무늬 티셔츠'),
+  'hoodie': ('torso', '후드티'),
+  'knit-vest': ('torso', '니트 조끼'),
+  'puffer-vest': ('torso', '패딩 조끼'),
+  'rib-beanie': ('head', '기본 비니'),
+  'bandana': ('torso', '반다나'),
+};
+const _basicColours = ['cream', 'navy', 'grey', 'tomato'];
 
 class WardrobeBackground {
   const WardrobeBackground(this.name, {this.price = backgroundPrice});
@@ -176,6 +266,15 @@ const wardrobeBackgrounds = {
   'winter-dusk': WardrobeBackground('겨울 저녁'),
   'holiday-night': WardrobeBackground('크리스마스 밤'),
   'seollal-morning': WardrobeBackground('설날 아침'),
+  'spring-blossom': WardrobeBackground('벚꽃 마당'),
+  'picnic-meadow': WardrobeBackground('봄 소풍 잔디'),
+  'kids-day-park': WardrobeBackground('어린이날 마당'),
+  'monsoon-rain': WardrobeBackground('장마 마당'),
+  'summer-beach': WardrobeBackground('한여름 물놀이'),
+  'summer-night': WardrobeBackground('여름밤 마당'),
+  'chuseok-moon': WardrobeBackground('보름달 밤'),
+  'halloween-dusk': WardrobeBackground('핼러윈 저녁'),
+  'autumn-maple': WardrobeBackground('단풍 마당'),
 };
 
 /// A window as KST wall-clock instants, stored in UTC.
@@ -309,14 +408,96 @@ class WardrobeCatalog {
         effect: 'seollal',
         sellable: false,
       ),
+      'spring': WardrobeSet(
+        name: '봄 벚꽃 세트',
+        items: ['knit', 'blossom'],
+        background: 'spring-blossom',
+        colours: ['sakura', 'forsythia', 'lilac', 'mint'],
+        effect: 'spring',
+        sellable: false,
+      ),
+      'picnic': WardrobeSet(
+        name: '봄 소풍 세트',
+        items: ['overall', 'flower-crown'],
+        background: 'picnic-meadow',
+        colours: ['cherry', 'sky', 'yeondu', 'butter'],
+        effect: 'picnic',
+        sellable: false,
+      ),
+      'kids-day': WardrobeSet(
+        name: '어린이날 세트',
+        items: ['smock', 'kinder-hat'],
+        background: 'kids-day-park',
+        colours: ['chick', 'sky', 'pink', 'yeondu'],
+        effect: 'kids-day',
+        sellable: false,
+      ),
+      'monsoon': WardrobeSet(
+        name: '장마 세트',
+        items: ['raincoat', 'rain-hat'],
+        background: 'monsoon-rain',
+        colours: ['chick', 'sky', 'frog', 'tomato'],
+        effect: 'monsoon',
+        sellable: false,
+      ),
+      'sea': WardrobeSet(
+        name: '여름 바다 세트',
+        items: ['rashguard', 'straw-hat'],
+        background: 'summer-beach',
+        colours: ['ocean', 'watermelon', 'lemon', 'mint'],
+        effect: 'summer',
+        sellable: false,
+      ),
+      'watermelon': WardrobeSet(
+        name: '수박 세트',
+        items: ['melon-vest', 'melon-clip'],
+        background: 'summer-night',
+        colours: ['watermelon', 'yellow-watermelon', 'peach', 'melon'],
+        effect: 'summer-night',
+        sellable: false,
+      ),
+      'chuseok': WardrobeSet(
+        name: '추석 세트',
+        items: ['baeja', 'rabbit-band'],
+        background: 'chuseok-moon',
+        colours: ['teal', 'jaju', 'ginkgo', 'jjok'],
+        effect: 'chuseok',
+        sellable: false,
+      ),
+      'halloween': WardrobeSet(
+        name: '핼러윈 세트',
+        items: ['witch-cape', 'witch-hat'],
+        background: 'halloween-dusk',
+        colours: ['purple', 'black', 'slime', 'burgundy'],
+        effect: 'halloween',
+        sellable: false,
+      ),
+      'autumn': WardrobeSet(
+        name: '단풍 세트',
+        items: ['muffler', 'beret'],
+        background: 'autumn-maple',
+        colours: ['maple', 'mustard', 'wine', 'olive'],
+        effect: 'autumn',
+        sellable: false,
+      ),
     },
-    // Months with art so far; an art lane fills the rest.
+    // Every gift opens on the 1st at 00:00 KST. November 2026 ships now
+    // (owner, 2026-11-24); the rest stay closed until their month.
     gifts: {
+      '2026-11': MonthlyGift.set('autumn'),
       '2026-12': MonthlyGift.set('holiday'),
       '2027-01': MonthlyGift.set('winter'),
       // Opens Feb 1 like every month. Seollal 2027 is Feb 7 (KASI 2027
       // 월력요항, korea.kr press release newsId=156768474).
       '2027-02': MonthlyGift.set('seollal'),
+      '2027-03': MonthlyGift.set('spring'),
+      '2027-04': MonthlyGift.set('picnic'),
+      '2027-05': MonthlyGift.set('kids-day'),
+      '2027-06': MonthlyGift.set('monsoon'),
+      '2027-07': MonthlyGift.set('sea'),
+      '2027-08': MonthlyGift.set('watermelon'),
+      '2027-09': MonthlyGift.set('chuseok'),
+      '2027-10': MonthlyGift.set('halloween'),
     },
   );
 
