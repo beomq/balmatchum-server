@@ -1,0 +1,9 @@
+### A one-time S3 upload: PUT the JPEG bytes to [uploadUrl] with exactly
+### [headers] before [expiresAt], then call confirmUpload with [photoId].
+class: PhotoUploadTicket
+fields:
+  photoId: UuidValue
+  uploadUrl: String
+  method: String
+  headers: Map<String, String>
+  expiresAt: DateTime

@@ -34,10 +34,12 @@ import '../auth/kakao_endpoint.dart' as _if7olpvl;
 import '../auth/naver_endpoint.dart' as _ijj6xngx;
 import '../billing/billing_endpoint.dart' as _irc9lmoc;
 import '../greetings/greeting_endpoint.dart' as _il624ik7;
+import '../photos/photo_endpoint.dart' as _iruuo3h9;
 import '../product/product_endpoint.dart' as _itexbxyn;
 import '../profile/profile_endpoint.dart' as _i6ky944g;
 import '../quiz/quiz_endpoint.dart' as _iskif4sw;
 import '../records/records_endpoint.dart' as _imwf5oma;
+import '../wardrobe/wardrobe_endpoint.dart' as _ia3wvjeg;
 export 'future_calls.dart' show ServerpodFutureCallsGetter;
 
 class Endpoints extends _is.EndpointDispatch {
@@ -92,6 +94,12 @@ class Endpoints extends _is.EndpointDispatch {
           'greeting',
           null,
         ),
+      'photo': _iruuo3h9.PhotoEndpoint()
+        ..initialize(
+          server,
+          'photo',
+          null,
+        ),
       'product': _itexbxyn.ProductEndpoint()
         ..initialize(
           server,
@@ -114,6 +122,12 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'records',
+          null,
+        ),
+      'wardrobe': _ia3wvjeg.WardrobeEndpoint()
+        ..initialize(
+          server,
+          'wardrobe',
           null,
         ),
     };
@@ -562,6 +576,109 @@ class Endpoints extends _is.EndpointDispatch {
                   (endpoints['greeting'] as _il624ik7.GreetingEndpoint).hello(
                     session,
                     params['name'],
+                  ),
+        ),
+      },
+    );
+    connectors['photo'] = _is.EndpointConnector(
+      name: 'photo',
+      endpoint: endpoints['photo']!,
+      methodConnectors: {
+        'createUpload': _is.MethodConnector(
+          name: 'createUpload',
+          params: {
+            'contentType': _is.ParameterDescription(
+              name: 'contentType',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'byteSize': _is.ParameterDescription(
+              name: 'byteSize',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'kind': _is.ParameterDescription(
+              name: 'kind',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+            'originalId': _is.ParameterDescription(
+              name: 'originalId',
+              type: _is.getType<_is.UuidValue?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['photo'] as _iruuo3h9.PhotoEndpoint).createUpload(
+                    session,
+                    params['contentType'],
+                    params['byteSize'],
+                    kind: params['kind'],
+                    originalId: params['originalId'],
+                  ),
+        ),
+        'confirmUpload': _is.MethodConnector(
+          name: 'confirmUpload',
+          params: {
+            'photoId': _is.ParameterDescription(
+              name: 'photoId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'width': _is.ParameterDescription(
+              name: 'width',
+              type: _is.getType<int?>(),
+              nullable: true,
+            ),
+            'height': _is.ParameterDescription(
+              name: 'height',
+              type: _is.getType<int?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['photo'] as _iruuo3h9.PhotoEndpoint).confirmUpload(
+                    session,
+                    params['photoId'],
+                    params['width'],
+                    params['height'],
+                  ),
+        ),
+        'listMine': _is.MethodConnector(
+          name: 'listMine',
+          params: {},
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['photo'] as _iruuo3h9.PhotoEndpoint)
+                  .listMine(session),
+        ),
+        'deletePhoto': _is.MethodConnector(
+          name: 'deletePhoto',
+          params: {
+            'photoId': _is.ParameterDescription(
+              name: 'photoId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['photo'] as _iruuo3h9.PhotoEndpoint).deletePhoto(
+                    session,
+                    params['photoId'],
                   ),
         ),
       },
@@ -1348,6 +1465,246 @@ class Endpoints extends _is.EndpointDispatch {
                   (endpoints['records'] as _imwf5oma.RecordsEndpoint).getMine(
                     session,
                     params['recordId'],
+                  ),
+        ),
+      },
+    );
+    connectors['wardrobe'] = _is.EndpointConnector(
+      name: 'wardrobe',
+      endpoint: endpoints['wardrobe']!,
+      methodConnectors: {
+        'getWardrobe': _is.MethodConnector(
+          name: 'getWardrobe',
+          params: {},
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['wardrobe'] as _ia3wvjeg.WardrobeEndpoint)
+                  .getWardrobe(session),
+        ),
+        'purchaseItem': _is.MethodConnector(
+          name: 'purchaseItem',
+          params: {
+            'itemId': _is.ParameterDescription(
+              name: 'itemId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'colourId': _is.ParameterDescription(
+              name: 'colourId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'requestId': _is.ParameterDescription(
+              name: 'requestId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['wardrobe'] as _ia3wvjeg.WardrobeEndpoint)
+                  .purchaseItem(
+                    session,
+                    params['itemId'],
+                    params['colourId'],
+                    params['requestId'],
+                  ),
+        ),
+        'purchaseSet': _is.MethodConnector(
+          name: 'purchaseSet',
+          params: {
+            'setId': _is.ParameterDescription(
+              name: 'setId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'colourId': _is.ParameterDescription(
+              name: 'colourId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'requestId': _is.ParameterDescription(
+              name: 'requestId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['wardrobe'] as _ia3wvjeg.WardrobeEndpoint)
+                  .purchaseSet(
+                    session,
+                    params['setId'],
+                    params['colourId'],
+                    params['requestId'],
+                  ),
+        ),
+        'purchaseBackground': _is.MethodConnector(
+          name: 'purchaseBackground',
+          params: {
+            'backgroundId': _is.ParameterDescription(
+              name: 'backgroundId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'requestId': _is.ParameterDescription(
+              name: 'requestId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['wardrobe'] as _ia3wvjeg.WardrobeEndpoint)
+                  .purchaseBackground(
+                    session,
+                    params['backgroundId'],
+                    params['requestId'],
+                  ),
+        ),
+        'equipItem': _is.MethodConnector(
+          name: 'equipItem',
+          params: {
+            'itemId': _is.ParameterDescription(
+              name: 'itemId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'colourId': _is.ParameterDescription(
+              name: 'colourId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'requestId': _is.ParameterDescription(
+              name: 'requestId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['wardrobe'] as _ia3wvjeg.WardrobeEndpoint)
+                  .equipItem(
+                    session,
+                    params['itemId'],
+                    params['colourId'],
+                    params['requestId'],
+                  ),
+        ),
+        'unequipSlot': _is.MethodConnector(
+          name: 'unequipSlot',
+          params: {
+            'slot': _is.ParameterDescription(
+              name: 'slot',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'requestId': _is.ParameterDescription(
+              name: 'requestId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['wardrobe'] as _ia3wvjeg.WardrobeEndpoint)
+                  .unequipSlot(
+                    session,
+                    params['slot'],
+                    params['requestId'],
+                  ),
+        ),
+        'equipBackground': _is.MethodConnector(
+          name: 'equipBackground',
+          params: {
+            'backgroundId': _is.ParameterDescription(
+              name: 'backgroundId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'requestId': _is.ParameterDescription(
+              name: 'requestId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['wardrobe'] as _ia3wvjeg.WardrobeEndpoint)
+                  .equipBackground(
+                    session,
+                    params['backgroundId'],
+                    params['requestId'],
+                  ),
+        ),
+        'equipSet': _is.MethodConnector(
+          name: 'equipSet',
+          params: {
+            'setId': _is.ParameterDescription(
+              name: 'setId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'colourId': _is.ParameterDescription(
+              name: 'colourId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'requestId': _is.ParameterDescription(
+              name: 'requestId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['wardrobe'] as _ia3wvjeg.WardrobeEndpoint)
+                  .equipSet(
+                    session,
+                    params['setId'],
+                    params['colourId'],
+                    params['requestId'],
+                  ),
+        ),
+        'unequipSet': _is.MethodConnector(
+          name: 'unequipSet',
+          params: {
+            'setId': _is.ParameterDescription(
+              name: 'setId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'requestId': _is.ParameterDescription(
+              name: 'requestId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['wardrobe'] as _ia3wvjeg.WardrobeEndpoint)
+                  .unequipSet(
+                    session,
+                    params['setId'],
+                    params['requestId'],
                   ),
         ),
       },

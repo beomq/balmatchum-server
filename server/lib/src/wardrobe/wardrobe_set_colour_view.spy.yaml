@@ -1,0 +1,12 @@
+### A set in one colour, priced for this user.
+class: WardrobeSetColourView
+fields:
+  colourId: String
+  ### Points to pay now: 20% off the parts not owned yet. 0 when all owned.
+  price: int
+  ### Parts (items + background) still missing in this colour.
+  missingParts: int
+  ### Can be bought with points right now.
+  purchasable: bool
+  ### The profile's breed can wear every item of the set in this colour.
+  wearable: bool

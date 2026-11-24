@@ -26,6 +26,10 @@ import 'package:balmatchum_client/src/protocol/billing/purchase_input.dart'
     as _i833pumr;
 import 'package:balmatchum_client/src/protocol/greetings/greeting.dart'
     as _ipkbb44w;
+import 'package:balmatchum_client/src/protocol/photos/photo_upload_ticket.dart'
+    as _ihn2qlvs;
+import 'package:balmatchum_client/src/protocol/photos/photo_view.dart'
+    as _i8aiv0pd;
 import 'package:balmatchum_client/src/protocol/product/daily_quiz.dart'
     as _ig075m1r;
 import 'package:balmatchum_client/src/protocol/product/daily_record.dart'
@@ -56,6 +60,8 @@ import 'package:balmatchum_client/src/protocol/records/gps_record_input.dart'
     as _i9inenda;
 import 'package:balmatchum_client/src/protocol/records/record_receipt.dart'
     as _ixlh9bse;
+import 'package:balmatchum_client/src/protocol/wardrobe/wardrobe_store.dart'
+    as _iurrerqh;
 import 'package:http/http.dart' as _i85jenna;
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as _iacc;
@@ -319,6 +325,70 @@ class EndpointGreeting extends _isc.EndpointRef {
         'greeting',
         'hello',
         {'name': name},
+      );
+}
+
+/// {@category Endpoint}
+class EndpointPhoto extends _isc.EndpointRef {
+  EndpointPhoto(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'photo';
+
+  /// Reserves a photo and returns where to PUT its bytes. S3 itself rejects a
+  /// body of another length or content type because both headers are signed.
+  ///
+  /// [kind] is `original` (default) or `composite`; a composite may name the
+  /// caller's own [originalId] it was made from. Both count toward the same
+  /// limits.
+  _ida.Future<_ihn2qlvs.PhotoUploadTicket> createUpload(
+    String contentType,
+    int byteSize, {
+    String? kind,
+    _isc.UuidValue? originalId,
+  }) => caller.callServerEndpoint<_ihn2qlvs.PhotoUploadTicket>(
+    'photo',
+    'createUpload',
+    {
+      'contentType': contentType,
+      'byteSize': byteSize,
+      'kind': kind,
+      'originalId': originalId,
+    },
+  );
+
+  /// Marks the photo ready once S3 holds exactly the reserved object.
+  /// Repeating it for a ready photo returns the same photo.
+  _ida.Future<_i8aiv0pd.PhotoView> confirmUpload(
+    _isc.UuidValue photoId,
+    int? width,
+    int? height,
+  ) => caller.callServerEndpoint<_i8aiv0pd.PhotoView>(
+    'photo',
+    'confirmUpload',
+    {
+      'photoId': photoId,
+      'width': width,
+      'height': height,
+    },
+  );
+
+  /// Confirmed photos, newest first, each with a fresh short-lived GET URL.
+  _ida.Future<List<_i8aiv0pd.PhotoView>> listMine() =>
+      caller.callServerEndpoint<List<_i8aiv0pd.PhotoView>>(
+        'photo',
+        'listMine',
+        {},
+      );
+
+  /// Removes the object first: a row is never deleted while its object may
+  /// remain, so a failed call can simply be retried. Composites made from a
+  /// deleted original stay, unlinked.
+  _ida.Future<void> deletePhoto(_isc.UuidValue photoId) =>
+      caller.callServerEndpoint<void>(
+        'photo',
+        'deletePhoto',
+        {'photoId': photoId},
       );
 }
 
@@ -707,6 +777,127 @@ class EndpointRecords extends _isc.EndpointRef {
       );
 }
 
+/// Wardrobe: items per colour, sets, backgrounds and what is worn.
+/// Every write takes a requestId and replays its first result.
+/// {@category Endpoint}
+class EndpointWardrobe extends _isc.EndpointRef {
+  EndpointWardrobe(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'wardrobe';
+
+  _ida.Future<_iurrerqh.WardrobeStore> getWardrobe() =>
+      caller.callServerEndpoint<_iurrerqh.WardrobeStore>(
+        'wardrobe',
+        'getWardrobe',
+        {},
+      );
+
+  _ida.Future<_iurrerqh.WardrobeStore> purchaseItem(
+    String itemId,
+    String colourId,
+    String requestId,
+  ) => caller.callServerEndpoint<_iurrerqh.WardrobeStore>(
+    'wardrobe',
+    'purchaseItem',
+    {
+      'itemId': itemId,
+      'colourId': colourId,
+      'requestId': requestId,
+    },
+  );
+
+  _ida.Future<_iurrerqh.WardrobeStore> purchaseSet(
+    String setId,
+    String colourId,
+    String requestId,
+  ) => caller.callServerEndpoint<_iurrerqh.WardrobeStore>(
+    'wardrobe',
+    'purchaseSet',
+    {
+      'setId': setId,
+      'colourId': colourId,
+      'requestId': requestId,
+    },
+  );
+
+  _ida.Future<_iurrerqh.WardrobeStore> purchaseBackground(
+    String backgroundId,
+    String requestId,
+  ) => caller.callServerEndpoint<_iurrerqh.WardrobeStore>(
+    'wardrobe',
+    'purchaseBackground',
+    {
+      'backgroundId': backgroundId,
+      'requestId': requestId,
+    },
+  );
+
+  _ida.Future<_iurrerqh.WardrobeStore> equipItem(
+    String itemId,
+    String colourId,
+    String requestId,
+  ) => caller.callServerEndpoint<_iurrerqh.WardrobeStore>(
+    'wardrobe',
+    'equipItem',
+    {
+      'itemId': itemId,
+      'colourId': colourId,
+      'requestId': requestId,
+    },
+  );
+
+  _ida.Future<_iurrerqh.WardrobeStore> unequipSlot(
+    String slot,
+    String requestId,
+  ) => caller.callServerEndpoint<_iurrerqh.WardrobeStore>(
+    'wardrobe',
+    'unequipSlot',
+    {
+      'slot': slot,
+      'requestId': requestId,
+    },
+  );
+
+  _ida.Future<_iurrerqh.WardrobeStore> equipBackground(
+    String backgroundId,
+    String requestId,
+  ) => caller.callServerEndpoint<_iurrerqh.WardrobeStore>(
+    'wardrobe',
+    'equipBackground',
+    {
+      'backgroundId': backgroundId,
+      'requestId': requestId,
+    },
+  );
+
+  _ida.Future<_iurrerqh.WardrobeStore> equipSet(
+    String setId,
+    String colourId,
+    String requestId,
+  ) => caller.callServerEndpoint<_iurrerqh.WardrobeStore>(
+    'wardrobe',
+    'equipSet',
+    {
+      'setId': setId,
+      'colourId': colourId,
+      'requestId': requestId,
+    },
+  );
+
+  _ida.Future<_iurrerqh.WardrobeStore> unequipSet(
+    String setId,
+    String requestId,
+  ) => caller.callServerEndpoint<_iurrerqh.WardrobeStore>(
+    'wardrobe',
+    'unequipSet',
+    {
+      'setId': setId,
+      'requestId': requestId,
+    },
+  );
+}
+
 class Modules {
   Modules(Client client) {
     serverpod_auth_core = _iacc.Caller(client);
@@ -753,10 +944,12 @@ class Client extends _isc.ServerpodClientShared {
     naver = EndpointNaver(this);
     billing = EndpointBilling(this);
     greeting = EndpointGreeting(this);
+    photo = EndpointPhoto(this);
     product = EndpointProduct(this);
     profile = EndpointProfile(this);
     quiz = EndpointQuiz(this);
     records = EndpointRecords(this);
+    wardrobe = EndpointWardrobe(this);
     modules = Modules(this);
   }
 
@@ -776,6 +969,8 @@ class Client extends _isc.ServerpodClientShared {
 
   late final EndpointGreeting greeting;
 
+  late final EndpointPhoto photo;
+
   late final EndpointProduct product;
 
   late final EndpointProfile profile;
@@ -783,6 +978,8 @@ class Client extends _isc.ServerpodClientShared {
   late final EndpointQuiz quiz;
 
   late final EndpointRecords records;
+
+  late final EndpointWardrobe wardrobe;
 
   late final Modules modules;
 
@@ -796,10 +993,12 @@ class Client extends _isc.ServerpodClientShared {
     'naver': naver,
     'billing': billing,
     'greeting': greeting,
+    'photo': photo,
     'product': product,
     'profile': profile,
     'quiz': quiz,
     'records': records,
+    'wardrobe': wardrobe,
   };
 
   @override

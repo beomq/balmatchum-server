@@ -9,6 +9,7 @@ import '../profile/profile_service.dart';
 import 'outfit_service.dart';
 import 'product_service.dart';
 import 'quiz_theme_service.dart';
+import '../wardrobe/wardrobe_service.dart';
 
 class ProductEndpoint extends Endpoint {
   @override
@@ -169,6 +170,7 @@ Future<HomeSnapshot> homeSnapshot(
     wallet: wallet,
     themes: await s.themes(),
     outfits: await s.outfits(),
+    wardrobe: await s.wardrobe(),
     // Same window as the app's StepStreak.window: today and 30 days before.
     recentDays: await s.listDays(
       localDate(dayStart(today).subtract(const Duration(days: 30))),

@@ -11,6 +11,8 @@
 // ignore_for_file: dead_code, unnecessary_type_check
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:balmatchum_client/src/protocol/photos/photo_view.dart'
+    as _i8aiv0pd;
 import 'package:balmatchum_client/src/protocol/product/daily_quiz.dart'
     as _ig075m1r;
 import 'package:balmatchum_client/src/protocol/product/daily_record.dart'
@@ -35,6 +37,9 @@ import 'billing/purchase_input.dart' as _i8awtsqn;
 import 'billing/purchase_product.dart' as _iiesu012;
 import 'billing/purchase_view.dart' as _i0fbcnhc;
 import 'greetings/greeting.dart' as _izw8z7ou;
+import 'photos/photo_exception.dart' as _iigpd3j4;
+import 'photos/photo_upload_ticket.dart' as _ilhfcnh4;
+import 'photos/photo_view.dart' as _i00aw8k6;
 import 'product/daily_quiz.dart' as _i94q6xjz;
 import 'product/daily_record.dart' as _ie37ihl8;
 import 'product/daily_step_input.dart' as _i4z7ptb2;
@@ -58,6 +63,14 @@ import 'records/gps_record_input.dart' as _ijl0tr6b;
 import 'records/record_exception.dart' as _ihyrwhon;
 import 'records/record_receipt.dart' as _ipyparvp;
 import 'records/route_point.dart' as _ir7rvxr1;
+import 'wardrobe/wardrobe_background_view.dart' as _it8ud1gq;
+import 'wardrobe/wardrobe_colour_view.dart' as _ixlxdrib;
+import 'wardrobe/wardrobe_equip_view.dart' as _ikwt7tme;
+import 'wardrobe/wardrobe_item_view.dart' as _iupll8tb;
+import 'wardrobe/wardrobe_season_view.dart' as _iioemq8t;
+import 'wardrobe/wardrobe_set_colour_view.dart' as _icerumb8;
+import 'wardrobe/wardrobe_set_view.dart' as _ick58lqq;
+import 'wardrobe/wardrobe_store.dart' as _i52ngzd4;
 export 'ads/ad_exception.dart';
 export 'ads/ad_intent.dart';
 export 'ads/ad_platform.dart';
@@ -71,6 +84,9 @@ export 'billing/purchase_input.dart';
 export 'billing/purchase_product.dart';
 export 'billing/purchase_view.dart';
 export 'greetings/greeting.dart';
+export 'photos/photo_exception.dart';
+export 'photos/photo_upload_ticket.dart';
+export 'photos/photo_view.dart';
 export 'product/daily_quiz.dart';
 export 'product/daily_record.dart';
 export 'product/daily_step_input.dart';
@@ -94,6 +110,14 @@ export 'records/gps_record_input.dart';
 export 'records/record_exception.dart';
 export 'records/record_receipt.dart';
 export 'records/route_point.dart';
+export 'wardrobe/wardrobe_background_view.dart';
+export 'wardrobe/wardrobe_colour_view.dart';
+export 'wardrobe/wardrobe_equip_view.dart';
+export 'wardrobe/wardrobe_item_view.dart';
+export 'wardrobe/wardrobe_season_view.dart';
+export 'wardrobe/wardrobe_set_colour_view.dart';
+export 'wardrobe/wardrobe_set_view.dart';
+export 'wardrobe/wardrobe_store.dart';
 export 'client.dart';
 
 class Protocol extends _isc.SerializationManager {
@@ -169,6 +193,15 @@ class Protocol extends _isc.SerializationManager {
     if (t == _izw8z7ou.Greeting) {
       return _izw8z7ou.Greeting.fromJson(data) as T;
     }
+    if (t == _iigpd3j4.PhotoException) {
+      return _iigpd3j4.PhotoException.fromJson(data) as T;
+    }
+    if (t == _ilhfcnh4.PhotoUploadTicket) {
+      return _ilhfcnh4.PhotoUploadTicket.fromJson(data) as T;
+    }
+    if (t == _i00aw8k6.PhotoView) {
+      return _i00aw8k6.PhotoView.fromJson(data) as T;
+    }
     if (t == _i94q6xjz.DailyQuiz) {
       return _i94q6xjz.DailyQuiz.fromJson(data) as T;
     }
@@ -238,6 +271,30 @@ class Protocol extends _isc.SerializationManager {
     if (t == _ir7rvxr1.RoutePoint) {
       return _ir7rvxr1.RoutePoint.fromJson(data) as T;
     }
+    if (t == _it8ud1gq.WardrobeBackgroundView) {
+      return _it8ud1gq.WardrobeBackgroundView.fromJson(data) as T;
+    }
+    if (t == _ixlxdrib.WardrobeColourView) {
+      return _ixlxdrib.WardrobeColourView.fromJson(data) as T;
+    }
+    if (t == _ikwt7tme.WardrobeEquipView) {
+      return _ikwt7tme.WardrobeEquipView.fromJson(data) as T;
+    }
+    if (t == _iupll8tb.WardrobeItemView) {
+      return _iupll8tb.WardrobeItemView.fromJson(data) as T;
+    }
+    if (t == _iioemq8t.WardrobeSeasonView) {
+      return _iioemq8t.WardrobeSeasonView.fromJson(data) as T;
+    }
+    if (t == _icerumb8.WardrobeSetColourView) {
+      return _icerumb8.WardrobeSetColourView.fromJson(data) as T;
+    }
+    if (t == _ick58lqq.WardrobeSetView) {
+      return _ick58lqq.WardrobeSetView.fromJson(data) as T;
+    }
+    if (t == _i52ngzd4.WardrobeStore) {
+      return _i52ngzd4.WardrobeStore.fromJson(data) as T;
+    }
     if (t == _isc.getType<_i8mgtt64.AdException?>()) {
       return (data != null ? _i8mgtt64.AdException.fromJson(data) : null) as T;
     }
@@ -288,6 +345,17 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _isc.getType<_izw8z7ou.Greeting?>()) {
       return (data != null ? _izw8z7ou.Greeting.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_iigpd3j4.PhotoException?>()) {
+      return (data != null ? _iigpd3j4.PhotoException.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_ilhfcnh4.PhotoUploadTicket?>()) {
+      return (data != null ? _ilhfcnh4.PhotoUploadTicket.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_i00aw8k6.PhotoView?>()) {
+      return (data != null ? _i00aw8k6.PhotoView.fromJson(data) : null) as T;
     }
     if (t == _isc.getType<_i94q6xjz.DailyQuiz?>()) {
       return (data != null ? _i94q6xjz.DailyQuiz.fromJson(data) : null) as T;
@@ -364,6 +432,42 @@ class Protocol extends _isc.SerializationManager {
     if (t == _isc.getType<_ir7rvxr1.RoutePoint?>()) {
       return (data != null ? _ir7rvxr1.RoutePoint.fromJson(data) : null) as T;
     }
+    if (t == _isc.getType<_it8ud1gq.WardrobeBackgroundView?>()) {
+      return (data != null
+              ? _it8ud1gq.WardrobeBackgroundView.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_ixlxdrib.WardrobeColourView?>()) {
+      return (data != null ? _ixlxdrib.WardrobeColourView.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_ikwt7tme.WardrobeEquipView?>()) {
+      return (data != null ? _ikwt7tme.WardrobeEquipView.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_iupll8tb.WardrobeItemView?>()) {
+      return (data != null ? _iupll8tb.WardrobeItemView.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_iioemq8t.WardrobeSeasonView?>()) {
+      return (data != null ? _iioemq8t.WardrobeSeasonView.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_icerumb8.WardrobeSetColourView?>()) {
+      return (data != null
+              ? _icerumb8.WardrobeSetColourView.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_ick58lqq.WardrobeSetView?>()) {
+      return (data != null ? _ick58lqq.WardrobeSetView.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_i52ngzd4.WardrobeStore?>()) {
+      return (data != null ? _i52ngzd4.WardrobeStore.fromJson(data) : null)
+          as T;
+    }
     if (t == List<_i0fbcnhc.PurchaseView>) {
       return (data as List)
               .map((e) => deserialize<_i0fbcnhc.PurchaseView>(e))
@@ -374,6 +478,12 @@ class Protocol extends _isc.SerializationManager {
       return (data as List)
               .map((e) => deserialize<_iiesu012.PurchaseProduct>(e))
               .toList()
+          as T;
+    }
+    if (t == Map<String, String>) {
+      return (data as Map).map(
+            (k, v) => MapEntry(deserialize<String>(k), deserialize<String>(v)),
+          )
           as T;
     }
     if (t == List<String>) {
@@ -423,6 +533,48 @@ class Protocol extends _isc.SerializationManager {
               .toList()
           as T;
     }
+    if (t == List<_icerumb8.WardrobeSetColourView>) {
+      return (data as List)
+              .map((e) => deserialize<_icerumb8.WardrobeSetColourView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_ixlxdrib.WardrobeColourView>) {
+      return (data as List)
+              .map((e) => deserialize<_ixlxdrib.WardrobeColourView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_iupll8tb.WardrobeItemView>) {
+      return (data as List)
+              .map((e) => deserialize<_iupll8tb.WardrobeItemView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_it8ud1gq.WardrobeBackgroundView>) {
+      return (data as List)
+              .map((e) => deserialize<_it8ud1gq.WardrobeBackgroundView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_ick58lqq.WardrobeSetView>) {
+      return (data as List)
+              .map((e) => deserialize<_ick58lqq.WardrobeSetView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_ikwt7tme.WardrobeEquipView>) {
+      return (data as List)
+              .map((e) => deserialize<_ikwt7tme.WardrobeEquipView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i8aiv0pd.PhotoView>) {
+      return (data as List)
+              .map((e) => deserialize<_i8aiv0pd.PhotoView>(e))
+              .toList()
+          as T;
+    }
     if (t == List<_i6924b5v.DailyRecord>) {
       return (data as List)
               .map((e) => deserialize<_i6924b5v.DailyRecord>(e))
@@ -465,6 +617,9 @@ class Protocol extends _isc.SerializationManager {
       _iiesu012.PurchaseProduct => 'PurchaseProduct',
       _i0fbcnhc.PurchaseView => 'PurchaseView',
       _izw8z7ou.Greeting => 'Greeting',
+      _iigpd3j4.PhotoException => 'PhotoException',
+      _ilhfcnh4.PhotoUploadTicket => 'PhotoUploadTicket',
+      _i00aw8k6.PhotoView => 'PhotoView',
       _i94q6xjz.DailyQuiz => 'DailyQuiz',
       _ie37ihl8.DailyRecord => 'DailyRecord',
       _i4z7ptb2.DailyStepInput => 'DailyStepInput',
@@ -488,6 +643,14 @@ class Protocol extends _isc.SerializationManager {
       _ihyrwhon.RecordException => 'RecordException',
       _ipyparvp.RecordReceipt => 'RecordReceipt',
       _ir7rvxr1.RoutePoint => 'RoutePoint',
+      _it8ud1gq.WardrobeBackgroundView => 'WardrobeBackgroundView',
+      _ixlxdrib.WardrobeColourView => 'WardrobeColourView',
+      _ikwt7tme.WardrobeEquipView => 'WardrobeEquipView',
+      _iupll8tb.WardrobeItemView => 'WardrobeItemView',
+      _iioemq8t.WardrobeSeasonView => 'WardrobeSeasonView',
+      _icerumb8.WardrobeSetColourView => 'WardrobeSetColourView',
+      _ick58lqq.WardrobeSetView => 'WardrobeSetView',
+      _i52ngzd4.WardrobeStore => 'WardrobeStore',
       _ => null,
     };
   }
@@ -528,6 +691,12 @@ class Protocol extends _isc.SerializationManager {
         return 'PurchaseView';
       case _izw8z7ou.Greeting():
         return 'Greeting';
+      case _iigpd3j4.PhotoException():
+        return 'PhotoException';
+      case _ilhfcnh4.PhotoUploadTicket():
+        return 'PhotoUploadTicket';
+      case _i00aw8k6.PhotoView():
+        return 'PhotoView';
       case _i94q6xjz.DailyQuiz():
         return 'DailyQuiz';
       case _ie37ihl8.DailyRecord():
@@ -574,6 +743,22 @@ class Protocol extends _isc.SerializationManager {
         return 'RecordReceipt';
       case _ir7rvxr1.RoutePoint():
         return 'RoutePoint';
+      case _it8ud1gq.WardrobeBackgroundView():
+        return 'WardrobeBackgroundView';
+      case _ixlxdrib.WardrobeColourView():
+        return 'WardrobeColourView';
+      case _ikwt7tme.WardrobeEquipView():
+        return 'WardrobeEquipView';
+      case _iupll8tb.WardrobeItemView():
+        return 'WardrobeItemView';
+      case _iioemq8t.WardrobeSeasonView():
+        return 'WardrobeSeasonView';
+      case _icerumb8.WardrobeSetColourView():
+        return 'WardrobeSetColourView';
+      case _ick58lqq.WardrobeSetView():
+        return 'WardrobeSetView';
+      case _i52ngzd4.WardrobeStore():
+        return 'WardrobeStore';
     }
     className = _iacc.Protocol().getClassNameForObject(data);
     if (className != null) {
@@ -634,6 +819,15 @@ class Protocol extends _isc.SerializationManager {
     }
     if (dataClassName == 'Greeting') {
       return deserialize<_izw8z7ou.Greeting>(data['data']);
+    }
+    if (dataClassName == 'PhotoException') {
+      return deserialize<_iigpd3j4.PhotoException>(data['data']);
+    }
+    if (dataClassName == 'PhotoUploadTicket') {
+      return deserialize<_ilhfcnh4.PhotoUploadTicket>(data['data']);
+    }
+    if (dataClassName == 'PhotoView') {
+      return deserialize<_i00aw8k6.PhotoView>(data['data']);
     }
     if (dataClassName == 'DailyQuiz') {
       return deserialize<_i94q6xjz.DailyQuiz>(data['data']);
@@ -703,6 +897,30 @@ class Protocol extends _isc.SerializationManager {
     }
     if (dataClassName == 'RoutePoint') {
       return deserialize<_ir7rvxr1.RoutePoint>(data['data']);
+    }
+    if (dataClassName == 'WardrobeBackgroundView') {
+      return deserialize<_it8ud1gq.WardrobeBackgroundView>(data['data']);
+    }
+    if (dataClassName == 'WardrobeColourView') {
+      return deserialize<_ixlxdrib.WardrobeColourView>(data['data']);
+    }
+    if (dataClassName == 'WardrobeEquipView') {
+      return deserialize<_ikwt7tme.WardrobeEquipView>(data['data']);
+    }
+    if (dataClassName == 'WardrobeItemView') {
+      return deserialize<_iupll8tb.WardrobeItemView>(data['data']);
+    }
+    if (dataClassName == 'WardrobeSeasonView') {
+      return deserialize<_iioemq8t.WardrobeSeasonView>(data['data']);
+    }
+    if (dataClassName == 'WardrobeSetColourView') {
+      return deserialize<_icerumb8.WardrobeSetColourView>(data['data']);
+    }
+    if (dataClassName == 'WardrobeSetView') {
+      return deserialize<_ick58lqq.WardrobeSetView>(data['data']);
+    }
+    if (dataClassName == 'WardrobeStore') {
+      return deserialize<_i52ngzd4.WardrobeStore>(data['data']);
     }
     if (dataClassName.startsWith('serverpod_auth_core.')) {
       data['className'] = dataClassName.substring(20);

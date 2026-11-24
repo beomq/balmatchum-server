@@ -23,14 +23,16 @@ abstract class ThemeOwnership
     required this.authUserId,
     this.authUser,
     required this.themeId,
+    String? source,
     required this.purchasedAt,
-  });
+  }) : source = source ?? 'purchase';
 
   factory ThemeOwnership({
     int? id,
     required _is.UuidValue authUserId,
     _iacs.AuthUser? authUser,
     required String themeId,
+    String? source,
     required DateTime purchasedAt,
   }) = _ThemeOwnershipImpl;
 
@@ -46,6 +48,7 @@ abstract class ThemeOwnership
               jsonSerialization['authUser'],
             ),
       themeId: jsonSerialization['themeId'] as String,
+      source: jsonSerialization['source'] as String?,
       purchasedAt: _is.DateTimeJsonExtension.fromJson(
         jsonSerialization['purchasedAt'],
       ),
@@ -65,6 +68,9 @@ abstract class ThemeOwnership
 
   String themeId;
 
+  /// purchase, subscription, or migration.
+  String source;
+
   DateTime purchasedAt;
 
   @override
@@ -78,6 +84,7 @@ abstract class ThemeOwnership
     _is.UuidValue? authUserId,
     _iacs.AuthUser? authUser,
     String? themeId,
+    String? source,
     DateTime? purchasedAt,
   });
   @override
@@ -88,6 +95,7 @@ abstract class ThemeOwnership
       'authUserId': authUserId.toJson(),
       if (authUser != null) 'authUser': authUser?.toJson(),
       'themeId': themeId,
+      'source': source,
       'purchasedAt': purchasedAt.toJson(),
     };
   }
@@ -133,12 +141,14 @@ class _ThemeOwnershipImpl extends ThemeOwnership {
     required _is.UuidValue authUserId,
     _iacs.AuthUser? authUser,
     required String themeId,
+    String? source,
     required DateTime purchasedAt,
   }) : super._(
          id: id,
          authUserId: authUserId,
          authUser: authUser,
          themeId: themeId,
+         source: source,
          purchasedAt: purchasedAt,
        );
 
@@ -151,6 +161,7 @@ class _ThemeOwnershipImpl extends ThemeOwnership {
     _is.UuidValue? authUserId,
     Object? authUser = _Undefined,
     String? themeId,
+    String? source,
     DateTime? purchasedAt,
   }) {
     return ThemeOwnership(
@@ -160,6 +171,7 @@ class _ThemeOwnershipImpl extends ThemeOwnership {
           ? authUser
           : this.authUser?.copyWith(),
       themeId: themeId ?? this.themeId,
+      source: source ?? this.source,
       purchasedAt: purchasedAt ?? this.purchasedAt,
     );
   }
@@ -177,6 +189,11 @@ class ThemeOwnershipUpdateTable extends _is.UpdateTable<ThemeOwnershipTable> {
 
   _is.ColumnValue<String, String> themeId(String value) => _is.ColumnValue(
     table.themeId,
+    value,
+  );
+
+  _is.ColumnValue<String, String> source(String value) => _is.ColumnValue(
+    table.source,
     value,
   );
 
@@ -199,6 +216,11 @@ class ThemeOwnershipTable extends _is.Table<int?> {
       'themeId',
       this,
     );
+    source = _is.ColumnString(
+      'source',
+      this,
+      hasDefault: true,
+    );
     purchasedAt = _is.ColumnDateTime(
       'purchasedAt',
       this,
@@ -212,6 +234,9 @@ class ThemeOwnershipTable extends _is.Table<int?> {
   _iacs.AuthUserTable? _authUser;
 
   late final _is.ColumnString themeId;
+
+  /// purchase, subscription, or migration.
+  late final _is.ColumnString source;
 
   late final _is.ColumnDateTime purchasedAt;
 
@@ -233,6 +258,7 @@ class ThemeOwnershipTable extends _is.Table<int?> {
     id,
     authUserId,
     themeId,
+    source,
     purchasedAt,
   ];
 

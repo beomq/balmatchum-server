@@ -4,6 +4,8 @@ table: theme_ownership
 fields:
   authUser: module:serverpod_auth_core:AuthUser?, relation(onDelete=Cascade)
   themeId: String
+  ### purchase, subscription, or migration.
+  source: String, default='purchase'
   purchasedAt: DateTime
 indexes:
   theme_ownership_auth_user_key:

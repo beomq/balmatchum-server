@@ -1,0 +1,17 @@
+### A confirmed photo. [url] is a short-lived signed GET; cache the bytes by
+### [photoId], not by URL, and list again after [urlExpiresAt].
+class: PhotoView
+fields:
+  photoId: UuidValue
+  ### original or composite.
+  kind: String
+  ### For a composite, the original it was made from (null if unknown or
+  ### since deleted).
+  originalId: UuidValue?
+  contentType: String
+  byteSize: int
+  width: int?
+  height: int?
+  createdAt: DateTime
+  url: String
+  urlExpiresAt: DateTime

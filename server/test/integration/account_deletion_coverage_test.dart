@@ -4,6 +4,8 @@ import 'package:balmatchum_client/balmatchum_client.dart' as api;
 import 'package:balmatchum_server/src/auth/auth_setup.dart';
 import 'package:balmatchum_server/src/generated/protocol.dart';
 import 'package:balmatchum_server/src/generated/serverpod.dart' as generated;
+import 'package:balmatchum_server/src/photos/photo_endpoint.dart';
+import 'package:balmatchum_server/src/photos/photo_store.dart';
 import 'package:balmatchum_server/src/product/product_endpoint.dart';
 import 'package:balmatchum_server/src/product/product_service.dart';
 import 'package:balmatchum_server/src/profile/profile_endpoint.dart';
@@ -16,6 +18,7 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
 import 'package:test/test.dart';
 
 import '../test_utils/kakao_test_keys.dart';
+import '../test_utils/memory_photo_store.dart';
 
 class _Token implements api.ClientAuthKeyProvider {
   _Token(this.value);
@@ -113,13 +116,16 @@ void main() {
         'external_identity',
         'gps_record',
         'naver_grant',
+        'outfit_equip',
         'outfit_ownership',
+        'photo',
         'point_entry',
         'product_account',
         'product_day',
         'product_request',
         'quiz_assignment',
         'quiz_state',
+        'gift_grant',
         'step_revision',
         'theme_ownership',
       ]),
@@ -243,6 +249,25 @@ void main() {
           purchasedAt: at,
         ),
       );
+      await OutfitEquip.db.insertRow(
+        admin,
+        OutfitEquip(
+          authUserId: id,
+          slot: 'torso',
+          outfitId: 'vest',
+          colourId: 'classic',
+        ),
+      );
+      await GiftGrant.db.insertRow(
+        admin,
+        GiftGrant(
+          authUserId: id,
+          month: '2026-12',
+          setId: 'holiday',
+          grantedAt: at,
+          reason: 'release',
+        ),
+      );
       await StoredAdIntent.db.insertRow(
         admin,
         StoredAdIntent(
@@ -290,6 +315,28 @@ void main() {
           refreshToken: 'coverage-refresh',
         ),
       );
+      // A confirmed photo plus an object with no row (an upload whose
+      // confirm never came): both live under the account's prefix.
+      final photos = MemoryPhotoStore();
+      PhotoStore.current = photos;
+      addTearDown(() => PhotoStore.current = null);
+      final photoId = const Uuid().v7obj();
+      await StoredPhoto.db.insertRow(
+        admin,
+        StoredPhoto(
+          id: photoId,
+          authUserId: id,
+          objectKey: photoObjectKey(id, photoId),
+          contentType: 'image/jpeg',
+          byteSize: 10,
+          status: 'ready',
+          createdAt: at,
+        ),
+      );
+      photos.put(photoObjectKey(id, photoId), byteSize: 10);
+      photos.put(photoObjectKey(id, const Uuid().v7obj()), byteSize: 10);
+      final otherKey = photoObjectKey(const Uuid().v7obj(), photoId);
+      photos.put(otherKey, byteSize: 10);
 
       Future<Map<String, Map<String, int>>> counts() async {
         final parameters = QueryParameters.named({'o': owner});
@@ -327,6 +374,8 @@ void main() {
         }
       }
       expect(revoked, ['coverage-refresh']);
+      // Only another account's object is left in the bucket.
+      expect(photos.objects.keys, [otherKey]);
     } finally {
       client.close();
       await session.close();

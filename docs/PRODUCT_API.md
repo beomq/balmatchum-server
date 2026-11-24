@@ -126,8 +126,9 @@ client.product.equipTheme(String themeId, String requestId); // ThemeStore
 `HomeSnapshot`은 홈 화면에 필요한 값을 **한 번의 읽기 트랜잭션(repeatable read, 잠금·쓰기 없음)**
 에서 만든다. 필드: `date`(서버 기준 KST 오늘, `YYYY-MM-DD`), `profile`(`getProfile()`과 같음,
 없으면 null → 온보딩), `day`(오늘 `DailyRecord`), `wallet`, `themes`, `outfits`,
+`wardrobe`(입은 옷·세트 완성 여부, [옷장 API](WARDROBE_API.md)),
 `recentDays`(`date - 30` … `date` 31개, 오래된 순, 마지막이 `day`와 같음 = 앱 `StepStreak.window`).
-'단일 스냅샷'이란 호출 도중 다른 요청이 수령·구매를 커밋해도 응답의 day·wallet·themes·outfits·
+'단일 스냅샷'이란 호출 도중 다른 요청이 수령·구매를 커밋해도 응답의 day·wallet·themes·outfits·wardrobe·
 recentDays가 모두 그 이전 값이거나 모두 이후 값이라는 뜻이다(섞이지 않음). 홈은 경로를 그리지 않으므로
 `day`와 `recentDays`의 routes는 항상 비고 GPS 기록을 읽지 않는다. 경로는 `getDay`로 읽는다.
 퀴즈는 발급 쓰기가 있을 수 있어 포함하지 않으며 `getQuiz`를 병렬로 호출한다. 앱은 기기 날짜 대신

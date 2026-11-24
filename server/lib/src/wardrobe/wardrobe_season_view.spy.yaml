@@ -1,0 +1,14 @@
+### A monthly gift window of a set or an item.
+class: WardrobeSeasonView
+fields:
+  ### KST month of the gift, yyyy-MM.
+  month: String
+  releaseAt: DateTime
+  endsAt: DateTime
+  ### Now inside [releaseAt, endsAt].
+  open: bool
+  ### The user received this gift as a paying member.
+  granted: bool
+  ### A limited-time point sale of this past gift is open now.
+  resaleOpen: bool
+  resaleEndsAt: DateTime?

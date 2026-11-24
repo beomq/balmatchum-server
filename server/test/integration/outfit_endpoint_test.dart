@@ -1,6 +1,7 @@
 import 'package:balmatchum_server/src/generated/protocol.dart';
 import 'package:balmatchum_server/src/product/outfit_service.dart';
 import 'package:balmatchum_server/src/product/product_service.dart';
+import 'package:balmatchum_server/src/wardrobe/wardrobe_catalog.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
 import 'package:test/test.dart';
@@ -275,13 +276,15 @@ void main() {
     });
 
     test('incompatible breed may own but cannot equip the vest', () async {
-      // Given: ownership seeded directly because purchase is blocked.
+      // Given: ownership seeded directly because purchase is blocked. The
+      // legacy vest is stored as wardrobe item vest/classic.
       await as('toy-poodle');
       await OutfitOwnership.db.insertRow(
         session,
         OutfitOwnership(
           authUserId: authUserIdOf(userId),
-          outfitId: vest,
+          outfitId: vestItemId,
+          colourId: vestColourId,
           purchasedAt: createdAt,
         ),
       );

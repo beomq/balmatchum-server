@@ -3,12 +3,19 @@ import 'dart:convert';
 import 'package:clock/clock.dart';
 
 import '../generated/protocol.dart';
+import '../wardrobe/wardrobe_catalog.dart';
+import '../wardrobe/wardrobe_service.dart';
 import 'product_service.dart';
 
+/// Legacy single-outfit API kept for app builds from before the wardrobe.
+/// It sees only the vest, stored as wardrobe item vest/classic.
 const vestOutfitPrice = 3;
 const _outfits = {
-  'vest-low-v': ('조끼', vestOutfitPrice, ['shih-tzu', 'dachshund']),
+  legacyVestOutfitId: ('조끼', vestOutfitPrice, ['shih-tzu', 'dachshund']),
 };
+
+bool _isVest(String outfitId, String colourId) =>
+    outfitId == vestItemId && colourId == vestColourId;
 
 extension OutfitService on ProductService {
   Future<OutfitStore> outfits() async {
@@ -22,6 +29,11 @@ extension OutfitService on ProductService {
       where: (t) => t.authUserId.equals(authUserId),
       transaction: tx,
     );
+    final torso = await OutfitEquip.db.findFirstRow(
+      session,
+      where: (t) => t.authUserId.equals(authUserId) & t.slot.equals('torso'),
+      transaction: tx,
+    );
     final fixture = productFixturesEnabled(session);
     return OutfitStore(
       items: [
@@ -33,10 +45,12 @@ extension OutfitService on ProductService {
             price: price,
             compatibleBreeds: breeds,
             compatible: breeds.contains(dog?.breedId),
-            owned: owned.any((o) => o.outfitId == id),
+            owned: owned.any((o) => _isVest(o.outfitId, o.colourId)),
           ),
       ],
-      equippedOutfit: account.equippedOutfit,
+      equippedOutfit: torso != null && _isVest(torso.outfitId, torso.colourId)
+          ? legacyVestOutfitId
+          : null,
       breedId: dog?.breedId,
       balance: await balance(fixture: fixture),
       fixtureLabel: fixture ? productFixtureLabel : null,
@@ -83,7 +97,8 @@ extension OutfitService on ProductService {
         session,
         OutfitOwnership(
           authUserId: authUserId,
-          outfitId: outfitId,
+          outfitId: vestItemId,
+          colourId: vestColourId,
           purchasedAt: clock.now().toUtc(),
         ),
         transaction: tx,
@@ -116,8 +131,18 @@ extension OutfitService on ProductService {
     String requestId,
     Object payload,
   ) async {
-    account.equippedOutfit = outfitId;
-    await ProductAccount.db.updateRow(session, account, transaction: tx);
+    if (outfitId != null) {
+      await setSlot('torso', vestItemId, vestColourId);
+    } else {
+      await OutfitEquip.db.deleteWhere(
+        session,
+        where: (t) =>
+            t.authUserId.equals(authUserId) &
+            t.slot.equals('torso') &
+            t.outfitId.equals(vestItemId),
+        transaction: tx,
+      );
+    }
     final result = await outfits();
     await remember(requestId, payload, result.toJson());
     return result;

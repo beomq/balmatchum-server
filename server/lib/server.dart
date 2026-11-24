@@ -8,6 +8,7 @@ import 'src/billing/billing_retention.dart';
 import 'src/billing/billing_service.dart';
 import 'src/maintenance/periodic_maintenance.dart';
 import 'src/maintenance/schema_guard.dart';
+import 'src/photos/photo_store.dart';
 
 /// The starting point of the Serverpod server.
 void run(List<String> args) async {
@@ -18,6 +19,7 @@ void run(List<String> args) async {
   final pod = Serverpod(args);
   configureAuth(pod);
   BillingService.configure(pod);
+  configurePhotoStorage(pod);
 
   // Start the server. Pending migrations are applied inside start(); outside
   // development a failed migration is logged and startup continues.
